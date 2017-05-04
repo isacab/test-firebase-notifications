@@ -30,8 +30,10 @@ namespace TestFirebaseNotificationsAPI.Services
 
                 request.ContentType = "application/json;charset=UTF-8";
 
-                JsonSerializerSettings serializerSettings = new JsonSerializerSettings();
-                serializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                };
                 string json = JsonConvert.SerializeObject(data, serializerSettings);
                 Byte[] byteArray = Encoding.UTF8.GetBytes(json);
                 request.ContentLength = byteArray.Length;
