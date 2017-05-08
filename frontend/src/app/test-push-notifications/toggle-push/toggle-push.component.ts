@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PushNotificationService } from '../../push-notification.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 @Component({
   selector: 'toggle-push',
@@ -18,6 +18,10 @@ export class TogglePushComponent implements OnInit {
     this.label = "Enable push notifications!";
     this.isPushEnabled = false;
     this.canEnablePush = false;
+  }
+
+  onChange(checked: boolean) {
+    this.pushService.setEnabled(checked);
   }
 
 }

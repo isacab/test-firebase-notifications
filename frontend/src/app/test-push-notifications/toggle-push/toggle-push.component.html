@@ -3,10 +3,11 @@
     <h2>Result</h2>
 
     <section class="example-section">
-      <md-slide-toggle 
+      <md-slide-toggle #toggle
           color="primary"
           [checked]="isPushEnabled"
-          [disabled]="!canEnablePush">
+          [disabled]="!canEnablePush"
+          (change)="onChange(toggle.checked)">
         {{ label }}
       </md-slide-toggle>
     </section>

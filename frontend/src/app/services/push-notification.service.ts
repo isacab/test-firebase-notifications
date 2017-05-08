@@ -8,8 +8,8 @@ import * as firebase from 'firebase';
 
 import 'rxjs/add/operator/toPromise';
 
-import { Shared } from './shared';
-import { IndexedDBService } from './services/indexed-db.service';
+import { Shared } from '../shared';
+import { IndexedDBService } from './indexed-db.service';
 
 declare var Notification: any;
 declare var navigator: any;
@@ -38,12 +38,12 @@ export class PushNotificationService {
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private http: Http, private db: IndexedDBService) { 
     let self = this;
     if(this.isSuported()) {
-      this.messaging = firebaseApp.messaging();
-      this.getNotificationPermissionState().then(function(state: string) {
-        if(state !== 'denied') {
-          self.setUpPush();
-        }
-      });
+        this.messaging = firebaseApp.messaging();
+        this.getNotificationPermissionState().then(function(state: string) {
+            if(state !== 'denied') {
+              self.setUpPush();
+            }
+          });
     }
   }
 

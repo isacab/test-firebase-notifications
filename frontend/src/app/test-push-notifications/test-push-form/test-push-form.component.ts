@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-test-push-form',
+  selector: 'test-push-form',
   templateUrl: './test-push-form.component.html',
   styleUrls: ['./test-push-form.component.css']
 })

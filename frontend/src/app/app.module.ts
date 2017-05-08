@@ -8,7 +8,9 @@ import { AngularFireModule } from 'angularfire2';
 
 import 'hammerjs';
 
-import { PushNotificationService } from './push-notification.service';
+import { PushNotificationService } from './services/push-notification.service';
+//import { AngularIndexedDB } from 'angular2-indexeddb';
+import { IndexedDBService } from './services/indexed-db.service';
 
 import { AppComponent } from './app.component';
 import { TogglePushComponent } from './test-push-notifications/toggle-push/toggle-push.component';
@@ -16,14 +18,15 @@ import { TestPushNotificationsComponent } from './test-push-notifications/test-p
 import { TestPushFormComponent } from './test-push-notifications/test-push-form/test-push-form.component';
 
 export const firebaseConfig = {
-      apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
-      authDomain: "testnotificationsfirebase.firebaseapp.com",
-      databaseURL: "https://testnotificationsfirebase.firebaseio.com",
-      projectId: "testnotificationsfirebase",
-      storageBucket: "testnotificationsfirebase.appspot.com",
-      messagingSenderId: "170551356465"
-  };
+  apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
+  authDomain: "testnotificationsfirebase.firebaseapp.com",
+  databaseURL: "https://testnotificationsfirebase.firebaseio.com",
+  projectId: "testnotificationsfirebase",
+  storageBucket: "testnotificationsfirebase.appspot.com",
+  messagingSenderId: "170551356465"
+};
 
+export const indexeddbName = 'test_firebase_db';
 
 @NgModule({
   declarations: [
@@ -38,9 +41,13 @@ export const firebaseConfig = {
     HttpModule,
     BrowserAnimationsModule,
     MdSlideToggleModule,
-    AngularFireModule.initializeApp(firebaseConfig)
+    AngularFireModule.initializeApp(firebaseConfig),
   ],
-  providers: [PushNotificationService],
+  providers: [
+    PushNotificationService, 
+    //{ provide: AngularIndexedDB, useValue: new AngularIndexedDB(indexeddbName, 1) }
+    IndexedDBService,
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
