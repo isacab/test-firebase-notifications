@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,6 +11,7 @@ import 'hammerjs';
 import { PushNotificationService } from './services/push-notification.service';
 //import { AngularIndexedDB } from 'angular2-indexeddb';
 import { IndexedDBService } from './services/indexed-db.service';
+import { TestPushNotificationsService } from './services/test-push-notifications.service';
 
 import { AppComponent } from './app.component';
 import { TogglePushComponent } from './test-push-notifications/toggle-push/toggle-push.component';
@@ -27,6 +28,10 @@ export const firebaseConfig = {
 };
 
 export const indexeddbName = 'test_firebase_db';
+
+export function indexedDBFactory(db: IndexedDBService): Function {
+  return () => db.open();
+};
 
 @NgModule({
   declarations: [
@@ -47,6 +52,11 @@ export const indexeddbName = 'test_firebase_db';
     PushNotificationService, 
     //{ provide: AngularIndexedDB, useValue: new AngularIndexedDB(indexeddbName, 1) }
     IndexedDBService,
+    TestPushNotificationsService,
+    { provide: APP_INITIALIZER,
+      useFactory: indexedDBFactory,
+      deps: [IndexedDBService], 
+      multi: true }
   ],
   bootstrap: [AppComponent]
 })
