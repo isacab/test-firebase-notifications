@@ -7,14 +7,21 @@ import { IPair } from '../interfaces';
 
 declare var window: any;
 
+// Object containing properties needed to open a database
+const IndexedDBConfig = Object.freeze({
+    DB_NAME: 'test-firebase-notifications',
+    DB_VERSION: 1,
+    ON_UPGRADE_NEEDED: function(event : IDBVersionChangeEvent) {
+      // Get the database
+      let db = (<IDBOpenDBRequest>event.target).result;
+
+      // Setup database object stores here
+      db.createObjectStore('push_notifications', { keyPath: 'key', autoIncrement: false });
+    },
+});
+
 @Injectable()
 export class IndexedDBService {
-
-  readonly DB_NAME = 'test-firebase-notifications';
-  readonly DB_VERSION = 1;
-  readonly OBJECT_STORES = [
-    { name: 'push_notifications_data', optionalParameters: { keyPath: 'key', autoIncrement: false } }
-  ];
 
   private db : IDBDatabase = null;
 
@@ -36,14 +43,9 @@ export class IndexedDBService {
         reject("IndexedDB is not suported by this browser.");
       }
 
-      let request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+      let request = indexedDB.open(IndexedDBConfig.DB_NAME, IndexedDBConfig.DB_VERSION);
       
-      request.onupgradeneeded = (event) => {
-          let db = request.result;
-          this.OBJECT_STORES.forEach(element => {
-            let obj = db.createObjectStore(element.name, element.optionalParameters);
-          });                 
-      };
+      request.onupgradeneeded = IndexedDBConfig.ON_UPGRADE_NEEDED;
       
       request.onsuccess = (e) => {
         console.log('Database loaded');

@@ -2,7 +2,11 @@ import { TestBed, inject, async } from '@angular/core/testing';
 
 import { IndexedDBService } from './indexed-db.service';
 
-fdescribe('IndexedDBService', () => {
+describe('IndexedDBService', () => {
+
+  const objStoreName = 'push_notifications';
+  const key = 'key';
+
   beforeEach(async() => {
     TestBed.configureTestingModule({
       providers: [IndexedDBService]
@@ -13,11 +17,10 @@ fdescribe('IndexedDBService', () => {
     let service = TestBed.get(IndexedDBService);
     service.open().then(() => {
       
-      let objStoreName = service.OBJECT_STORES[0].name;
       let data = [
-        {key: 'obj1', data: 'test'},
-        {key: 'obj2', data: 'test'},
-        {key: 'obj3', data: 'test'},
+        {key: 'obj1', value: 'test'},
+        {key: 'obj2', value: 'test'},
+        {key: 'obj3', value: 'test'},
       ];
       let countCompleted = 0;
 
@@ -56,8 +59,6 @@ fdescribe('IndexedDBService', () => {
   it('2. delete all', (done) => {
     let service = TestBed.get(IndexedDBService);
     service.open().then(() => {
-      
-      let objStoreName = service.OBJECT_STORES[0].name;
 
       service.deleteAll(objStoreName).then(() => {
         // get values
@@ -87,9 +88,7 @@ fdescribe('IndexedDBService', () => {
     let service = TestBed.get(IndexedDBService);
     service.open().then(() => {
       
-      let objStoreName = service.OBJECT_STORES[0].name;
-      let key = service.OBJECT_STORES[0].optionalParameters.keyPath;
-      let data = {wrongKey: 'obj1', data: 'test'};
+      let data = {wrongKey: 'obj1', value: 'test'};
 
       // put values
       service.put(objStoreName, data)
@@ -110,12 +109,11 @@ fdescribe('IndexedDBService', () => {
     let service = TestBed.get(IndexedDBService);
     service.open().then(() => {
       
-      let objStoreName = service.OBJECT_STORES[0].name;
       let data = [
-        {key: 'obj1', data: 'test'},
-        {key: 'obj2', data: 'test'},
-        {key: 'obj3', data: 'test'},
-        {key: 'obj3', data: 'updated'},
+        {key: 'obj1', value: 'test'},
+        {key: 'obj2', value: 'test'},
+        {key: 'obj3', value: 'test'},
+        {key: 'obj3', value: 'updated'},
       ];
       let countCompleted = 0;
 
@@ -160,8 +158,7 @@ fdescribe('IndexedDBService', () => {
     let service = TestBed.get(IndexedDBService);
     service.open().then(() => {
       
-      let objStoreName = service.OBJECT_STORES[0].name;
-      let data = {key: 'obj1', data: 'test'};
+      let data = {key: 'obj1', value: 'test'};
 
       // put values
       service.put(objStoreName, data)
@@ -191,7 +188,6 @@ fdescribe('IndexedDBService', () => {
 
   it('6. should not get an object with wrong key.', (done) => {
     let service = TestBed.get(IndexedDBService);
-    let objStoreName = service.OBJECT_STORES[0].name;
 
     service.open().then(() => {
 

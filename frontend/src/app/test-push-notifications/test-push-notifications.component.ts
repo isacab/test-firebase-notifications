@@ -13,12 +13,12 @@ export class TestPushNotificationsComponent implements OnInit {
   ngOnInit() {
     console.log('db.isOpen(): {0}', this.db.isOpen());
 
-    let objStoreName = this.db.OBJECT_STORES[0].name;
+    let objStoreName = 'push-notifications';
       let data = [
-        {key: 'obj1', data: 'test'},
-        {key: 'obj2', data: 'test'},
-        {key: 'obj3', data: 'test'},
-        {key: 'obj3', data: 'updated'},
+        {key: 'obj1', value: 'test'},
+        {key: 'obj2', value: 'test'},
+        {key: 'obj3', value: 'test'},
+        {key: 'obj3', value: 'updated'},
       ];
       let countCompleted = 0;
 
@@ -32,7 +32,7 @@ export class TestPushNotificationsComponent implements OnInit {
             console.log("All values has been inserted");
 
             // get values
-            this.db.getAll(objStoreName).then((result) => {
+            this.db.getMany(objStoreName).then((result) => {
               console.log("result: ", result);
               console.log("done");
             });
