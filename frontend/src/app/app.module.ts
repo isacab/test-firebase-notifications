@@ -29,7 +29,7 @@ export const firebaseConfig = {
 
 export const indexeddbName = 'test_firebase_db';
 
-export function indexedDBFactory(db: IndexedDBService): Function {
+export function openIndexedDB(db: IndexedDBService): Function {
   return () => db.open();
 };
 
@@ -54,7 +54,7 @@ export function indexedDBFactory(db: IndexedDBService): Function {
     IndexedDBService,
     TestPushNotificationsService,
     { provide: APP_INITIALIZER,
-      useFactory: indexedDBFactory,
+      useFactory: openIndexedDB,
       deps: [IndexedDBService], 
       multi: true }
   ],

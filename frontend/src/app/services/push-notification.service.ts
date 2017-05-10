@@ -9,6 +9,7 @@ import * as firebase from 'firebase';
 import 'rxjs/add/operator/toPromise';
 
 import { Shared } from '../shared';
+import { IPair } from '../interfaces';
 import { IndexedDBService } from './indexed-db.service';
 
 declare var Notification: any;
@@ -30,6 +31,7 @@ export class PushNotificationService {
   private readonly apiUrl = Shared.BASE_API_URL;
   private readonly headers = new Headers({'Content-Type': 'application/json'});
   private readonly messaging: firebase.messaging.Messaging;
+  private readonly storeName = Shared.PUSH_SETTINGS_OBJECT_STORE;
   
   private isPushEnabled : boolean = false;
 
@@ -64,6 +66,9 @@ export class PushNotificationService {
     return true;
   }
 
+  /**
+   * Returns a boolean that tells if push notifications are enabled or not.
+   */
   isEnabled() : boolean {
     return this.isPushEnabled;
   }
@@ -111,7 +116,7 @@ export class PushNotificationService {
                 oldToken: oldToken, 
                 enabled: true
               });
-              this.sendTokenToServer(data);
+              this.sendToServer(data);
               this.token = currentToken;
             })
             .then(function() {
@@ -233,11 +238,29 @@ export class PushNotificationService {
         });
   }
 
-  private tokenSentToServer: boolean = false;
-  private setTokenSentToServer(value: boolean) : void {
-    // TODO save to indexeddb
+  private getValueFromIndexedDB(key : string, defaultValue? : any) {
+    return new Promise<boolean>((resolve, reject) => {
+      this.db.get(this.storeName, key, defaultValue)
+        .then((result) => {
+          resolve(result.value);
+        },
+        (error) => {
+          reject(error);
+        });
+    });
+  }
 
-    this.tokenSentToServer = value;
+  private putValueInIndexedDB(key : string, value: any) : Promise<string> {
+    let data : IPair = { 'key': key, 'value': value };
+    return this.db.put(this.storeName, data);
+  }
+
+  private setTokenSentToServer(value: boolean) : Promise<string> {
+    return this.putValueInIndexedDB('sentToServer', value);
+  }
+
+  private getTokenSentToServer() : Promise<boolean> {
+    return this.getValueFromIndexedDB('sentToServer', false);
   }
 
   private sendTokenToServer(data: PushNotificationDataToServer) : Promise<boolean> {

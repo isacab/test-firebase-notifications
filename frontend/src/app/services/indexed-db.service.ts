@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observer } from 'rxjs/Observer';
 import { Observable } from 'rxjs/Observable';
 
+import { IPair } from '../interfaces';
+
 declare var window: any;
 
 @Injectable()
@@ -58,7 +60,7 @@ export class IndexedDBService {
 
   }
 
-  get(objStoreName : string, key: any) {
+  get(objStoreName : string, key : any, defaultValue? : any) : Promise<IPair> {
     let transaction = this.db.transaction([objStoreName], 'readonly');
     let objectStore = transaction.objectStore(objStoreName);
 
@@ -67,29 +69,34 @@ export class IndexedDBService {
       let request = objectStore.get(key);
 
       request.onerror = function(event : any) {
-        reject((<IDBRequest>event.target).error.name);
+        reject(request.error.name);
       };
 
       request.onsuccess = function(event : any) {
-        let result = event.result;
+        let result = request.result;
+
+        if(result === undefined) {
+          result = defaultValue;
+        }
+
         resolve(result);
       };
     });
   }
 
-  getAll(objStoreName : string) {
+  getMany(objStoreName : string, keyRange? : string | number | IDBKeyRange | Date | IDBArrayKey) : Promise<Array<any>> {
     let transaction = this.db.transaction([objStoreName], 'readonly');
     let objectStore = transaction.objectStore(objStoreName);
+    let result = [];
 
     return new Promise((resolve, reject) => {
-      let request = objectStore.openCursor();
+      let request = objectStore.openCursor(keyRange);
       
       request.onsuccess = (event : Event) => {
         let cursor = request.result;
-        let result = [];
         if (cursor) {
-          alert("Name for SSN " + cursor.key + " is " + cursor.value.name);
-          result.push(cursor.value);
+          let value = cursor.value;
+          result.push(value);
           cursor.continue();
         }
         else {
@@ -104,7 +111,7 @@ export class IndexedDBService {
     });
   }
 
-  put(objStoreName : string, data) {
+  put(objStoreName : string, data : IPair) : Promise<string> {
     let transaction = this.db.transaction([objStoreName], 'readwrite');
     let objectStore = transaction.objectStore(objStoreName);
 
@@ -117,13 +124,14 @@ export class IndexedDBService {
       request.onerror = function(event) {
         reject(request.error.name);
       };
+
       request.onsuccess = function(event) {
         resolve(request.readyState);
       };
     });
   }
 
-  delete(objStoreName : string, key) {
+  delete(objStoreName : string, key) : Promise<string> {
     let transaction = this.db.transaction([objStoreName], 'readwrite');
     let objectStore = transaction.objectStore(objStoreName);
 
@@ -132,7 +140,7 @@ export class IndexedDBService {
       let request = objectStore.delete(key); // Deletes the record by the key.
   
       request.onsuccess = (event: Event) => {
-          resolve(request.readyState);
+        resolve(request.readyState);
       }
       
       request.onerror = (event: Event) => {
@@ -142,7 +150,7 @@ export class IndexedDBService {
     });
   }
 
-  deleteAll(objStoreName : string) {
+  deleteAll(objStoreName : string) : Promise<string> {
     let transaction = this.db.transaction([objStoreName], 'readwrite');
     let objectStore = transaction.objectStore(objStoreName);
 
