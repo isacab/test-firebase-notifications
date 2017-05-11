@@ -31,7 +31,7 @@ export class PushNotificationService {
   private readonly apiUrl = Shared.BASE_API_URL;
   private readonly headers = new Headers({'Content-Type': 'application/json'});
   private readonly messaging: firebase.messaging.Messaging;
-  private readonly storeName = Shared.PUSH_SETTINGS_OBJECT_STORE;
+  private readonly storeName = 'push_notifications';
   
   private isPushEnabled : boolean = false;
 
@@ -78,7 +78,7 @@ export class PushNotificationService {
    * 
    * @param value 
    */
-  setEnabled(value : boolean) : Promise<any> {
+  setEnabled(value : boolean) : firebase.Promise<any> {
     // Check if push is already enabled
     if(this.isEnabled() === value)
       return new Promise((resolve, reject) => { resolve(); });
@@ -96,30 +96,22 @@ export class PushNotificationService {
    * This function does following:
    *    1. request permission
    *    2. get token
-   *    3. set token sent to server = false
-   *    4. send token to server
-   *    5. set token sent to server = true
-   *    6. set isPushEnabled = true
+   *    3. if succeed, set isPushEnabled = true
    */
-  private enable() : Promise<any> {
+  private enable() : firebase.Promise<any> {
     // Request permission, get token and on success, set isPushEnabled to true
     return this.requestPermission()
-            .then(this.getToken)
-            .then(function(currentToken) {
-              this.setTokenSentToServer(false);
+            .then(this.getToken) // get current token
+            .then((currentToken) => {
 
-              let oldToken = this.token;
-
-              console.log('Current token: ' + currentToken);
               let data = new PushNotificationDataToServer({
-                token: currentToken, 
-                oldToken: oldToken, 
-                enabled: true
+                token: currentToken,
+                oldToken: this.token
               });
-              this.sendToServer(data);
-              this.token = currentToken;
+
+              return this.sendToServer(data);
             })
-            .then(function() {
+            .then(function(currentToken) {
               this.isPushEnabled = true;
             })
             .catch(function(err) {
@@ -128,15 +120,16 @@ export class PushNotificationService {
             });
   }
 
-  private disable() : Promise<any> {
-    // TODO
-    // 1. Tell the server to not send notifications
-    // 2. Update lokal database (isEnabled)
-    this.isPushEnabled = false;
-    let data = new PushNotificationDataToServer({
-      enabled: false
-    });
-    return this.sendTokenToServer(data);
+  private disable() : firebase.Promise<any> {
+    return this.getToken()
+            .then(this.messaging.deleteToken)
+            .then(() => {
+              this.isPushEnabled = false;
+            })
+            .catch((error) => {
+              console.log(error);
+              throw error;
+            });
   }
 
   removeToken() : Promise<void> {
@@ -194,7 +187,7 @@ export class PushNotificationService {
                   token: refreshedToken,
                   oldToken: oldToken
                 });
-                this.sendTokenToServer(data);
+                this.sendToServer(data);
                 this.token = refreshedToken;
                 console.log('Refreshed token: ' + refreshedToken);
             })
@@ -212,17 +205,6 @@ export class PushNotificationService {
     });
   }
 
-  private requestPermission() {
-    return this.messaging.requestPermission()
-        .then(function () {
-            console.log('Notification permission granted.');
-        })
-        .catch(function (err) {
-            console.log('Unable to get permission for notifications.', err);
-            throw err;
-        });
-  }
-
   private getToken() : firebase.Promise<any> {
     // Get Instance ID token. The first call to this method makes a network call, once retrieved
     // subsequent calls to getToken will return from cache (if the token is not deleted).
@@ -235,6 +217,20 @@ export class PushNotificationService {
           //showToken('Error retrieving Instance ID token. ', err);
           this.setTokenSentToServer(false);
           throw err;
+        });
+  }
+
+  /** 
+   * Request permission for push notifications.
+   */
+  private requestPermission() : firebase.Promise<any> {
+    return this.messaging.requestPermission()
+        .then(function () {
+            console.log('Notification permission granted.');
+        })
+        .catch(function (err) {
+            console.log('Unable to get permission for notifications.', err);
+            throw err;
         });
   }
 
@@ -263,9 +259,17 @@ export class PushNotificationService {
     return this.getValueFromIndexedDB('sentToServer', false);
   }
 
-  private sendTokenToServer(data: PushNotificationDataToServer) : Promise<boolean> {
-    // TODO
-    return null;
+  private sendToServer(data : PushNotificationDataToServer) {
+    let url = this.apiUrl + "/token"
+    return this.http.post(url, data).subscribe((result) => { 
+      if(result.status == 200) {
+        //ok
+      } else {
+        // nok
+      }
+    }, () => {
+      // nok 
+    });
   }
 
   /**
