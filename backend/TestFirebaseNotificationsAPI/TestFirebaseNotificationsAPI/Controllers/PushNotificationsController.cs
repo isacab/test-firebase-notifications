@@ -5,17 +5,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TestFirebaseNotificationsAPI.Model;
 using TestFirebaseNotificationsAPI.Services;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace TestFirebaseNotificationsAPI.Controllers
 {
     [Route("api/[controller]")]
     public class PushNotificationsController : Controller
     {
-        private PushNotificationService _service;
+        private PushNotificationService _pushNotificationService;
+        private PushRegistrationService _pushRegistrationService;
 
-        public PushNotificationsController(PushNotificationService service)
+        public PushNotificationsController(PushNotificationService pushNotificationService, PushRegistrationService pushRegistrationService)
         {
-            this._service = service;
+            this._pushNotificationService = pushNotificationService;
+            this._pushRegistrationService = pushRegistrationService;
         }
 
         // GET api/values
@@ -25,18 +29,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
         // POST api/values
         [HttpPost]
         public IActionResult Post([FromBody]NotificationModel data)
         {
-            _service.Send(data);
+            _pushNotificationService.Send(data);
             return Json(new { ok = true });
         }
 

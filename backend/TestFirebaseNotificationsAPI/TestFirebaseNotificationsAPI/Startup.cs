@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TestFirebaseNotificationsAPI.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestFirebaseNotificationsAPI
 {
@@ -21,6 +22,11 @@ namespace TestFirebaseNotificationsAPI
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
+
+            using (var db = new DatabaseContext())
+            {
+                db.Database.EnsureCreated();
+            }
         }
 
         public IConfigurationRoot Configuration { get; }
@@ -31,6 +37,8 @@ namespace TestFirebaseNotificationsAPI
             // Add framework services.
             services.AddMvc();
             services.AddScoped<PushNotificationService>();
+            services.AddScoped<PushRegistrationService>();
+            services.AddEntityFrameworkSqlite().AddDbContext<DatabaseContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

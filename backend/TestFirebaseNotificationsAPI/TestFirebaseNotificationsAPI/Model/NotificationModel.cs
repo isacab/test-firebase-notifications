@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TestFirebaseNotificationsAPI.Model
 {
-    public class NotificationModel
+    public class NotificationModel : Model
     {
         public string To { get; set; }
         public NotificationContentModel Notification { get; set; }
