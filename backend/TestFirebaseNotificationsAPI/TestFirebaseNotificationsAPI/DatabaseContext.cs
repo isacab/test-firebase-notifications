@@ -12,8 +12,12 @@ namespace TestFirebaseNotificationsAPI
     {
         public DbSet<PushRegistrationModel> PushRegistrations { get; set; }
 
-        public DatabaseContext()
-        { }
+        public string DataSource { get; protected set; }
+
+        public DatabaseContext(string dataSource = "MyDatabase.db")
+        {
+            this.DataSource = dataSource;
+        }
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options)
             : base(options)
@@ -23,7 +27,7 @@ namespace TestFirebaseNotificationsAPI
         {
             if (!optionsBuilder.IsConfigured)
             {
-                var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = "MyDatabase.db" };
+                var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = this.DataSource };
                 var connectionString = connectionStringBuilder.ToString();
                 var connection = new SqliteConnection(connectionString);
 
