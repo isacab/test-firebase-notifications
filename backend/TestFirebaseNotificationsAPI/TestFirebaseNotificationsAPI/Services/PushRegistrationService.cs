@@ -20,36 +20,47 @@ namespace TestFirebaseNotificationsAPI.Services
             return _databaseContext.PushRegistrations.FirstOrDefault(x => x.Token == token);
         }
 
-        public PushRegistrationModel Get(int id)
-        {
-            return _databaseContext.PushRegistrations.Find(id);
-        }
-
         public void Insert(PushRegistrationModel model)
         {
+            model.Id = 0;
+            model.UpdatedAt = default(DateTime);
+            model.CreatedAt = DateTime.Now;
+
             _databaseContext.Add(model);
         }
 
         public void Update(PushRegistrationModel model)
         {
+            model.UpdatedAt = DateTime.Now;
             _databaseContext.PushRegistrations.Update(model);
+        }
+
+        public void Delete(PushRegistrationModel model)
+        {
+            _databaseContext.PushRegistrations.Remove(model);
         }
 
         public void Delete(string token)
         {
-            PushRegistrationModel model = Get(token);
-            _databaseContext.PushRegistrations.Remove(model);
-        }
+            var models = _databaseContext.PushRegistrations.Where(x => x.Token == token);
 
-        public void Delete(int id)
-        {
-            PushRegistrationModel model = Get(id);
-            _databaseContext.PushRegistrations.Remove(model);
+            _databaseContext.PushRegistrations.RemoveRange(models);
         }
 
         public int SaveChanges()
         {
             return _databaseContext.SaveChanges();
+        }
+
+        private string GenerateDeviceId()
+        {
+            Guid g = Guid.NewGuid();
+            string guidString = Convert.ToBase64String(g.ToByteArray());
+            guidString = guidString.Replace("=", "");
+            guidString = guidString.Replace("+", "");
+            guidString = guidString.Replace("/", "");
+
+            return guidString;
         }
     }
 }

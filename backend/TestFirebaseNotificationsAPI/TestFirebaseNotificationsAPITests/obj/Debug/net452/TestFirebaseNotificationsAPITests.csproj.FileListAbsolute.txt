@@ -144,3 +144,4 @@ C:\Users\Isac\Documents\exjobb\test-firebase-notifications\backend\TestFirebaseN
 C:\Users\Isac\Documents\exjobb\test-firebase-notifications\backend\TestFirebaseNotificationsAPI\TestFirebaseNotificationsAPITests\bin\Debug\net452\TestFirebaseNotificationsAPI.exe.config
 C:\Users\Isac\Documents\exjobb\test-firebase-notifications\backend\TestFirebaseNotificationsAPI\TestFirebaseNotificationsAPITests\obj\Debug\net452\TestFirebaseNotificationsAPITests.exe
 C:\Users\Isac\Documents\exjobb\test-firebase-notifications\backend\TestFirebaseNotificationsAPI\TestFirebaseNotificationsAPITests\obj\Debug\net452\TestFirebaseNotificationsAPITests.pdb
+C:\Users\Isac\Documents\exjobb\test-firebase-notifications\backend\TestFirebaseNotificationsAPI\TestFirebaseNotificationsAPITests\obj\Debug\net452\TestFirebaseNotificationsAPITests.csprojResolveAssemblyReference.cache

@@ -14,6 +14,8 @@ namespace TestFirebaseNotificationsAPI
 {
     public class Startup
     {
+        private const string _connectionString = "Data Source=MyDatabase"; // on file
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -23,9 +25,14 @@ namespace TestFirebaseNotificationsAPI
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
-            using (var db = new DatabaseContext())
+            var options = new DbContextOptionsBuilder<DatabaseContext>()
+                    .UseSqlite(_connectionString)
+                    .Options;
+
+            // Create the schema in the database
+            using (var context = new DatabaseContext(options))
             {
-                db.Database.EnsureCreated();
+                context.Database.EnsureCreated();
             }
         }
 
@@ -36,9 +43,10 @@ namespace TestFirebaseNotificationsAPI
         {
             // Add framework services.
             services.AddMvc();
+            services.AddEntityFrameworkSqlite()
+                    .AddDbContext<DatabaseContext>(options => options.UseSqlite(_connectionString));
             services.AddScoped<PushNotificationService>();
             services.AddScoped<PushRegistrationService>();
-            services.AddEntityFrameworkSqlite().AddDbContext<DatabaseContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

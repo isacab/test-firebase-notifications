@@ -16,7 +16,7 @@ namespace TestFirebaseNotificationsAPITests
         public void Test1()
         {
             // In-memory database only exists while the connection is open
-            var connection = new SqliteConnection("DataSource=:memory:");
+            var connection = new SqliteConnection("Data Source=:memory:");
             connection.Open();
 
             PushRegistrationModel registration = new PushRegistrationModel()
