@@ -13,13 +13,13 @@ namespace TestFirebaseNotificationsAPI.Controllers
     [Route("api/[controller]")]
     public class PushNotificationsController : Controller
     {
-        private PushNotificationService _pushNotificationService;
-        private PushRegistrationService _pushRegistrationService;
+        private PushNotificationService _notificationService;
+        private PushRegistrationService _registrationService;
 
         public PushNotificationsController(PushNotificationService pushNotificationService, PushRegistrationService pushRegistrationService)
         {
-            this._pushNotificationService = pushNotificationService;
-            this._pushRegistrationService = pushRegistrationService;
+            this._notificationService = pushNotificationService;
+            this._registrationService = pushRegistrationService;
         }
 
         // GET api/values
@@ -33,8 +33,35 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPost]
         public IActionResult Post([FromBody]NotificationModel data)
         {
-            _pushNotificationService.Send(data);
+            _notificationService.Send(data);
             return Json(new { ok = true });
+        }
+
+        // POST api/values
+        [HttpPost("{token}")]
+        public IActionResult Post(string token)
+        {
+            PushRegistrationModel reg = _registrationService.Get(token);
+
+            if (reg == null)
+                return NotFound(new { Message = "Token not found" });
+
+            if (!reg.Enabled)
+                return BadRequest(new { Message = "Notifications are disabled" });
+
+            NotificationModel notification = new NotificationModel()
+            {
+                To = token,
+                Notification = new NotificationContentModel()
+                {
+                    Title = "Hello",
+                    Body = "There!"
+                }
+            };
+
+            _notificationService.Send(notification);
+
+            return Ok();
         }
 
         /*
