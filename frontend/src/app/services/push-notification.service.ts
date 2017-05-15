@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@angular/core';
-import { Headers, Http } from '@angular/http';
 
 import { FirebaseApp } from "angularfire2";
 import * as firebase from 'firebase';
@@ -7,17 +6,20 @@ import * as firebase from 'firebase';
 //import { AngularIndexedDB } from 'angular2-indexeddb';
 
 import 'rxjs/add/operator/toPromise';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subject } from 'rxjs/Subject';
 
-import { Shared } from '../shared';
 import { IPair } from '../interfaces';
 import { IndexedDBService } from './indexed-db.service';
+import { ApiService } from './api.service';
+
+import { PushRegistration } from '../models/push-registration';
 
 declare var Notification: any;
 declare var navigator: any;
 
 export class PushNotificationDataToServer {
   token: string;
-  oldToken: string;
   enabled: boolean;
   
   constructor(init?:Partial<PushNotificationDataToServer>) {
@@ -28,16 +30,12 @@ export class PushNotificationDataToServer {
 @Injectable()
 export class PushNotificationService {
   
-  private readonly apiUrl = Shared.BASE_API_URL;
-  private readonly headers = new Headers({'Content-Type': 'application/json'});
   private readonly messaging: firebase.messaging.Messaging;
   private readonly storeName = 'push_notifications';
   
-  private isPushEnabled : boolean = false;
+  private pushRegistration : PushRegistration;
 
-  private token : string; // current registrated token
-
-  constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private http: Http, private db: IndexedDBService) { 
+  constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService, private db: IndexedDBService) { 
     let self = this;
     if(this.isSuported()) {
         this.messaging = firebaseApp.messaging();
@@ -49,10 +47,53 @@ export class PushNotificationService {
     }
   }
 
+  // [start] Observable properties
+
+  // isSetUp - observable property
+  private isSetUpSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isSetUpChanged = this.isSetUpSource.asObservable();
+  get isSetUp() : boolean {
+    return this.isSetUpSource.getValue();
+  }
+  private setIsSetUp(value : boolean) : void {
+    this.setValue(this.isSetUpSource, value);
+  }
+
+  // isEnabled - observable property
+  private isEnabledSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isEnabledChanged = this.isEnabledSource.asObservable();
+  get isEnabled() : boolean {
+    return this.isEnabledSource.getValue();
+  }
+  private setIsEnabled(value : boolean) : void {
+    this.setValue(this.isEnabledSource, value);
+  }
+
+  // canEnable - observable property
+  private canEnableSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  canEnableChanged = this.isEnabledSource.asObservable();
+  get canEnable() : boolean {
+    return this.canEnableSource.getValue();
+  }
+  private setCanEnable(value : boolean) : void {
+    this.setValue(this.canEnableSource, value);
+  }
+
+  // [end] Observable properties
+
+  /**
+   * set value for an BehaviorSubject
+   */ 
+  private setValue<T>(subject : BehaviorSubject<T>, value : T) : void {
+    if(subject.getValue() !== value) {
+      subject.next(value);
+    }
+  }
+
   /**
    * Check if push notifications are supported by the browser.
    */
-  isSuported() : boolean {
+  private isSuported() : boolean {
     if (!('serviceWorker' in navigator)) {
         console.log("Service Worker isn't supported on this browser.");
         return false;
@@ -67,20 +108,13 @@ export class PushNotificationService {
   }
 
   /**
-   * Returns a boolean that tells if push notifications are enabled or not.
-   */
-  isEnabled() : boolean {
-    return this.isPushEnabled;
-  }
-
-  /**
    * Enable or disable push notifications.
    * 
    * @param value 
    */
   setEnabled(value : boolean) : firebase.Promise<any> {
     // Check if push is already enabled
-    if(this.isEnabled() === value)
+    if(this.isEnabledSource.value === value)
       return new Promise((resolve, reject) => { resolve(); });
 
     if(value) {
@@ -104,39 +138,40 @@ export class PushNotificationService {
             .then(this.getToken) // get current token
             .then((currentToken) => {
 
+              let oldToken = this.pushRegistration.token;
               let data = new PushNotificationDataToServer({
                 token: currentToken,
-                oldToken: this.token
+                enabled: true
               });
 
-              return this.sendToServer(data);
+              return this.sendToServer(data, oldToken);
             })
-            .then(function(currentToken) {
-              this.isPushEnabled = true;
+            .then((reg : PushRegistration) => {
+              this.pushRegistration = reg;
+
+              this.setIsEnabled(true);
             })
             .catch(function(err) {
-              this.isPushEnabled = false;
               throw err;
             });
   }
 
   private disable() : firebase.Promise<any> {
-    return this.getToken()
-            .then(this.messaging.deleteToken)
-            .then(() => {
-              this.isPushEnabled = false;
-            })
-            .catch((error) => {
-              console.log(error);
-              throw error;
-            });
-  }
+    const currentToken = this.pushRegistration.token;
+    const data = new PushNotificationDataToServer({
+      token: currentToken,
+      enabled: false
+    });
+    
+    return this.sendToServer(data, currentToken)
+            .then((reg : PushRegistration) => {
+              this.pushRegistration = reg;
 
-  removeToken() : Promise<void> {
-    // TODO
-    // 1. Ta bort token
-    // 2. Ta bort alla subscriptions från servern
-    return null;
+              this.setIsEnabled(false);
+            })
+            .catch(function(err) {
+              throw err;
+            });
   }
 
   /**
@@ -149,9 +184,14 @@ export class PushNotificationService {
             console.log("subscription", subscription);
             
             this.getToken().then((token) => {
-              this.token = token;
-              this.isPushEnabled = (subscription !== null);
-              this.setMessagingEventHandlers();
+              if(token) {
+                this.api.getPushRegistration(token).then((reg : PushRegistration) => {
+                  this.pushRegistration = reg;
+                  this.setMessagingEventHandlers();
+                  this.setCanEnable(true);
+                  this.setIsSetUp(true);
+                });
+              }
             });
         }).catch((error) => {
             console.error('Could not setup push,', error);
@@ -180,15 +220,15 @@ export class PushNotificationService {
         console.log('Token refreshed.');
         this.messaging.getToken()
             .then((refreshedToken) => {
-                let oldToken = this.token;
+                let oldToken = this.pushRegistration.token;
                 this.setTokenSentToServer(false);
                 console.log('Current token: ' + refreshedToken);
                 let data = new PushNotificationDataToServer({
                   token: refreshedToken,
-                  oldToken: oldToken
+                  enabled: this.pushRegistration.enabled
                 });
-                this.sendToServer(data);
-                this.token = refreshedToken;
+                this.sendToServer(data, oldToken);
+                this.pushRegistration.token = refreshedToken;
                 console.log('Refreshed token: ' + refreshedToken);
             })
             .catch(function (err) {
@@ -234,7 +274,7 @@ export class PushNotificationService {
         });
   }
 
-  private getValueFromIndexedDB(key : string, defaultValue? : any) {
+  /*private getValueFromIndexedDB(key : string, defaultValue? : any) {
     return new Promise<boolean>((resolve, reject) => {
       this.db.get(this.storeName, key, defaultValue)
         .then((result) => {
@@ -249,26 +289,34 @@ export class PushNotificationService {
   private putValueInIndexedDB(key : string, value: any) : Promise<string> {
     let data : IPair = { 'key': key, 'value': value };
     return this.db.put(this.storeName, data);
+  }*/
+
+  private setTokenSentToServer(value: boolean) : void {
+    localStorage.setItem('tokenSentToServer', value.toString());
   }
 
-  private setTokenSentToServer(value: boolean) : Promise<string> {
-    return this.putValueInIndexedDB('sentToServer', value);
+  private getTokenSentToServer() : boolean {
+    let str = localStorage.getItem('tokenSentToServer');
+    return JSON.parse(str);
   }
 
-  private getTokenSentToServer() : Promise<boolean> {
-    return this.getValueFromIndexedDB('sentToServer', false);
-  }
+  private sendToServer(data : PushNotificationDataToServer, oldToken? : string) : Promise<PushRegistration> {
+    let request : Promise<PushRegistration>;
 
-  private sendToServer(data : PushNotificationDataToServer) {
-    let url = this.apiUrl + "/token"
-    return this.http.post(url, data).subscribe((result) => { 
-      if(result.status == 200) {
-        //ok
-      } else {
-        // nok
-      }
-    }, () => {
+    if(oldToken) {
+      request = this.api.updatePushRegistration(oldToken, data);
+    }
+    else {
+      request = this.api.createPushRegistration(data);
+    }
+
+    return request.then((result) => { 
+      // ok
+      this.setTokenSentToServer(true);
+      return result;
+    }, (error) => {
       // nok 
+      Promise.reject(error);
     });
   }
 

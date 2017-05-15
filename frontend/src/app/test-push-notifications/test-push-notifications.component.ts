@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IndexedDBService } from '../services/indexed-db.service';
+//import { IndexedDBService } from '../services/indexed-db.service';
 
 @Component({
   selector: 'test-push-notifications',
@@ -8,10 +8,10 @@ import { IndexedDBService } from '../services/indexed-db.service';
 })
 export class TestPushNotificationsComponent implements OnInit {
 
-  constructor(private db : IndexedDBService) { }
+  //constructor(private db : IndexedDBService) { }
 
   ngOnInit() {
-    console.log('db.isOpen(): {0}', this.db.isOpen());
+    /*console.log('db.isOpen(): {0}', this.db.isOpen());
 
     let objStoreName = 'push-notifications';
       let data = [
@@ -41,7 +41,7 @@ export class TestPushNotificationsComponent implements OnInit {
         (error) => {
           //console.log("error", error);
         });
-      });
+      });*/
   }
 
 }

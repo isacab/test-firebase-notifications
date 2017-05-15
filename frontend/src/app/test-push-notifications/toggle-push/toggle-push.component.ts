@@ -16,8 +16,17 @@ export class TogglePushComponent implements OnInit {
 
   ngOnInit() {
     this.label = "Enable push notifications!";
-    this.isPushEnabled = false;
-    this.canEnablePush = false;
+
+    this.isPushEnabled = this.pushService.isEnabled;
+    this.canEnablePush = this.pushService.canEnable;
+
+    this.pushService.isEnabledChanged.subscribe((newValue) => {
+      this.isPushEnabled = newValue;
+    });
+
+    this.pushService.canEnableChanged.subscribe((newValue) => {
+      this.canEnablePush = newValue;
+    });
   }
 
   onChange(checked: boolean) {

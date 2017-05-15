@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Headers, Http } from '@angular/http';
+import { ApiService } from './api.service';
+import { PushRegistration } from '../models/push-registration';
 
 @Injectable()
 export class TestPushNotificationsService {
 
-  constructor(private http: Http) { }
+  constructor(private api : ApiService) { }
 
-  startTest(data) {
-    
+  send(token : string) {
+    this.api.sendPushNotification(token);
   }
 
 }

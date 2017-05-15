@@ -1,13 +1,14 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { HttpModule, JsonpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MdSlideToggleModule } from '@angular/material';
 import { AngularFireModule } from 'angularfire2';
 
 import 'hammerjs';
 
+import { ApiService } from './services/api.service';
 import { PushNotificationService } from './services/push-notification.service';
 //import { AngularIndexedDB } from 'angular2-indexeddb';
 import { IndexedDBService } from './services/indexed-db.service';
@@ -44,11 +45,13 @@ export function openIndexedDB(db: IndexedDBService): Function {
     BrowserModule,
     FormsModule,
     HttpModule,
+    JsonpModule,
     BrowserAnimationsModule,
     MdSlideToggleModule,
     AngularFireModule.initializeApp(firebaseConfig),
   ],
   providers: [
+    ApiService,
     PushNotificationService, 
     //{ provide: AngularIndexedDB, useValue: new AngularIndexedDB(indexeddbName, 1) }
     IndexedDBService,
