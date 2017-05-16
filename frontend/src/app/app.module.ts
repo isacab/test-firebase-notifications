@@ -34,6 +34,10 @@ export function openIndexedDB(db: IndexedDBService): Function {
   return () => db.open();
 };
 
+export function initializePushNotifications(service: PushNotificationService): Function {
+  return () => service.initialize();
+};
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -59,6 +63,10 @@ export function openIndexedDB(db: IndexedDBService): Function {
     { provide: APP_INITIALIZER,
       useFactory: openIndexedDB,
       deps: [IndexedDBService], 
+      multi: true },
+    { provide: APP_INITIALIZER,
+      useFactory: initializePushNotifications,
+      deps: [PushNotificationService], 
       multi: true }
   ],
   bootstrap: [AppComponent]

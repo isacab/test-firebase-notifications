@@ -36,27 +36,19 @@ export class PushNotificationService {
   private pushRegistration : PushRegistration;
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService, private db: IndexedDBService) { 
-    let self = this;
-    if(this.isSuported()) {
-        this.messaging = firebaseApp.messaging();
-        this.getNotificationPermissionState().then(function(state: string) {
-            if(state !== 'denied') {
-              self.setUpPush();
-            }
-          });
-    }
+    this.messaging = firebaseApp.messaging();
   }
 
   // [start] Observable properties
 
   // isSetUp - observable property
-  private isSetUpSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  isSetUpChanged = this.isSetUpSource.asObservable();
-  get isSetUp() : boolean {
-    return this.isSetUpSource.getValue();
+  private isInitializedSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isInitializedChanged = this.isInitializedSource.asObservable();
+  get isInitialized() : boolean {
+    return this.isInitializedSource.getValue();
   }
-  private setIsSetUp(value : boolean) : void {
-    this.setValue(this.isSetUpSource, value);
+  private setIsInitialized(value : boolean) : void {
+    this.setValue(this.isInitializedSource, value);
   }
 
   // isEnabled - observable property
@@ -67,16 +59,6 @@ export class PushNotificationService {
   }
   private setIsEnabled(value : boolean) : void {
     this.setValue(this.isEnabledSource, value);
-  }
-
-  // canEnable - observable property
-  private canEnableSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  canEnableChanged = this.isEnabledSource.asObservable();
-  get canEnable() : boolean {
-    return this.canEnableSource.getValue();
-  }
-  private setCanEnable(value : boolean) : void {
-    this.setValue(this.canEnableSource, value);
   }
 
   // [end] Observable properties
@@ -91,20 +73,65 @@ export class PushNotificationService {
   }
 
   /**
-   * Check if push notifications are supported by the browser.
+   * Initialize the service
    */
-  private isSuported() : boolean {
-    if (!('serviceWorker' in navigator)) {
-        console.log("Service Worker isn't supported on this browser.");
-        return false;
-    }
+  initialize() : Promise<any> {
+    // Register the service worker
+    return this.checkAvailable()
+      .then(() => this.registerServiceWorker())
+      .then((swReg : ServiceWorkerRegistration) => {
+          // for debugging
+          swReg.pushManager.getSubscription().then((subscription) => {
+            console.log("subscription", subscription);
+          });
+      })
+      .then(() => this.getToken())
+      .then((token) => {
+        if(token) {
+          return this.api.getPushRegistration(token)
+            .then((reg : PushRegistration) => {
+              this.pushRegistration = reg;
+            });
+        }
+      })
+      .then(() => {
+        this.setMessagingEventHandlers();
+        if(this.pushRegistration) {
+          this.setIsEnabled(this.pushRegistration.enabled);
+        }
+        this.setIsInitialized(true);
+      })
+      .catch((error) => {
+        console.log(error);
+        throw error;
+      });
+  }
 
-    if (!('PushManager' in window)) {
-        console.log("Push isn't supported on this browser.");
-        return false;
-    }
+  /**
+   * Check if push notifications are supported by the browser.
+   * Returns a promise that resolves if they are available or rejects if not available.
+   */
+  checkAvailable() : Promise<any> {
+    let promise = new Promise<boolean>((resolve, reject) => {
+      
+      if (!('serviceWorker' in navigator)) {
+          reject(Error("Service Worker isn't supported on this browser."));
+      }
 
-    return true;
+      if (!('PushManager' in window)) {
+          reject(Error("Push isn't supported on this browser."));
+      }
+
+      this.getNotificationPermissionState().then(function(state: string) {
+        if(state === 'denied') {
+          reject(Error("Notifications are blocked by the browser."));
+        }
+      });
+
+      resolve();
+    });
+    
+    return promise;
   }
 
   /**
@@ -112,17 +139,21 @@ export class PushNotificationService {
    * 
    * @param value 
    */
-  setEnabled(value : boolean) : firebase.Promise<any> {
-    // Check if push is already enabled
-    if(this.isEnabledSource.value === value)
-      return new Promise((resolve, reject) => { resolve(); });
+  setEnabled(value : boolean) : Promise<any> {
+    let promise : Promise<any>;
 
-    if(value) {
-      return this.enable();
+    // Check if push is already enabled
+    if(this.isEnabledSource.value === value) {
+      promise = new Promise((resolve, reject) => { resolve(); });
+    }
+    else if(value) {
+      promise = this.enable();
     }
     else {
-      return this.disable();
+      promise = this.disable();
     }
+
+    return promise;
   }
 
   /**
@@ -132,71 +163,52 @@ export class PushNotificationService {
    *    2. get token
    *    3. if succeed, set isPushEnabled = true
    */
-  private enable() : firebase.Promise<any> {
+  private enable() : Promise<any> {
     // Request permission, get token and on success, set isPushEnabled to true
-    return this.requestPermission()
-            .then(this.getToken) // get current token
-            .then((currentToken) => {
+    let promise = new Promise((resolve, reject) => {
+      this.requestPermission()
+        .then(() => this.getToken()) // get current token
+        .then((currentToken) => {
 
-              let oldToken = this.pushRegistration.token;
-              let data = new PushNotificationDataToServer({
-                token: currentToken,
-                enabled: true
-              });
+          let oldToken = this.pushRegistration.token;
+          let data = new PushNotificationDataToServer({
+            token: currentToken,
+            enabled: true
+          });
 
-              return this.sendToServer(data, oldToken);
-            })
-            .then((reg : PushRegistration) => {
-              this.pushRegistration = reg;
+          return this.sendToServer(data, oldToken);
+        })
+        .then((reg : PushRegistration) => {
+          this.pushRegistration = reg;
 
-              this.setIsEnabled(true);
-            })
-            .catch(function(err) {
-              throw err;
-            });
+          this.setIsEnabled(true);
+          resolve();
+        })
+        .catch(function(err) {
+          reject(err);
+        });
+    });
+    return promise;
   }
 
-  private disable() : firebase.Promise<any> {
+  private disable() : Promise<any> {
     const currentToken = this.pushRegistration.token;
     const data = new PushNotificationDataToServer({
       token: currentToken,
       enabled: false
     });
     
-    return this.sendToServer(data, currentToken)
-            .then((reg : PushRegistration) => {
-              this.pushRegistration = reg;
+    let promise = this.sendToServer(data, currentToken)
+      .then((reg : PushRegistration) => {
+        this.pushRegistration = reg;
 
-              this.setIsEnabled(false);
-            })
-            .catch(function(err) {
-              throw err;
-            });
-  }
+        this.setIsEnabled(false);
+      })
+      .catch(function(err) {
+        throw err;
+      });
 
-  /**
-   * Register the service worker and set up message handlers
-   */
-  private setUpPush() {
-    // Register the service worker
-    this.registerServiceWorker().then((swReg : ServiceWorkerRegistration) => {
-        swReg.pushManager.getSubscription().then((subscription) => {
-            console.log("subscription", subscription);
-            
-            this.getToken().then((token) => {
-              if(token) {
-                this.api.getPushRegistration(token).then((reg : PushRegistration) => {
-                  this.pushRegistration = reg;
-                  this.setMessagingEventHandlers();
-                  this.setCanEnable(true);
-                  this.setIsSetUp(true);
-                });
-              }
-            });
-        }).catch((error) => {
-            console.error('Could not setup push,', error);
-        });
-    });
+    return promise;
   }
 
   private registerServiceWorker() : Promise<ServiceWorkerRegistration> {
