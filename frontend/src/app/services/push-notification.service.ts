@@ -3,14 +3,11 @@ import { Injectable, Inject } from '@angular/core';
 import { FirebaseApp } from "angularfire2";
 import * as firebase from 'firebase';
 
-//import { AngularIndexedDB } from 'angular2-indexeddb';
-
 import 'rxjs/add/operator/toPromise';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subject } from 'rxjs/Subject';
 
 import { IPair } from '../interfaces';
-//import { IndexedDBService } from './indexed-db.service';
 import { ApiService } from './api.service';
 
 import { PushRegistration } from '../models/push-registration';
@@ -79,10 +76,7 @@ export class PushNotificationService {
             console.log("subscription", subscription);
           });
       })
-      .then(() => {
-        if(this.getLocalEnabled())
-          return this.getToken();
-      })
+      .then(() => this.getToken())
       .then((token) => this.loadPushRegistration(token))
       .then(() => {
         this.setMessagingEventHandlers();
@@ -211,7 +205,7 @@ export class PushNotificationService {
 
   private disable() : Promise<any> {
     const currentToken = this.pushRegistration.token;
-    const data = new PushNotificationDataToServer({
+    const data = new PushRegistration({
       token: currentToken,
       enabled: false
     });
@@ -253,7 +247,7 @@ export class PushNotificationService {
                 let oldToken = this.pushRegistration.token;
                 this.setTokenSentToServer(false);
                 console.log('Current token: ' + refreshedToken);
-                let data = new PushNotificationDataToServer({
+                let data = new PushRegistration({
                   token: refreshedToken,
                   enabled: this.pushRegistration.enabled
                 });
@@ -303,23 +297,6 @@ export class PushNotificationService {
             throw err;
         });
   }
-
-  /*private getValueFromIndexedDB(key : string, defaultValue? : any) {
-    return new Promise<boolean>((resolve, reject) => {
-      this.db.get(this.storeName, key, defaultValue)
-        .then((result) => {
-          resolve(result.value);
-        },
-        (error) => {
-          reject(error);
-        });
-    });
-  }
-
-  private putValueInIndexedDB(key : string, value: any) : Promise<string> {
-    let data : IPair = { 'key': key, 'value': value };
-    return this.db.put(this.storeName, data);
-  }*/
 
   private setTokenSentToServer(value: boolean) : void {
     localStorage.setItem('tokenSentToServer', value.toString());

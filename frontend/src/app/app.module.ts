@@ -10,8 +10,6 @@ import 'hammerjs';
 
 import { ApiService } from './services/api.service';
 import { PushNotificationService } from './services/push-notification.service';
-//import { AngularIndexedDB } from 'angular2-indexeddb';
-//import { IndexedDBService } from './services/indexed-db.service';
 import { TestPushNotificationsService } from './services/test-push-notifications.service';
 
 import { AppComponent } from './app.component';
@@ -27,12 +25,6 @@ export const firebaseConfig = {
   storageBucket: "testnotificationsfirebase.appspot.com",
   messagingSenderId: "170551356465"
 };
-
-export const indexeddbName = 'test_firebase_db';
-
-/*export function openIndexedDB(db: IndexedDBService): Function {
-  return () => db.open();
-};*/
 
 export function initializePushNotifications(service: PushNotificationService): Function {
   return () => service.initialize().catch((error) => {});
@@ -57,13 +49,7 @@ export function initializePushNotifications(service: PushNotificationService): F
   providers: [
     ApiService,
     PushNotificationService, 
-    //{ provide: AngularIndexedDB, useValue: new AngularIndexedDB(indexeddbName, 1) }
-    //IndexedDBService,
     TestPushNotificationsService,
-    /*{ provide: APP_INITIALIZER,
-      useFactory: openIndexedDB,
-      deps: [IndexedDBService], 
-      multi: true },*/,
     { provide: APP_INITIALIZER,
       useFactory: initializePushNotifications,
       deps: [PushNotificationService], 
