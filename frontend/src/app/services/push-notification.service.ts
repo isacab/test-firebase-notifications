@@ -10,22 +10,16 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subject } from 'rxjs/Subject';
 
 import { IPair } from '../interfaces';
-import { IndexedDBService } from './indexed-db.service';
+//import { IndexedDBService } from './indexed-db.service';
 import { ApiService } from './api.service';
 
 import { PushRegistration } from '../models/push-registration';
 
+import { Helpers } from '../helpers';
+import { PushNotAvailableError } from '../errors';
+
 declare var Notification: any;
 declare var navigator: any;
-
-export class PushNotificationDataToServer {
-  token: string;
-  enabled: boolean;
-  
-  constructor(init?:Partial<PushNotificationDataToServer>) {
-    Object.assign(this, init);
-  }
-}
 
 @Injectable()
 export class PushNotificationService {
@@ -35,7 +29,7 @@ export class PushNotificationService {
   
   private pushRegistration : PushRegistration;
 
-  constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService, private db: IndexedDBService) { 
+  constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService) { 
     this.messaging = firebaseApp.messaging();
   }
 
@@ -85,15 +79,11 @@ export class PushNotificationService {
             console.log("subscription", subscription);
           });
       })
-      .then(() => this.getToken())
-      .then((token) => {
-        if(token) {
-          return this.api.getPushRegistration(token)
-            .then((reg : PushRegistration) => {
-              this.pushRegistration = reg;
-            });
-        }
+      .then(() => {
+        if(this.getLocalEnabled())
+          return this.getToken();
       })
+      .then((token) => this.loadPushRegistration(token))
       .then(() => {
         this.setMessagingEventHandlers();
         if(this.pushRegistration) {
@@ -102,9 +92,35 @@ export class PushNotificationService {
         this.setIsInitialized(true);
       })
       .catch((error) => {
+
+        if(error !== null && typeof error === 'object') {
+          if(error.name === PushNotAvailableError.name 
+            && error.code === PushNotAvailableError.Blocked) {
+              //blocked
+              console.log("blocked");
+          }
+        }
         console.log(error);
         throw error;
       });
+  }
+
+  loadPushRegistration(token : string) : Promise<PushRegistration> {
+    return new Promise<PushRegistration>((resolve, reject) => {
+      if(!token) {
+        resolve(null);
+      }
+
+      if(!this.getTokenSentToServer()) {
+        this.sendToServer(null);
+      }
+
+      this.api.getPushRegistration(token)
+        .then((reg : PushRegistration) => {
+          this.pushRegistration = reg;
+          resolve(reg);
+        });
+    });
   }
 
   /**
@@ -115,22 +131,23 @@ export class PushNotificationService {
     let promise = new Promise<boolean>((resolve, reject) => {
       
       if (!('serviceWorker' in navigator)) {
-          reject(Error("Service Worker isn't supported on this browser."));
+        reject(new PushNotAvailableError("Service Worker isn't supported on this browser."));
       }
 
       if (!('PushManager' in window)) {
-          reject(Error("Push isn't supported on this browser."));
+        reject(new PushNotAvailableError("Push isn't supported on this browser."));
       }
 
-      this.getNotificationPermissionState().then(function(state: string) {
-        if(state === 'denied') {
-          reject(Error("Notifications are blocked by the browser."));
-        }
-      });
-
-      resolve();
+      this.getNotificationPermissionState()
+        .then(function(state: string) {
+          if(state === 'denied') {
+            reject(new PushNotAvailableError("Notifications are blocked by the browser."));
+          }
+          // Push notifications is available
+          resolve();
+        });
     });
-    
+
     return promise;
   }
 
@@ -170,8 +187,9 @@ export class PushNotificationService {
         .then(() => this.getToken()) // get current token
         .then((currentToken) => {
 
-          let oldToken = this.pushRegistration.token;
-          let data = new PushNotificationDataToServer({
+          let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
+
+          let data = new PushRegistration({
             token: currentToken,
             enabled: true
           });
@@ -184,7 +202,7 @@ export class PushNotificationService {
           this.setIsEnabled(true);
           resolve();
         })
-        .catch(function(err) {
+        .catch((err) => {
           reject(err);
         });
     });
@@ -312,7 +330,24 @@ export class PushNotificationService {
     return JSON.parse(str);
   }
 
-  private sendToServer(data : PushNotificationDataToServer, oldToken? : string) : Promise<PushRegistration> {
+  private setLocalToken(value: string) : void {
+    localStorage.setItem('token', value.toString());
+  }
+
+  private getLocalToken() : string {
+    return localStorage.getItem('token');
+  }
+
+  private setLocalEnabled(value: boolean) : void {
+    localStorage.setItem('enabled', value.toString());
+  }
+
+  private getLocalEnabled() : boolean {
+    let str = localStorage.getItem('enabled');
+    return JSON.parse(str);
+  }
+
+  private sendToServer(data : PushRegistration, oldToken? : string) : Promise<PushRegistration> {
     let request : Promise<PushRegistration>;
 
     if(oldToken) {
@@ -341,8 +376,8 @@ export class PushNotificationService {
   private getNotificationPermissionState() : Promise<any> {
     if (navigator.permissions) {
       return navigator.permissions.query({name: 'notifications'})
-          .then((result) => {
-            return result.state;
+        .then((result) => {
+          return result.state;
         });
     }
     
