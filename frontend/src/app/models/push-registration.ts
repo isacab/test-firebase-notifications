@@ -5,5 +5,5 @@ export class PushRegistration {
   constructor(init?:Partial<PushRegistration>) {
     Object.assign(this, init);
   }
-  
+
 }

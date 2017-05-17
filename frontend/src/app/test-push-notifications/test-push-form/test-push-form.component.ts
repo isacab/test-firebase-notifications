@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 @Component({
   selector: 'test-push-form',
@@ -7,9 +9,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class TestPushFormComponent implements OnInit {
 
-  constructor() { }
+  constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
 
   ngOnInit() {
+  }
+
+  send() {
+    let pushReg = this.pushService.getPushRegistration();
+    if(pushReg) {
+      let token = pushReg.token;
+      this.testService.send(token);
+    }
   }
 
 }

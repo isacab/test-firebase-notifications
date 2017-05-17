@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TestFirebaseNotificationsAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Cors;
 
 namespace TestFirebaseNotificationsAPI
 {
@@ -42,6 +43,7 @@ namespace TestFirebaseNotificationsAPI
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
+            services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkSqlite()
                     .AddDbContext<DatabaseContext>(options => options.UseSqlite(_connectionString));
@@ -54,6 +56,12 @@ namespace TestFirebaseNotificationsAPI
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            app.UseCors(builder =>
+                builder.AllowAnyMethod().AllowAnyHeader().WithOrigins(
+                    "http://localhost:4200",
+                    "http://localhost:21378"
+                ));
 
             app.UseMvc();
         }

@@ -1,15 +1,9 @@
-<md-card>
-  <md-card-content>
-    <h2>Result</h2>
-
-    <section class="example-section">
-      <md-slide-toggle #toggle
-          color="primary"
-          [checked]="isPushEnabled"
-          [disabled]="!canEnablePush"
-          (change)="onChange(toggle.checked)">
-        {{ label }}
-      </md-slide-toggle>
-    </section>
-  </md-card-content>
-</md-card>
+<section class="example-section">
+  <label>{{ label }}</label>
+  <button md-raised-button 
+          [color]="isEnabled ? 'accent' : 'primary'" 
+          (click)="toggleEnabled()" 
+          [disabled]="!canEnablePush">
+    {{ buttonText }}
+  </button>
+</section>

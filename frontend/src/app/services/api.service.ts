@@ -38,7 +38,7 @@ export class ApiService {
   }
 
   updatePushRegistration(token : string, registration : PushRegistration) : Promise<PushRegistration> {
-    let url = this.apiUrl + "/" + token;
+    let url = this.apiUrl + "/pushregistrations/" + token;
     let request = this.http.put(url, registration, this.options);
     return request
               .map(this.extractData)
@@ -47,7 +47,7 @@ export class ApiService {
   }
 
   removePushRegistration(token : string) : Promise<any> {
-    let url = this.apiUrl + "/" + token;
+    let url = this.apiUrl + "/pushregistrations/" + token;
     let request = this.http.delete(url);
     return request
               .map(this.extractData)
@@ -56,30 +56,27 @@ export class ApiService {
   }
 
   sendPushNotification(token : string) : Promise<any> {
-    let url = this.apiUrl + "/pushregistrations"
+    let url = this.apiUrl + "/pushnotifications/" + token;
     let request = this.http.post(url, { }, this.options);
     return request
-              .map(this.extractData)
               .catch(this.handleError)
               .toPromise();
   }
 
   private extractData(res: Response) {
-    let body = res.json()
+    let body = res.json();
     return body.data || { };
   }
 
   private handleError (error: Response | any) {
-    let errMsg: string;
+    let rejectError: Error;
+    let errMsg : string;
 
       if (error instanceof Response) {
-        let err;
-        try {
-          let body = error.json() || '';
-          let err = body.error || JSON.stringify(body);
-        } catch(error) { }
-        
-        errMsg = `${error.status} - ${error.statusText || ''} ${err}`;
+        let body = error.json() || '';
+        let err = body.error || JSON.stringify(body);
+
+        `${error.status} - ${error.statusText || ''} ${err}`;
       } else {
         errMsg = error.message ? error.message : error.toString();
       }

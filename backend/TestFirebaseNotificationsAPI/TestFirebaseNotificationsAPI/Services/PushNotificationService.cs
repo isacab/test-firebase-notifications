@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using TestFirebaseNotificationsAPI.Model;
+using System.Configuration;
 
 namespace TestFirebaseNotificationsAPI.Services
 {
@@ -14,7 +15,7 @@ namespace TestFirebaseNotificationsAPI.Services
     {
         private const string _url = "https://fcm.googleapis.com/fcm/send";
         
-        private string _serverKey = System.Configuration.ConfigurationManager.AppSettings["FCMServerKey"];
+        private string _serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
 
         public string Send(NotificationModel data)
         {

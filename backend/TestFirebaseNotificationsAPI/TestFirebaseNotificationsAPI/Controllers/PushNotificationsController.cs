@@ -52,7 +52,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             NotificationModel notification = new NotificationModel()
             {
                 To = token,
-                Notification = new NotificationContentModel()
+                Data = new NotificationContentModel()
                 {
                     Title = "Hello",
                     Body = "There!"

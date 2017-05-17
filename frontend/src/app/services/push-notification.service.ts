@@ -21,38 +21,35 @@ declare var navigator: any;
 @Injectable()
 export class PushNotificationService {
   
-  private readonly messaging: firebase.messaging.Messaging;
-  private readonly storeName = 'push_notifications';
+  private readonly _messaging: firebase.messaging.Messaging;
   
-  private pushRegistration : PushRegistration;
+  private _pushRegistration : PushRegistration;
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService) { 
-    this.messaging = firebaseApp.messaging();
+    this._messaging = firebaseApp.messaging();
   }
 
   // [start] Observable properties
 
-  // isSetUp - observable property
-  private isInitializedSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  isInitializedChanged = this.isInitializedSource.asObservable();
+  // isInitialized - observable property
+  private _isInitializedSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isInitializedChanged = this._isInitializedSource.asObservable();
   get isInitialized() : boolean {
-    return this.isInitializedSource.getValue();
+    return this._isInitializedSource.getValue();
   }
   private setIsInitialized(value : boolean) : void {
-    this.setValue(this.isInitializedSource, value);
-  }
-
-  // isEnabled - observable property
-  private isEnabledSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  isEnabledChanged = this.isEnabledSource.asObservable();
-  get isEnabled() : boolean {
-    return this.isEnabledSource.getValue();
-  }
-  private setIsEnabled(value : boolean) : void {
-    this.setValue(this.isEnabledSource, value);
+    this.setValue(this._isInitializedSource, value);
   }
 
   // [end] Observable properties
+
+  /**
+   * Get a copy of the push registration. 
+   * Note: If no push registration is set a default registration will be returned.
+   */
+  getPushRegistration() : PushRegistration {
+    return new PushRegistration(this._pushRegistration);
+  }
 
   /**
    * set value for an BehaviorSubject
@@ -69,6 +66,7 @@ export class PushNotificationService {
   initialize() : Promise<any> {
     // Register the service worker
     return this.checkAvailable()
+      .then(() => this.setMessagingEventHandlers())
       .then(() => this.registerServiceWorker())
       .then((swReg : ServiceWorkerRegistration) => {
           // for debugging
@@ -79,10 +77,6 @@ export class PushNotificationService {
       .then(() => this.getToken())
       .then((token) => this.loadPushRegistration(token))
       .then(() => {
-        this.setMessagingEventHandlers();
-        if(this.pushRegistration) {
-          this.setIsEnabled(this.pushRegistration.enabled);
-        }
         this.setIsInitialized(true);
       })
       .catch((error) => {
@@ -99,21 +93,59 @@ export class PushNotificationService {
       });
   }
 
-  loadPushRegistration(token : string) : Promise<PushRegistration> {
+  /**
+   * This method sets pushRegistration to the current push registration on the server.
+   * This method also updates the token if a new token has not been sent to the server yet.
+   * 
+   * @param token Current registration token generated from messaging.getToken()
+   */
+  private loadPushRegistration(token : string) : Promise<PushRegistration> {
     return new Promise<PushRegistration>((resolve, reject) => {
       if(!token) {
-        resolve(null);
+        // No token, nothing to load
+        resolve(undefined);
+        return;
       }
 
-      if(!this.getTokenSentToServer()) {
-        this.sendToServer(null);
+      // Get the last token sent to the server from local storage
+      let lastSentToken = this.getLocalToken();
+
+      if(!lastSentToken) {
+        // No token has been sent to the server which means there is no push registration to load from server.
+        resolve(undefined);
+        return;
       }
 
-      this.api.getPushRegistration(token)
-        .then((reg : PushRegistration) => {
-          this.pushRegistration = reg;
-          resolve(reg);
-        });
+      // Check if we have a token that has not been sent to the server yet
+      if(lastSentToken !== token) {
+        // Get current push registration at the server
+        this.api.getPushRegistration(lastSentToken)
+          .then((reg : PushRegistration) => {
+            // Update the push registration with the current token
+            reg.token = token;
+            return this.sendToServer(reg, lastSentToken);
+          })
+          .then((reg : PushRegistration) => {
+            // Push registration has been updated
+            this._pushRegistration = reg;
+            resolve(reg);
+          })
+          .catch((error) => {
+            reject(new Error("Could not load registration token."));
+          });
+      } 
+      else{
+        // Get current push registration at the server
+        this.api.getPushRegistration(token)
+          .then((reg : PushRegistration) => {
+            this._pushRegistration = reg;
+            resolve(reg);
+          })
+          .catch((error) => {
+            reject(new Error("Could not load registration token."));
+          });
+      }
+      
     });
   }
 
@@ -126,10 +158,12 @@ export class PushNotificationService {
       
       if (!('serviceWorker' in navigator)) {
         reject(new PushNotAvailableError("Service Worker isn't supported on this browser."));
+        return;
       }
 
       if (!('PushManager' in window)) {
         reject(new PushNotAvailableError("Push isn't supported on this browser."));
+        return;
       }
 
       this.getNotificationPermissionState()
@@ -153,8 +187,10 @@ export class PushNotificationService {
   setEnabled(value : boolean) : Promise<any> {
     let promise : Promise<any>;
 
+    let enabled = this._pushRegistration ? this._pushRegistration.enabled : false;
+
     // Check if push is already enabled
-    if(this.isEnabledSource.value === value) {
+    if(enabled === value) {
       promise = new Promise((resolve, reject) => { resolve(); });
     }
     else if(value) {
@@ -168,11 +204,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Make the client able to receive push notifications
-   * This function does following:
-   *    1. request permission
-   *    2. get token
-   *    3. if succeed, set isPushEnabled = true
+   * Private helper method to setEnabled. This method enables push notifications.
    */
   private enable() : Promise<any> {
     // Request permission, get token and on success, set isPushEnabled to true
@@ -181,7 +213,7 @@ export class PushNotificationService {
         .then(() => this.getToken()) // get current token
         .then((currentToken) => {
 
-          let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
+          let oldToken = this._pushRegistration ? this._pushRegistration.token : undefined;
 
           let data = new PushRegistration({
             token: currentToken,
@@ -191,9 +223,7 @@ export class PushNotificationService {
           return this.sendToServer(data, oldToken);
         })
         .then((reg : PushRegistration) => {
-          this.pushRegistration = reg;
-
-          this.setIsEnabled(true);
+          this._pushRegistration = reg;
           resolve();
         })
         .catch((err) => {
@@ -203,8 +233,11 @@ export class PushNotificationService {
     return promise;
   }
 
+  /**
+   * Private helper method to setEnabled. This method disables push notifications.
+   */
   private disable() : Promise<any> {
-    const currentToken = this.pushRegistration.token;
+    const currentToken = this._pushRegistration.token;
     const data = new PushRegistration({
       token: currentToken,
       enabled: false
@@ -212,9 +245,7 @@ export class PushNotificationService {
     
     let promise = this.sendToServer(data, currentToken)
       .then((reg : PushRegistration) => {
-        this.pushRegistration = reg;
-
-        this.setIsEnabled(false);
+        this._pushRegistration = reg;
       })
       .catch(function(err) {
         throw err;
@@ -223,12 +254,15 @@ export class PushNotificationService {
     return promise;
   }
 
+  /**
+   * Register the service worker used to receive push notifications.
+   */
   private registerServiceWorker() : Promise<ServiceWorkerRegistration> {
     return navigator.serviceWorker.register('sw.js')
         .then((swReg) => {
             console.log('Service Worker is registered', swReg);
 
-            this.messaging.useServiceWorker(swReg);
+            this._messaging.useServiceWorker(swReg);
 
             return swReg;
         })
@@ -239,21 +273,21 @@ export class PushNotificationService {
   }
 
   private setMessagingEventHandlers() : void {
+    let messaging = this._messaging;
     // Callback fired if Instance ID token is updated.
-    this.messaging.onTokenRefresh(() => {
+    messaging.onTokenRefresh(() => {
         console.log('Token refreshed.');
-        this.messaging.getToken()
+        messaging.getToken()
             .then((refreshedToken) => {
-                let oldToken = this.pushRegistration.token;
-                this.setTokenSentToServer(false);
-                console.log('Current token: ' + refreshedToken);
+                let oldToken = this._pushRegistration.token;
                 let data = new PushRegistration({
                   token: refreshedToken,
-                  enabled: this.pushRegistration.enabled
+                  enabled: this._pushRegistration.enabled
                 });
-                this.sendToServer(data, oldToken);
-                this.pushRegistration.token = refreshedToken;
-                console.log('Refreshed token: ' + refreshedToken);
+                return this.sendToServer(data, oldToken);
+            })
+            .then((reg : PushRegistration) => {
+                console.log('Refreshed token: ' + reg.token);
             })
             .catch(function (err) {
                 console.log('Unable to retrieve refreshed token ', err);
@@ -264,22 +298,22 @@ export class PushNotificationService {
     // - a message is received while the app has focus
     // - the user clicks on an app notification created by a sevice worker
     //   `messaging.setBackgroundMessageHandler` handler.
-    this.messaging.onMessage(function (payload) {
+    messaging.onMessage(function (payload) {
         console.log("Message received. ", payload);
     });
   }
 
+  /**
+   * Get Instance ID token. The first call to this method makes a network call, once retrieved
+   * subsequent calls to getToken will return from cache (if the token is not deleted).
+   */
   private getToken() : firebase.Promise<any> {
-    // Get Instance ID token. The first call to this method makes a network call, once retrieved
-    // subsequent calls to getToken will return from cache (if the token is not deleted).
-    return this.messaging.getToken()
+    return this._messaging.getToken()
         .then((currentToken) => {
           return currentToken;
         })
         .catch((err) => {
           console.log('An error occurred while retrieving token. ', err);
-          //showToken('Error retrieving Instance ID token. ', err);
-          this.setTokenSentToServer(false);
           throw err;
         });
   }
@@ -288,7 +322,7 @@ export class PushNotificationService {
    * Request permission for push notifications.
    */
   private requestPermission() : firebase.Promise<any> {
-    return this.messaging.requestPermission()
+    return this._messaging.requestPermission()
         .then(function () {
             console.log('Notification permission granted.');
         })
@@ -298,32 +332,23 @@ export class PushNotificationService {
         });
   }
 
-  private setTokenSentToServer(value: boolean) : void {
-    localStorage.setItem('tokenSentToServer', value.toString());
-  }
-
-  private getTokenSentToServer() : boolean {
-    let str = localStorage.getItem('tokenSentToServer');
-    return JSON.parse(str);
-  }
-
   private setLocalToken(value: string) : void {
-    localStorage.setItem('token', value.toString());
+    localStorage.setItem('token', value);
   }
 
   private getLocalToken() : string {
-    return localStorage.getItem('token');
+    let token = localStorage.getItem('token');
+    if(token === "undefined" || token === "")
+      token = null;
+    return token;
   }
 
-  private setLocalEnabled(value: boolean) : void {
-    localStorage.setItem('enabled', value.toString());
-  }
-
-  private getLocalEnabled() : boolean {
-    let str = localStorage.getItem('enabled');
-    return JSON.parse(str);
-  }
-
+  /**
+   * Send a push registration to the server
+   * 
+   * @param data The push registration to send
+   * @param oldToken Set this to the last token sent to server if you want to update it
+   */
   private sendToServer(data : PushRegistration, oldToken? : string) : Promise<PushRegistration> {
     let request : Promise<PushRegistration>;
 
@@ -334,14 +359,18 @@ export class PushNotificationService {
       request = this.api.createPushRegistration(data);
     }
 
-    return request.then((result) => { 
+    let onResolve = (result : PushRegistration) => { 
       // ok
-      this.setTokenSentToServer(true);
+      this.setLocalToken(result.token);
       return result;
-    }, (error) => {
+    };
+
+    let onReject = (error) => {
       // nok 
-      Promise.reject(error);
-    });
+      throw error;
+    };
+
+    return request.then(onResolve, onReject);
   }
 
   /**

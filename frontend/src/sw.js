@@ -9,35 +9,42 @@ firebase.initializeApp({
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-/*messaging.setBackgroundMessageHandler(function (payload) {
+messaging.setBackgroundMessageHandler(function (payload) {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
-    payload.hej = "hallå";
+    const data = payload.data;
+    
     // Customize notification here
-    const notificationTitle = 'Background Message Title';
+    const notificationTitle = data.title;
     const notificationOptions = {
-        body: 'Background Message body.'
+        body: data.body
     };
 
-    return self.registration.showNotification(notificationTitle,
-        notificationOptions);
-});*/
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+});
 
-self.addEventListener('push', function (event) {
+/*self.addEventListener('push', function (event) {
     console.log('Received a push message', event);
 
-    var title = 'Yay a message.';
-    var body = 'We have received a push message.';
-    var icon = '/images/icon-192x192.png';
-    var tag = 'simple-push-demo-notification-tag';
+    if (!(self.Notification && self.Notification.permission === 'granted')) {
+        return;
+    }
+
+    var data = {};
+    if (event.data) {
+        data = event.data.json();
+    }
+    var title = data.title;
+    var message = data.message;
+    //var icon = "images/new-notification.png";
 
     event.waitUntil(
         self.registration.showNotification(title, {
-            body: body,
-            icon: icon,
-            tag: tag
+            body: message,
+            tag: 'test-firebase-notification',
+            //icon: icon
         })
     );
-});
+});*/
 
 self.addEventListener('notificationclick', function (event) {
     console.log('On notification click: ', event.notification.tag);

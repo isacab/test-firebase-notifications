@@ -30,7 +30,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if(model == null)
                 return NotFound(new { Message = "No resource found" });
 
-            return Json(model);
+            return Json(new { data = model });
         }
 
         // POST api/pushregistrations
@@ -50,12 +50,12 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Insert(data);
             _service.SaveChanges();
 
-            return Json(data);
+            return Json(new { data = data });
         }
 
         // PUT api/pushregistrations/{token}
         [HttpPut("{token}")]
-        public IActionResult Put(string token, [FromBody]PushRegistrationModel data)
+        public IActionResult Put([FromBody]PushRegistrationModel data, string token)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
@@ -71,7 +71,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Update(model);
             _service.SaveChanges();
 
-            return Json(data);
+            return Json(new { data = data });
         }
 
         // DELETE api/pushregistrations/{token}

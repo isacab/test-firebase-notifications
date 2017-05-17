@@ -11,3 +11,13 @@ export class PushNotAvailableError extends Error {
     }
 
 }
+
+export class ResourceNotFoundError extends Error {
+
+    constructor(public message: string = "") {
+        super(message);
+        this.name = "ResourceNotFoundError";
+        this.stack = (<any> new Error()).stack;
+    }
+
+}

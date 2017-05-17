@@ -3,7 +3,7 @@ import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule, JsonpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MdSlideToggleModule } from '@angular/material';
+import { MdButtonModule } from '@angular/material';
 import { AngularFireModule } from 'angularfire2';
 
 import 'hammerjs';
@@ -43,7 +43,7 @@ export function initializePushNotifications(service: PushNotificationService): F
     HttpModule,
     JsonpModule,
     BrowserAnimationsModule,
-    MdSlideToggleModule,
+    MdButtonModule,
     AngularFireModule.initializeApp(firebaseConfig),
   ],
   providers: [
