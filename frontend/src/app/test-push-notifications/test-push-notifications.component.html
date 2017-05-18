@@ -1,12 +1,16 @@
-<toggle-push></toggle-push>
-<div *ngIf="isEnabled">
-    <test-push-form></test-push-form>
-    <h2>Received notifications</h2>
-    <ul class="receivedList">
-        <li *ngFor="let message of receivedMessages">
-            <p>Title: {{message.title}}</p>
-            <p>Body: {{message.body}}</p>
-            <p>Sent: {{message.sent}}</p>
-        </li>
-    </ul>
+<div class="content">
+    <toggle-push></toggle-push>
+    <div *ngIf="isEnabled">
+        <test-push-form></test-push-form>
+        <h2>Received notifications</h2>
+        <md-list class="receivedList">
+            <md-list-item *ngFor="let message of receivedMessages">
+                <md-card>
+                    <md-card-title>Title: {{message.title}}</md-card-title>
+                    <md-card-content>Body: {{message.body}}</md-card-content>
+                    <md-card-subtitle>Sent: {{message.sent}}</md-card-subtitle>
+                </md-card>
+            </md-list-item>
+        </md-list>
+    </div>
 </div>

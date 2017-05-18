@@ -35,10 +35,7 @@ md-spinner.buttonSpinner {
   margin: 5px 0px 5px 10px;
 }
 
-ul.receivedList {
-    list-style-type: none;
-}
-
-ul.receivedList>li {
-    border: 1px solid black;
+div.content {
+    /*max-width: 512px;*/
+    margin: auto;
 }

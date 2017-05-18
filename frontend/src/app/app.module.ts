@@ -7,6 +7,7 @@ import { AngularFireModule } from 'angularfire2';
 import { MdButtonModule } from '@angular/material';
 import { MdProgressSpinnerModule } from '@angular/material';
 import { MdToolbarModule } from '@angular/material';
+import { MdCardModule } from '@angular/material';
 
 import 'hammerjs';
 
@@ -51,6 +52,7 @@ export function initializePushNotifications(service: PushNotificationService): F
     MdButtonModule,
     MdProgressSpinnerModule,
     MdToolbarModule,
+    MdCardModule,
   ],
   providers: [
     ApiService,
