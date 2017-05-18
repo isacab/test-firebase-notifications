@@ -24,5 +24,13 @@
   <ItemGroup>
     <Reference Include="System.Configuration" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="specialappsettings.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="specialappsettings.template.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
