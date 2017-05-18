@@ -20,7 +20,7 @@ export class TogglePushComponent implements OnInit {
 
     console.log("Is initialize: ", this.pushService.isInitialized);
 
-    this.label = "Push notifications!";
+    this.label = "Push notifications: ";
 
     this.setIsEnabled(pushReg.enabled);
 

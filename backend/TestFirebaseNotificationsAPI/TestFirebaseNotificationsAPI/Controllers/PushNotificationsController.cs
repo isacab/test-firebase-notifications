@@ -52,10 +52,10 @@ namespace TestFirebaseNotificationsAPI.Controllers
             NotificationModel notification = new NotificationModel()
             {
                 To = token,
-                Data = new NotificationContentModel()
-                {
+                Data = new {
                     Title = "Hello",
-                    Body = "There!"
+                    Body = "There!",
+                    Sent = DateTime.Now
                 }
             };
 

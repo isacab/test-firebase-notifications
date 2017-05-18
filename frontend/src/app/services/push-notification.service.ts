@@ -66,7 +66,6 @@ export class PushNotificationService {
   initialize() : Promise<any> {
     // Register the service worker
     return this.checkAvailable()
-      .then(() => this.setMessagingEventHandlers())
       .then(() => this.registerServiceWorker())
       .then((swReg : ServiceWorkerRegistration) => {
           // for debugging
@@ -76,6 +75,7 @@ export class PushNotificationService {
       })
       .then(() => this.getToken())
       .then((token) => this.loadPushRegistration(token))
+      .then(() => this.setMessagingEventHandlers())
       .then(() => {
         this.setIsInitialized(true);
       })
@@ -88,7 +88,6 @@ export class PushNotificationService {
               console.log("blocked");
           }
         }
-        console.log(error);
         throw error;
       });
   }
@@ -308,14 +307,13 @@ export class PushNotificationService {
    * subsequent calls to getToken will return from cache (if the token is not deleted).
    */
   private getToken() : firebase.Promise<any> {
-    return this._messaging.getToken()
-        .then((currentToken) => {
-          return currentToken;
-        })
-        .catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-          throw err;
-        });
+    return this._messaging.getToken().then((currentToken) => {
+        return currentToken;
+      })
+      .catch((err) => {
+        console.log('An error occurred while retrieving token. ', err);
+        throw err;
+      });
   }
 
   /** 

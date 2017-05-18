@@ -9,42 +9,58 @@ firebase.initializeApp({
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-messaging.setBackgroundMessageHandler(function (payload) {
-    console.log('[firebase-messaging-sw.js] Received background message ', payload);
-    const data = payload.data;
-    
-    // Customize notification here
-    const notificationTitle = data.title;
-    const notificationOptions = {
-        body: data.body
-    };
+const receivedMessages = [];
 
-    return self.registration.showNotification(notificationTitle, notificationOptions);
-});
+/*messaging.setBackgroundMessageHandler(function (payload) {
+    console.log('[sw.js] Received background message ', payload);
+    var data = payload.data;
 
-/*self.addEventListener('push', function (event) {
-    console.log('Received a push message', event);
+    var title = data.title || 'Notification!';
+    var options = {
+        body: data.body || '',
+        tag: 'test-firebase-notification',
+        //icon: "images/new-notification.png"
+    }
+
+    return self.registration.showNotification(title, options);
+});*/
+
+self.addEventListener('push', function (event) {
+    console.log('[sw.js] Received a push message', event.data.json());
 
     if (!(self.Notification && self.Notification.permission === 'granted')) {
         return;
     }
 
-    var data = {};
-    if (event.data) {
-        data = event.data.json();
+    if (!event.data) {
+        return;
     }
-    var title = data.title;
-    var message = data.message;
-    //var icon = "images/new-notification.png";
+
+    var data = {};
+    var json = event.data.json();
+    if (json) {
+        data = json.data;
+    }
+
+    receivedMessages.push(data);
+    
+    sendMessageToAllClients({
+        messageType: 'push',
+        received: data,
+        allReceived: receivedMessages
+    });
+
+    var title = data.title || 'Notification!';
+    var options = {
+        body: data.body || '',
+        tag: 'test-firebase-notification',
+        //icon: "images/new-notification.png"
+    }
 
     event.waitUntil(
-        self.registration.showNotification(title, {
-            body: message,
-            tag: 'test-firebase-notification',
-            //icon: icon
-        })
+        self.registration.showNotification(title, options)
     );
-});*/
+});
 
 self.addEventListener('notificationclick', function (event) {
     console.log('On notification click: ', event.notification.tag);
@@ -70,3 +86,36 @@ self.addEventListener('notificationclick', function (event) {
         })
     );
 });
+
+// Use this to listen for messages from client
+self.addEventListener('message', function(event){
+    const message = event.data;
+
+    if(message === 'getAll') {
+        event.ports[0].postMessage({
+            messageType: 'getAll',
+            allReceived: receivedMessages
+        });
+    }
+});
+
+function sendMessageToClient(client, message){
+    return new Promise(function(resolve, reject){
+        var channel = new MessageChannel();
+        client.postMessage(message, [channel.port2]);
+    });
+}
+
+function sendMessageToAllClients(message){
+    clients.matchAll().then(clients => {
+        clients.forEach(client => {
+            sendMessageToClient(client, message);
+        });
+    });
+}
+
+
+/* Use this function to send messages from client to service worker.
+function send_message_to_sw(msg){
+    navigator.serviceWorker.controller.postMessage(msg);
+}*/

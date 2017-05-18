@@ -7,7 +7,7 @@ export class PushNotAvailableError extends Error {
     constructor(public code : string = "", public message: string = "") {
         super(message);
         this.name = "PushNotAvailableError";
-        this.stack = (<any> new Error()).stack;
+        //this.stack = (<any> new Error()).stack;
     }
 
 }

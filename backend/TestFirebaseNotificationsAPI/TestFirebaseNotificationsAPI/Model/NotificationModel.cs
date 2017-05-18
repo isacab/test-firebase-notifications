@@ -8,6 +8,6 @@ namespace TestFirebaseNotificationsAPI.Model
     public class NotificationModel : Model
     {
         public string To { get; set; }
-        public NotificationContentModel Data { get; set; }
+        public object Data { get; set; }
     }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-//import { IndexedDBService } from '../services/indexed-db.service';
+import { TestPushNotificationsService } from '../services/test-push-notifications.service';
 
 @Component({
   selector: 'test-push-notifications',
@@ -8,7 +8,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class TestPushNotificationsComponent implements OnInit {
 
-  //constructor(private db : IndexedDBService) { }
+  constructor(private testService : TestPushNotificationsService) { }
+
+  get receivedMessages() : Array<any> {
+    return this.testService.receivedMessages;
+  }
 
   ngOnInit() {
     

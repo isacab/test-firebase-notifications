@@ -27,7 +27,9 @@ export const firebaseConfig = {
 };
 
 export function initializePushNotifications(service: PushNotificationService): Function {
-  return () => service.initialize().catch((error) => {});
+  return () => service.initialize().catch((error) => {
+    console.error('[app.module]', error);
+  });
 };
 
 @NgModule({
