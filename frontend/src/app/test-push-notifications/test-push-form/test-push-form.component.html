@@ -1,7 +1,14 @@
 <section>
   <button md-raised-button 
         color="primary" 
-        (click)="send()">
-  Send me a notification!
+        (click)="send()"
+        [disabled]="isSending">
+  Send me a notification! <md-spinner class="buttonSpinner" *ngIf="isSending"></md-spinner>
+  </button>
+  <button md-raised-button 
+        color="warn" 
+        (click)="clear()"
+        [disabled]="isClearing">
+  Clear list <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
   </button>
 </section>

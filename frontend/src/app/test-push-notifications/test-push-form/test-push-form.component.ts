@@ -9,6 +9,9 @@ import { PushNotificationService } from '../../services/push-notification.servic
 })
 export class TestPushFormComponent implements OnInit {
 
+  isSending : boolean;
+  isClearing : boolean;
+
   constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
 
   ngOnInit() {
@@ -18,8 +21,24 @@ export class TestPushFormComponent implements OnInit {
     let pushReg = this.pushService.getPushRegistration();
     if(pushReg) {
       let token = pushReg.token;
-      this.testService.send(token);
+      this.isSending = true;
+      this.testService.send(token)
+        .then(() => {
+          this.isSending = false;
+        }).catch(() => {
+          this.isSending = false;
+        });
     }
+  }
+
+  clear() {
+    this.isClearing = true;
+    this.testService.clearTest()
+      .then(() => {
+        this.isClearing = false;
+      }).catch(() => {
+        this.isClearing = false;
+      });
   }
 
 }

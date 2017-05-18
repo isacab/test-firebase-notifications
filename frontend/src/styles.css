@@ -2,6 +2,43 @@
 
 @import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
 
+body {
+  margin: 0;
+  font-family: Roboto, sans-serif;
+}
+
+md-card {
+  max-width: 80%;
+  margin: 2em auto;
+  text-align: center;
+}
+
+md-toolbar-row {
+  justify-content: space-between;
+}
+
+.done {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  color: white;
+}
+
 section {
     padding: 10px;
+}
+
+md-spinner.buttonSpinner {
+  float: right; 
+  width: 24px; 
+  height: 24px; 
+  margin: 5px 0px 5px 10px;
+}
+
+ul.receivedList {
+    list-style-type: none;
+}
+
+ul.receivedList>li {
+    border: 1px solid black;
 }

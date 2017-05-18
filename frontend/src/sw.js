@@ -96,6 +96,12 @@ self.addEventListener('message', function(event){
             messageType: 'getAll',
             allReceived: receivedMessages
         });
+    } else if(message === 'clear') {
+        receivedMessages.splice(0, receivedMessages.length);
+        event.ports[0].postMessage({
+            messageType: 'clear',
+            allReceived: receivedMessages
+        });
     }
 });
 

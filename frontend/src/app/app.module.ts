@@ -3,8 +3,10 @@ import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule, JsonpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MdButtonModule } from '@angular/material';
 import { AngularFireModule } from 'angularfire2';
+import { MdButtonModule } from '@angular/material';
+import { MdProgressSpinnerModule } from '@angular/material';
+import { MdToolbarModule } from '@angular/material';
 
 import 'hammerjs';
 
@@ -45,8 +47,10 @@ export function initializePushNotifications(service: PushNotificationService): F
     HttpModule,
     JsonpModule,
     BrowserAnimationsModule,
-    MdButtonModule,
     AngularFireModule.initializeApp(firebaseConfig),
+    MdButtonModule,
+    MdProgressSpinnerModule,
+    MdToolbarModule,
   ],
   providers: [
     ApiService,
