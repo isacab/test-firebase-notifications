@@ -7,6 +7,7 @@ using TestFirebaseNotificationsAPI.Model;
 using TestFirebaseNotificationsAPI.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 
 namespace TestFirebaseNotificationsAPI.Controllers
 {
@@ -30,10 +31,39 @@ namespace TestFirebaseNotificationsAPI.Controllers
         }
 
         // POST api/values
-        [HttpPost]
-        public IActionResult Post([FromBody]NotificationModel data)
+        [Route("api/[controller]/start")]
+        [HttpPost("{token}")]
+        public IActionResult Post(string token, [FromBody]TestModel data)
         {
-            _notificationService.Send(data);
+            PushRegistrationModel reg = _registrationService.Get(token);
+
+            if (reg == null)
+                return NotFound(new { Message = "Token not found" });
+
+            if (!reg.Enabled)
+                return BadRequest(new { Message = "Notifications are disabled" });
+
+            TestContext context = new TestContext()
+            {
+                Test = data,
+            };
+
+            Object tcLock = GlobalStore.RunningTestLocks.GetOrAdd(token, new Object());
+            TestContext t = GlobalStore.RunningTests.GetOrAdd(token, context);
+
+            // Stop already existing test
+            if(t != context)
+            {
+                lock (tcLock)
+                {
+                    t.Stop = true;
+                }
+
+            }
+
+            TestApplication testApp = new TestApplication(context, _notificationService);
+            Task.Run((Action)testApp.Run);
+
             return Json(new { ok = true });
         }
 

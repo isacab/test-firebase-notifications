@@ -23,6 +23,7 @@ export class PushNotificationService {
   
   private readonly _messaging: firebase.messaging.Messaging;
   
+  // Current push registration
   private _pushRegistration : PushRegistration;
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService) { 
@@ -61,10 +62,12 @@ export class PushNotificationService {
   }
 
   /**
-   * Initialize the service
+   * Initialize the service.
+   * This method should be called on application startup to set up the service worker for receiving push notifications
+   * and get the initial state of pushRegistration from server.
+   * Resolves and sets isInitialized to true if initialization went well otherwise it rejects and leaves isInitialized as false.
    */
   initialize() : Promise<any> {
-    // Register the service worker
     return this.checkAvailable()
       .then(() => this.registerServiceWorker())
       .then((swReg : ServiceWorkerRegistration) => {
@@ -73,14 +76,12 @@ export class PushNotificationService {
             console.log("subscription", subscription);
           });
       })
+      .then(() => this.setMessagingEventListeners())
       .then(() => this.getToken())
       .then((token) => this.loadPushRegistration(token))
-      .then(() => this.setMessagingEventHandlers())
-      .then(() => {
-        this.setIsInitialized(true);
-      })
+      .then(() => this.setIsInitialized(true))
       .catch((error) => {
-
+        // Something went wrong during the initialization
         if(error !== null && typeof error === 'object') {
           if(error.name === PushNotAvailableError.name 
             && error.code === PushNotAvailableError.Blocked) {
@@ -151,24 +152,29 @@ export class PushNotificationService {
   /**
    * Check if push notifications are supported by the browser.
    * Returns a promise that resolves if they are available or rejects if not available.
+   * There is no data passed on resolve.
    */
   checkAvailable() : Promise<any> {
-    let promise = new Promise<boolean>((resolve, reject) => {
+    let promise = new Promise<any>((resolve, reject) => {
       
       if (!('serviceWorker' in navigator)) {
-        reject(new PushNotAvailableError("Service Worker isn't supported on this browser."));
+        reject(new PushNotAvailableError(PushNotAvailableError.ServiceWorkerNotAvailable, 
+                                          "Service Worker isn't supported on this browser."));
         return;
       }
 
       if (!('PushManager' in window)) {
-        reject(new PushNotAvailableError("Push isn't supported on this browser."));
+        reject(new PushNotAvailableError(PushNotAvailableError.PushNotAvailable,
+                                          "Push isn't supported on this browser."));
         return;
       }
 
       this.getNotificationPermissionState()
         .then(function(state: string) {
           if(state === 'denied') {
-            reject(new PushNotAvailableError("Notifications are blocked by the browser."));
+            reject(new PushNotAvailableError(PushNotAvailableError.Blocked,
+                                              "Notifications are blocked by the browser."));
+            return;
           }
           // Push notifications is available
           resolve();
@@ -255,12 +261,14 @@ export class PushNotificationService {
 
   /**
    * Register the service worker used to receive push notifications.
+   * The notifications received when application is in background or closed are handled by the service worker.
    */
   private registerServiceWorker() : Promise<ServiceWorkerRegistration> {
     return navigator.serviceWorker.register('sw.js')
         .then((swReg) => {
             console.log('Service Worker is registered', swReg);
 
+            // Set firebase messaging to use the registrated service worker
             this._messaging.useServiceWorker(swReg);
 
             return swReg;
@@ -271,8 +279,12 @@ export class PushNotificationService {
         });
   }
 
-  private setMessagingEventHandlers() : void {
+  /**
+   * Set the firebase messaging event listeners that handles onTokenRefresh and onMessage
+   */
+  private setMessagingEventListeners() : void {
     let messaging = this._messaging;
+
     // Callback fired if Instance ID token is updated.
     messaging.onTokenRefresh(() => {
         console.log('Token refreshed.');
@@ -304,7 +316,7 @@ export class PushNotificationService {
 
   /**
    * Get Instance ID token. The first call to this method makes a network call, once retrieved
-   * subsequent calls to getToken will return from cache (if the token is not deleted).
+   * subsequent calls to getToken will return from cache (if the token has not been deleted in between).
    */
   private getToken() : firebase.Promise<any> {
     return this._messaging.getToken().then((currentToken) => {
@@ -317,7 +329,9 @@ export class PushNotificationService {
   }
 
   /** 
-   * Request permission for push notifications.
+   * Request permission for push notifications. 
+   * If the browser permission state is 'prompt', the user is asked to Allow or Block notifications.
+   * Returns a promise that resolves if permission could be granted and rejects if not.
    */
   private requestPermission() : firebase.Promise<any> {
     return this._messaging.requestPermission()
@@ -330,10 +344,18 @@ export class PushNotificationService {
         });
   }
 
+  /**
+   * Set the last sent token sent to server in local storage
+   * 
+   * @param value the token
+   */
   private setLocalToken(value: string) : void {
     localStorage.setItem('token', value);
   }
 
+  /**
+   * Get the last token sent to server from local storage
+   */
   private getLocalToken() : string {
     let token = localStorage.getItem('token');
     if(token === "undefined" || token === "")

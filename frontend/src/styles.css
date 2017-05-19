@@ -8,9 +8,8 @@ body {
 }
 
 md-card {
-  max-width: 80%;
-  margin: 2em auto;
-  text-align: center;
+  max-width: 400px;
+  margin: 10px;
 }
 
 md-toolbar-row {

@@ -42,6 +42,10 @@ self.addEventListener('push', function (event) {
         data = json.data;
     }
 
+    //let receivedDateTime = new Date().getTime();
+
+    //data.receivedDateTime = receivedDateTime;
+
     receivedMessages.push(data);
     
     sendMessageToAllClients({

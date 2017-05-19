@@ -8,6 +8,7 @@ import { MdButtonModule } from '@angular/material';
 import { MdProgressSpinnerModule } from '@angular/material';
 import { MdToolbarModule } from '@angular/material';
 import { MdCardModule } from '@angular/material';
+import { MdInputModule } from '@angular/material';
 
 import 'hammerjs';
 
@@ -53,6 +54,7 @@ export function initializePushNotifications(service: PushNotificationService): F
     MdProgressSpinnerModule,
     MdToolbarModule,
     MdCardModule,
+    MdInputModule,
   ],
   providers: [
     ApiService,
