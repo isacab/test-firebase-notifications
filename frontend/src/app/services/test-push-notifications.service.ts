@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
+import { PushNotificationService } from './push-notification.service';
 import { PushRegistration } from '../models/push-registration';
 
 @Injectable()
@@ -7,7 +8,11 @@ export class TestPushNotificationsService {
 
   private _receivedMessages : Array<any>;
 
-  constructor(private api : ApiService) { 
+  constructor(private api : ApiService, private pushService : PushNotificationService) { 
+    if(!pushService.isInitialized) {
+      throw new Error("PushNotificationService was not initialized");
+    }
+
     this.setServiceWorkerMessageListeners();
     this.updateAllReceived();
   }

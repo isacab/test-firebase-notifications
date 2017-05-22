@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
 import { PushNotificationService } from '../../services/push-notification.service';
+import { Test } from '../../models/test';
 
 @Component({
   selector: 'test-push-form',
@@ -11,10 +12,12 @@ export class TestPushFormComponent implements OnInit {
 
   isSending : boolean;
   isClearing : boolean;
+  model : Test;
 
   constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
 
   ngOnInit() {
+    this.model = new Test();
   }
 
   send() {

@@ -1,9 +1,10 @@
 <section class="example-section">
   <label>{{ label }}</label>
   <button md-raised-button 
-          [color]="isEnabled ? 'accent' : 'primary'" 
-          (click)="toggleEnabled()" 
-          [disabled]="!canEnablePush">
-    {{ buttonText }}
+    [color]="isEnabled ? 'accent' : 'primary'" 
+    (click)="toggleEnabled()" 
+    [disabled]="!canToggle">
+      <md-spinner class="buttonSpinner" *ngIf="isLoading"></md-spinner>
+      {{ buttonText }}
   </button>
 </section>

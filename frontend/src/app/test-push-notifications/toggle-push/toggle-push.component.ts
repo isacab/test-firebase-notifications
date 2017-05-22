@@ -10,8 +10,9 @@ export class TogglePushComponent implements OnInit {
 
   label: string;
   isEnabled: boolean;
-  canEnablePush: boolean;
+  canToggle: boolean;
   buttonText: string;
+  isLoading : boolean;
 
   constructor(private pushService: PushNotificationService) { }
 
@@ -22,22 +23,33 @@ export class TogglePushComponent implements OnInit {
 
     this.label = "Push notifications: ";
 
-    this.setIsEnabled(pushReg.enabled);
+    this.isEnabled = pushReg.enabled;
+    this.setButtonText(pushReg.enabled);
 
     this.pushService.checkAvailable().then(() => {
-      this.canEnablePush = true;
+      this.canToggle = true;
     });
   }
 
   toggleEnabled() {
-    this.pushService.setEnabled(!this.isEnabled).then(() => {
-      this.setIsEnabled(!this.isEnabled);
-    });
+    if(!this.canToggle)
+      return;
+
+    this.canToggle = false;
+    this.isLoading = true;
+    this.pushService.setEnabled(!this.isEnabled)
+      .then(() => {
+        this.isEnabled = !this.isEnabled;
+      }).catch((error) => {
+        // Show error message
+      }).then(() => {
+        this.isLoading = false;
+        this.canToggle = true;
+      });
   }
 
-  private setIsEnabled(value : boolean) {
-    this.isEnabled = value;
-    this.buttonText = value ? 'Disable' : 'Enable';
+  private setButtonText(pushIsEnabled : boolean) {
+    this.buttonText = pushIsEnabled ? 'Disable' : 'Enable';
   }
 
 }

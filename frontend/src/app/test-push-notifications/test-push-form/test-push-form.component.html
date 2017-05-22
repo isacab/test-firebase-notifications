@@ -1,14 +1,27 @@
 <section>
-  <button md-raised-button 
-        color="primary" 
-        (click)="send()"
-        [disabled]="isSending">
-  Send me a notification! <md-spinner class="buttonSpinner" *ngIf="isSending"></md-spinner>
-  </button>
-  <button md-raised-button 
-        color="warn" 
-        (click)="clear()"
-        [disabled]="isClearing">
-  Clear list <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
-  </button>
+      <form>
+            <md-input-container class="example-full-width">
+                  <input type="number" mdInput placeholder="Num notifications per interval">
+            </md-input-container>
+            <md-input-container class="example-full-width">
+                  <input type="number" mdInput placeholder="Num intervals">
+            </md-input-container>
+            <md-input-container class="example-full-width">
+                  <input type="number" mdInput placeholder="Interval">
+            </md-input-container>
+            <button md-raised-button 
+            color="primary" 
+            (click)="send()"
+            [disabled]="isSending">
+                  <md-spinner class="buttonSpinner" *ngIf="isSending"></md-spinner>
+                  Send me a notification!
+            </button>
+            <button md-raised-button 
+            color="warn" 
+            (click)="clear()"
+            [disabled]="isClearing">
+                  <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
+                  Clear list
+            </button>
+      </form>
 </section>
