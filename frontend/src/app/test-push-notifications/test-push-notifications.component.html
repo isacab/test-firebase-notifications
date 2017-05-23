@@ -1,7 +1,7 @@
 <div class="content">
     <toggle-push></toggle-push>
-    <div *ngIf="isEnabled">
-        <test-push-form></test-push-form>
+    <div>
+        <test-push-form *ngIf="isEnabled"></test-push-form>
         <h2>Received notifications</h2>
         <md-list class="receivedList">
             <md-list-item *ngFor="let message of receivedMessages">

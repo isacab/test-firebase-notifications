@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { Test } from '../../models/test';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'test-push-form',
@@ -10,38 +11,108 @@ import { Test } from '../../models/test';
 })
 export class TestPushFormComponent implements OnInit {
 
-  isSending : boolean;
+  isSubmitting : boolean;
   isClearing : boolean;
+  submitted : boolean;
   model : Test;
 
   constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
+  
+  testPushForm: NgForm;
+  @ViewChild('testPushForm') currentForm: NgForm;
 
-  ngOnInit() {
-    this.model = new Test();
+  ngAfterViewChecked() {
+    this.formChanged();
   }
 
-  send() {
+  formChanged() {
+    if (this.currentForm === this.testPushForm) { 
+      return; 
+    }
+
+    this.testPushForm = this.currentForm;
+
+    if (this.testPushForm) {
+      this.testPushForm.valueChanges
+        .subscribe(data => this.onValueChanged(data));
+    }
+  }
+
+  ngOnInit() {
+    this.model = new Test({numNotificationsPerInterval: 1, numIntervals: 1, interval: 0});
+  }
+
+  submit() {
     let pushReg = this.pushService.getPushRegistration();
     if(pushReg) {
       let token = pushReg.token;
-      this.isSending = true;
-      this.testService.send(token)
+      this.isSubmitting = true;
+      this.testService.startTest(token, this.model)
         .then(() => {
-          this.isSending = false;
+          this.isSubmitting = false;
         }).catch(() => {
-          this.isSending = false;
+          this.isSubmitting = false;
         });
     }
   }
 
   clear() {
-    this.isClearing = true;
-    this.testService.clearTest()
-      .then(() => {
-        this.isClearing = false;
-      }).catch(() => {
-        this.isClearing = false;
-      });
+    let pushReg = this.pushService.getPushRegistration();
+    if(pushReg) {
+      let token = pushReg.token;
+      this.isClearing = true;
+      this.testService.clearTest(token)
+        .then(() => {
+          this.isClearing = false;
+        }).catch(() => {
+          this.isClearing = false;
+        });
+    }
   }
+
+  onValueChanged(data?: any) {
+    if (!this.testPushForm) { 
+      return; 
+    }
+
+    const form = this.currentForm.form;
+
+    for (const field in this.formErrors) {
+      // clear previous error message (if any)
+      this.formErrors[field] = '';
+      const control = form.get(field);
+
+      if (control && control.dirty && !control.valid) {
+        const messages = this.validationMessages[field];
+        for (const key in control.errors) {
+          this.formErrors[field] += messages[key] + ' ';
+        }
+      }
+    }
+  }
+
+  validationMessages = {
+    'numNotificationsPerInterval': {
+      'required': 'Num notifications per interval is required.',
+      'min':      'Num notifications per interval must be at least 1.',
+      'max':      'Num notifications per interval cannot be more than 100.',
+    },
+    'numIntervals': {
+      'required': 'Num intervals is required.',
+      'min':      'Num intervals must be at least 1.',
+      'max':      'Num intervals cannot be more than 100.',
+    },
+    'interval': {
+      'required': 'Interval is required.',
+      'min':      'Interval must be at least 0.',
+      'max':      'Interval cannot be more than 100.',
+    },
+  };
+
+  formErrors = {
+    'numNotificationsPerInterval': '',
+    'numIntervals': '',
+    'interval': ''
+  };
 
 }

@@ -31,10 +31,12 @@ namespace TestFirebaseNotificationsAPI.Controllers
         }
 
         // POST api/values
-        [Route("api/[controller]/start")]
-        [HttpPost("{token}")]
-        public IActionResult Post(string token, [FromBody]TestModel data)
+        [HttpPost("start/{token}")]
+        public IActionResult Post([FromBody]TestModel data, string token)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
@@ -46,22 +48,25 @@ namespace TestFirebaseNotificationsAPI.Controllers
             TestContext context = new TestContext()
             {
                 Test = data,
+                SentNotifications = new List<NotificationContext>()
             };
 
             Object tcLock = GlobalStore.RunningTestLocks.GetOrAdd(token, new Object());
             TestContext t = GlobalStore.RunningTests.GetOrAdd(token, context);
 
+            TestApplication testApp;
+
             // Stop already existing test
-            if(t != context)
+            lock (tcLock)
             {
-                lock (tcLock)
+                if (t != context)
                 {
                     t.Stop = true;
                 }
 
+                testApp = new TestApplication(context, _notificationService);
             }
 
-            TestApplication testApp = new TestApplication(context, _notificationService);
             Task.Run((Action)testApp.Run);
 
             return Json(new { ok = true });

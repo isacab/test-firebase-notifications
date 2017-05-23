@@ -16,11 +16,21 @@ md-toolbar-row {
   justify-content: space-between;
 }
 
+md-input-container,
+md-input-container.mat-input-container {
+  display: block;
+  padding: 4px 0 4px 0;
+}
+
 .done {
   position: fixed;
   bottom: 20px;
   right: 20px;
   color: white;
+}
+
+.spacer {
+  flex: 1 1 auto;
 }
 
 section {
@@ -35,6 +45,6 @@ md-spinner.buttonSpinner {
 }
 
 div.content {
-    /*max-width: 512px;*/
-    margin: auto;
+    max-width: 512px;
+    margin: 20px;
 }

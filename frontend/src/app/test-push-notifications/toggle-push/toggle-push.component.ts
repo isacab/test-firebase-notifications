@@ -40,6 +40,7 @@ export class TogglePushComponent implements OnInit {
     this.pushService.setEnabled(!this.isEnabled)
       .then(() => {
         this.isEnabled = !this.isEnabled;
+        this.setButtonText(this.isEnabled);
       }).catch((error) => {
         // Show error message
       }).then(() => {

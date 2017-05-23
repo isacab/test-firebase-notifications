@@ -20,6 +20,11 @@ namespace TestFirebaseNotificationsAPI.Services
             return _databaseContext.PushRegistrations.FirstOrDefault(x => x.Token == token);
         }
 
+        public PushRegistrationModel Get(int id)
+        {
+            return _databaseContext.PushRegistrations.Find(id);
+        }
+
         public void Insert(PushRegistrationModel model)
         {
             model.Id = 0;

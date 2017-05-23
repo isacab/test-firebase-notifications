@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { PushNotificationService } from './push-notification.service';
 import { PushRegistration } from '../models/push-registration';
+import { Test } from '../models/test';
 
 @Injectable()
 export class TestPushNotificationsService {
@@ -25,15 +26,9 @@ export class TestPushNotificationsService {
     return this.api.sendPushNotification(token);
   }
 
-  newTest() {
-    // TODO call api to start new test
-  }
-
-  clearTest() {
-    // Send api call to stop test
-
+  startTest(token : string, test : Test) : Promise<any> {
     // Notify service worker to clear receivedMessages
-    return new Promise((resolve, reject) => {
+    let notifyServiceWorker = new Promise((resolve, reject) => {
       let message = "clear";
       let onresponse = (event) => {
         if(event.data.error) {
@@ -47,6 +42,33 @@ export class TestPushNotificationsService {
       };
       this.sendMessageToServiceWorker(message, onresponse);
     });
+
+    return notifyServiceWorker.then(() => this.api.startTest(token, test));
+  }
+
+  newTest() {
+    // TODO call api to start new test
+  }
+
+  clearTest(token : string) {
+    // Notify service worker to clear receivedMessages
+    let notifyServiceWorker = new Promise((resolve, reject) => {
+      let message = "clear";
+      let onresponse = (event) => {
+        if(event.data.error) {
+          reject(new Error("Could not update all received messages from service worker, Error: " + event.data.error));
+        } else {
+          // Clear receivedMessages
+          console.log("[clearTest] Response: ", event.data);
+          this._receivedMessages = event.data.allReceived;
+          resolve(event.data);
+        }
+      };
+      this.sendMessageToServiceWorker(message, onresponse);
+    });
+
+    // Send api call to stop test
+    return this.api.stopTest(token).then(() => notifyServiceWorker);
   }
 
   updateAllReceived() {

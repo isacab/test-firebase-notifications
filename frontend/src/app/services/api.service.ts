@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Headers, Http, Response, RequestOptions } from '@angular/http';
 import { Shared } from '../shared';
 import { PushRegistration } from '../models/push-registration';
+import { Test } from '../models/test';
 
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
@@ -57,6 +58,22 @@ export class ApiService {
 
   sendPushNotification(token : string) : Promise<any> {
     let url = this.apiUrl + "/pushnotifications/" + token;
+    let request = this.http.post(url, { }, this.options);
+    return request
+              .catch(this.handleError)
+              .toPromise();
+  }
+
+  startTest(token : string, test : Test) : Promise<any> {
+    let url = this.apiUrl + "/pushnotifications/start/" + token;
+    let request = this.http.post(url, test, this.options);
+    return request
+              .catch(this.handleError)
+              .toPromise();
+  }
+
+  stopTest(token : string) : Promise<any> {
+    let url = this.apiUrl + "/pushnotifications/stop/" + token;
     let request = this.http.post(url, { }, this.options);
     return request
               .catch(this.handleError)

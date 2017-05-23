@@ -6,4 +6,8 @@ export class Test {
     constructor(init?:Partial<Test>) {
         Object.assign(this, init);
     }
+
+    totalNumNotifications() : number {
+        return this.numNotificationsPerInterval * this.numIntervals;
+    }
 }

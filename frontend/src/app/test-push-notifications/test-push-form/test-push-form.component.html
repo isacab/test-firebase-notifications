@@ -1,27 +1,59 @@
 <section>
-      <form>
-            <md-input-container class="example-full-width">
-                  <input type="number" mdInput placeholder="Num notifications per interval">
+      <form #testPushForm="ngForm" (ngSubmit)="submit()">
+            <md-input-container class="full-width">
+                  <input mdInput 
+                  type="number" 
+                  placeholder="Num notifications per interval" 
+                  name="numNotificationsPerInterval" 
+                  [(ngModel)]="model.numNotificationsPerInterval"
+                  max="100"
+                  min="1" 
+                  required>
+                  <md-hint *ngIf="formErrors.numNotificationsPerInterval">
+                        {{ formErrors.numNotificationsPerInterval }}
+                  </md-hint>
             </md-input-container>
-            <md-input-container class="example-full-width">
-                  <input type="number" mdInput placeholder="Num intervals">
+            <md-input-container class="full-width">
+                  <input mdInput 
+                  type="number" 
+                  placeholder="Num intervals" 
+                  name="numIntervals"
+                  [(ngModel)]="model.numIntervals"
+                  max="100"
+                  min="1" 
+                  required>
+                  <md-hint *ngIf="formErrors.numIntervals">
+                        {{ formErrors.numIntervals }}
+                  </md-hint>
             </md-input-container>
-            <md-input-container class="example-full-width">
-                  <input type="number" mdInput placeholder="Interval">
+            <md-input-container class="full-width">
+                  <input mdInput 
+                  type="number" 
+                  placeholder="Interval" 
+                  name="interval"
+                  [(ngModel)]="model.interval"
+                  max="100"
+                  min="0" 
+                  required>
+                  <md-hint *ngIf="formErrors.interval">
+                        {{ formErrors.interval }}
+                  </md-hint>
             </md-input-container>
-            <button md-raised-button 
-            color="primary" 
-            (click)="send()"
-            [disabled]="isSending">
-                  <md-spinner class="buttonSpinner" *ngIf="isSending"></md-spinner>
-                  Send me a notification!
-            </button>
-            <button md-raised-button 
-            color="warn" 
-            (click)="clear()"
-            [disabled]="isClearing">
-                  <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
-                  Clear list
-            </button>
+            <div>
+                  <button md-raised-button 
+                  color="primary" 
+                  type="submit"
+                  [disabled]="isSubmitting || !testPushForm.form.valid">
+                        <md-spinner class="buttonSpinner" *ngIf="isSubmitting"></md-spinner>
+                        Start test
+                  </button>
+                  <button md-raised-button 
+                  color="warn" 
+                  (click)="clear()"
+                  [disabled]="isClearing">
+                        <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
+                        Clear test
+                  </button>
+            </div>
       </form>
 </section>

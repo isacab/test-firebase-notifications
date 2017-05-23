@@ -11,6 +11,10 @@ namespace TestFirebaseNotificationsAPI
     {
         public static ConcurrentDictionary<string, TestContext> RunningTests = new ConcurrentDictionary<string, TestContext>();
 
-        public static ConcurrentDictionary<string, Object> RunningTestLocks = new ConcurrentDictionary<string, Object>();
+        public static ConcurrentDictionary<TestContext, Object> RunningTestLocks = new ConcurrentDictionary<TestContext, Object>();
+
+        public static ConcurrentDictionary<NotificationContext, Object> SentNotificationLocks = new ConcurrentDictionary<NotificationContext, Object>();
+
+        public static ConcurrentDictionary<TestApplication, Object> TestApplicationLocks = new ConcurrentDictionary<TestApplication, Object>();
     }
 }
