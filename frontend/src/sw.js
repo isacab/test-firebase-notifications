@@ -28,10 +28,6 @@ const receivedMessages = [];
 self.addEventListener('push', function (event) {
     console.log('[sw.js] Received a push message', event.data.json());
 
-    if (!(self.Notification && self.Notification.permission === 'granted')) {
-        return;
-    }
-
     if (!event.data) {
         return;
     }
@@ -41,6 +37,8 @@ self.addEventListener('push', function (event) {
     if (json) {
         data = json.data;
     }
+
+    notifyServer(data);
 
     //let receivedDateTime = new Date().getTime();
 
@@ -53,11 +51,16 @@ self.addEventListener('push', function (event) {
         received: data,
         allReceived: receivedMessages
     });
+    
+    if (!(self.Notification && self.Notification.permission === 'granted')) {
+        return;
+    }
 
     var title = data.title || 'Notification!';
     var options = {
         body: data.body || '',
         tag: 'test-firebase-notification',
+        renotify: true,
         //icon: "images/new-notification.png"
     }
 
@@ -108,6 +111,16 @@ self.addEventListener('message', function(event){
         });
     }
 });
+
+function notifyServer(data)
+{
+    var xhttp = new XMLHttpRequest();
+    xhttp.open('POST', 'http://localhost:21378/api');
+    xhttp.onload = function(e) {
+        var data = e.data;
+        // TODO: post notification to clients
+    }
+}
 
 function sendMessageToClient(client, message){
     return new Promise(function(resolve, reject){

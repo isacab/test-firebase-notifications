@@ -89,14 +89,14 @@ export class ApiService {
     let rejectError: Error;
     let errMsg : string;
 
-      if (error instanceof Response) {
-        let body = error.json() || '';
-        let err = body.error || JSON.stringify(body);
+    if (error instanceof Response) {
+      let body = error.json() || '';
+      let err = body.error || JSON.stringify(body);
 
-        `${error.status} - ${error.statusText || ''} ${err}`;
-      } else {
-        errMsg = error.message ? error.message : error.toString();
-      }
+      errMsg = `${error.status} - ${error.statusText || ''} ${err}` || '';
+    } else {
+      errMsg = error.message ? error.message : error.toString() || '';
+    }
 
     console.error(errMsg);
     return Promise.reject(errMsg);

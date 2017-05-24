@@ -134,7 +134,7 @@ export class PushNotificationService {
             reject(new Error("Could not load registration token."));
           });
       } 
-      else{
+      else {
         // Get current push registration at the server
         this.api.getPushRegistration(token)
           .then((reg : PushRegistration) => {

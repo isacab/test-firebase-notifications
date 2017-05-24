@@ -28,9 +28,9 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel model = _service.Get(token);
 
             if(model == null)
-                return NotFound(new { Message = "No resource found" });
+                return Json(new { Ok = false, Message = "No resource found" });
 
-            return Json(new { data = model });
+            return Json(new { Ok = true, Data = model });
         }
 
         // POST api/pushregistrations
@@ -38,7 +38,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult Post([FromBody]PushRegistrationModel data)
         {
             if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             // Check if token is already registrated
             PushRegistrationModel model = _service.Get(data.Token);
@@ -50,7 +50,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Insert(data);
             _service.SaveChanges();
 
-            return Json(new { data = data });
+            return Json(new { Ok = true, Data = data });
         }
 
         // PUT api/pushregistrations/{token}
@@ -58,12 +58,12 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult Put([FromBody]PushRegistrationModel data, string token)
         {
             if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel model = _service.Get(token);
 
             if (model == null)
-                return NotFound(new { Message = "Resource does not exist" });
+                return Json(new { Ok = false, Message = "Resource does not exist" });
 
             model.Token = data.Token;
             model.Enabled = data.Enabled;
@@ -71,7 +71,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Update(model);
             _service.SaveChanges();
 
-            return Json(new { data = data });
+            return Json(new { Ok = true, Data = data });
         }
 
         // DELETE api/pushregistrations/{token}
@@ -81,12 +81,12 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel model = _service.Get(token);
 
             if (model == null)
-                return NotFound(new { Message = "Resource does not exist" });
+                return Json(new { Ok = false, Message = "Resource does not exist" });
 
             _service.Delete(model);
             _service.SaveChanges();
 
-            return Ok();
+            return Json(new { Ok = true });
         }
     }
 }

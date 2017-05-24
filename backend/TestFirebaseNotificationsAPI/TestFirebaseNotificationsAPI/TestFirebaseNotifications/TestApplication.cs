@@ -13,116 +13,113 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 {
     public class TestApplication
     {
-        private readonly TestContext _context;
+        private readonly TestModel _test; // a copy of the TestModel passed in constructor
+        private readonly DatabaseContext _databaseContext;
         private readonly PushNotificationService _pushService;
         private readonly PushRegistrationService _regService;
 
-        private readonly Object _testContextLock = new Object();
-        private readonly ConcurrentDictionary<int, Object> _sentNotificationLocks = new ConcurrentDictionary<int, Object>(); // sequence number as key
-
-        public TestApplication(TestModel test, PushNotificationService pushService, PushRegistrationService regService)
+        public TestApplication(TestModel test)
         {
-            this._context = new TestContext()
-            {
-                SentNotifications = new List<NotificationContext>(),
-                Test = new TestModel(test)
-            } ?? throw new ArgumentNullException("Test is null");
-            this._pushService = pushService ?? throw new ArgumentNullException("PushService is null");
-            this._regService = regService ?? throw new ArgumentNullException("RegService is null");
+            this._test = new TestModel(test) ?? throw new ArgumentNullException("Test is null");
+            this._pushService = new PushNotificationService();
+            this._databaseContext = DatabaseContext.CreateDefault();
+            this._regService = new PushRegistrationService(_databaseContext);
         }
 
-        public void Run()
+        #region Properties
+
+        // These properties are thread safe
+
+        private bool _started;
+        private readonly Object _startedLock = new Object();
+        public bool Started
         {
-            bool running;
-            Object tcLock;
-            PushRegistrationModel reg = this._regService.Get(regId);
-
-            if (reg == null)
-                throw new InvalidOperationException("Push registration does not exist");
-
-            tcLock = GlobalStore.RunningTestLocks.GetOrAdd(this._context, new Object());
-
-            lock(tcLock)
+            get
             {
-                running = !Finished(_context);
+                lock(_startedLock)
+                {
+                    return _started;
+                }
             }
-
-            while(running)
+            private set
             {
-                int interval;
-
-                lock (tcLock)
+                lock(_startedLock)
                 {
-                    TestModel test = _context.Test;
-                    for (int i = 0; i < test.NumNotificationsPerInterval; i++)
-                    {
-                        int seqNumber = _context.SentNotifications.Count + 1;
-                        DateTime sent = DateTime.Now;
-                        NotificationModel notification = new NotificationModel()
-                        {
-                            To = test.Token,
-                            Data = new TestNotifactionContentModel()
-                            {
-                                Title = "Test firebase notifications",
-                                Body = "Test body",
-                                Sent = sent,
-                                SequenceNumber = seqNumber,
-                            }
-                        };
-
-                        Stopwatch stopWatch = new Stopwatch();
-                        NotificationContext notificationContext = new NotificationContext()
-                        {
-                            Notification = notification,
-                            StopWatch = stopWatch
-                        };
-                        _context.SentNotifications.Add(notificationContext);
-                        GlobalStore.SentNotificationLocks.GetOrAdd(notificationContext, new Object());
-                        stopWatch.Start();
-                        string response = this._pushService.Send(notification);
-                    }
-                    interval = test.Interval;
-                } 
-
-                Thread.Sleep(interval);
-
-                lock (tcLock)
-                {
-                    running = !Finished(_context);
+                    _started = value;
                 }
             }
         }
 
-        public void stop()
+        private bool _stop;
+        private readonly Object _stopLock = new Object();
+        public bool Stop
         {
-            // TODO
-            // Stop application from running
-        }
-
-        public void stopTimer(int sequenceNumber)
-        {
-            var nLock = this._sentNotificationLocks.GetOrAdd(sequenceNumber, new Object());
-
-            lock(nLock)
+            get
             {
-                // TODO
-                // Get notification context
-                // Stop timer
-                // Set latancy on notification
-                // Set response
+                lock (_stopLock)
+                {
+                    return _stop;
+                }
             }
-
-            //return response
+            set
+            {
+                lock (_stopLock)
+                {
+                    _stop = value;
+                }
+            }
         }
 
-        private bool Finished(TestContext context)
+        #endregion
+
+        public void Run()
         {
-            return context.Stop || context.SentNotifications.Count >= CountTotalNumNotificationsToSend(context.Test);
+            if (Started)
+                throw new InvalidOperationException("TestApplication has already been started.");
+
+            Started = true;
+            
+            int seqNumber = 0;
+
+            while(Continue(seqNumber))
+            {
+                PushRegistrationModel reg = _regService.Get(_test.PushRegistrationId);
+                for (int i = 0; i < _test.NumNotificationsPerInterval; i++)
+                {
+                    seqNumber++;
+                    NotificationModel notification = new NotificationModel()
+                    {
+                        To = reg.Token,
+                        Data = new TestNotifactionContentModel()
+                        {
+                            Title = "Test firebase notifications",
+                            Body = "Test body",
+                            SequenceNumber = seqNumber,
+                            Sent = DateTime.UtcNow
+                        }
+                    };
+                    string response = this._pushService.Send(notification);
+                }
+
+                Thread.Sleep(_test.Interval);
+            }
         }
 
-        private int CountTotalNumNotificationsToSend(TestModel test)
+        public void StopTimer(TestNotifactionContentModel notificationContent)
         {
-            return test.NumIntervals * test.NumNotificationsPerInterval;
+            DateTime received = DateTime.UtcNow;
+            TimeSpan latancy = notificationContent.Sent.Subtract(received);
+            notificationContent.Latancy = latancy.Milliseconds;
+        }
+
+        private bool Continue(int seqNumber)
+        {
+            return seqNumber < TotalNumNotificationsToSend() && !Stop;
+        }
+
+        private int TotalNumNotificationsToSend()
+        {
+            return _test.NumIntervals * _test.NumNotificationsPerInterval;
         }
     }
 }

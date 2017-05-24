@@ -16,11 +16,13 @@ namespace TestFirebaseNotificationsAPI.Controllers
     {
         private PushNotificationService _notificationService;
         private PushRegistrationService _registrationService;
+        private IServiceProvider _provider;
 
-        public PushNotificationsController(PushNotificationService pushNotificationService, PushRegistrationService pushRegistrationService)
+        public PushNotificationsController(IServiceProvider provider, PushNotificationService pushNotificationService, PushRegistrationService pushRegistrationService)
         {
             this._notificationService = pushNotificationService;
             this._registrationService = pushRegistrationService;
+            this._provider = provider;
         }
 
         // GET api/values
@@ -30,59 +32,78 @@ namespace TestFirebaseNotificationsAPI.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // POST api/values
+        // POST api/pushnotifications/start
         [HttpPost("start/{token}")]
-        public IActionResult Post([FromBody]TestModel data, string token)
+        public IActionResult Start([FromBody]TestModel data, string token)
         {
             if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
-                return NotFound(new { Message = "Token not found" });
+                return Json(new { Ok = false, Message = "Token not found" });
 
             if (!reg.Enabled)
-                return BadRequest(new { Message = "Notifications are disabled" });
+                return Json(new { Ok = false, Message = "Notifications are disabled" });
 
-            TestContext context = new TestContext()
-            {
-                Test = data,
-                SentNotifications = new List<NotificationContext>()
-            };
+            data.PushRegistrationId = reg.Id;
 
-            Object tcLock = GlobalStore.RunningTestLocks.GetOrAdd(token, new Object());
-            TestContext t = GlobalStore.RunningTests.GetOrAdd(token, context);
-
-            TestApplication testApp;
-
-            // Stop already existing test
-            lock (tcLock)
-            {
-                if (t != context)
-                {
-                    t.Stop = true;
-                }
-
-                testApp = new TestApplication(context, _notificationService);
-            }
+            TestApplication testApp = new TestApplication(data);
 
             Task.Run((Action)testApp.Run);
 
-            return Json(new { ok = true });
+            return Json(new { Ok = true });
         }
 
-        // POST api/values
+        // POST api/pushnotifications/stop
+        [HttpPost("stop/{token}")]
+        public IActionResult Stop(string token)
+        {
+            PushRegistrationModel reg = _registrationService.Get(token);
+
+            if (reg == null)
+                return Json(new { Ok = false, Message = "Token not found" });
+
+            int id = reg.Id;
+
+            TestApplication testApp;
+
+            if (!GlobalStore.RunningTests.TryGetValue(id, out testApp))
+                return Json(new { Ok = false, Message = "No running test found" });
+
+            testApp.Stop = true;
+
+            GlobalStore.RunningTests.TryRemove(id, out testApp);
+
+            return Json(new { Ok = true });
+        }
+
+        // POST api/pushnotifications/stoptimer
+        [HttpPost("stoptimer/{token}")]
+        public IActionResult StopTimer([FromBody]TestNotifactionContentModel data)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
+            DateTime now = DateTime.UtcNow;
+            TimeSpan latancy = data.Sent.Subtract(now);
+            data.Latancy = latancy.Milliseconds;
+
+            return Json(new { Ok = true, Data = data });
+        }
+
+        // POST api/pushnotifications
         [HttpPost("{token}")]
         public IActionResult Post(string token)
         {
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
-                return NotFound(new { Message = "Token not found" });
+                return Json(new { Ok = false, Message = "Token not found" });
 
             if (!reg.Enabled)
-                return BadRequest(new { Message = "Notifications are disabled" });
+                return Json(new { Ok = false, Message = "Notifications are disabled" });
 
             NotificationModel notification = new NotificationModel()
             {
@@ -96,21 +117,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             _notificationService.Send(notification);
 
-            return Ok();
+            return Json(new { Ok = false });
         }
-
-        /*
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
-        */
     }
 }

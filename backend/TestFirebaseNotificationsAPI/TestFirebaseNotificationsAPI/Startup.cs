@@ -26,12 +26,8 @@ namespace TestFirebaseNotificationsAPI
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
 
-            var options = new DbContextOptionsBuilder<DatabaseContext>()
-                    .UseSqlite(_connectionString)
-                    .Options;
-
             // Create the schema in the database
-            using (var context = new DatabaseContext(options))
+            using (var context = DatabaseContext.CreateDefault())
             {
                 context.Database.EnsureCreated();
             }
