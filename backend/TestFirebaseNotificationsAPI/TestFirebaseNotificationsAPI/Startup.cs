@@ -10,13 +10,12 @@ using Microsoft.Extensions.Logging;
 using TestFirebaseNotificationsAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using System.Configuration;
 
 namespace TestFirebaseNotificationsAPI
 {
     public class Startup
     {
-        private const string _connectionString = "Data Source=MyDatabase"; // on file
-
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -38,11 +37,13 @@ namespace TestFirebaseNotificationsAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            string connectionString = ConfigurationManager.AppSettings["ConnectionString"];
+
             // Add framework services.
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkSqlite()
-                    .AddDbContext<DatabaseContext>(options => options.UseSqlite(_connectionString));
+                    .AddDbContext<DatabaseContext>(options => options.UseSqlite(connectionString));
             services.AddScoped<PushNotificationService>();
             services.AddScoped<PushRegistrationService>();
         }
