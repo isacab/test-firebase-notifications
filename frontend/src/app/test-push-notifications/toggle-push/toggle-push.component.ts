@@ -13,6 +13,7 @@ export class TogglePushComponent implements OnInit {
   canToggle: boolean;
   buttonText: string;
   isLoading : boolean;
+  error : string;
 
   constructor(private pushService: PushNotificationService) { }
 
@@ -41,8 +42,9 @@ export class TogglePushComponent implements OnInit {
       .then(() => {
         this.isEnabled = !this.isEnabled;
         this.setButtonText(this.isEnabled);
+        this.error = '';
       }).catch((error) => {
-        // Show error message
+        this.error = error;
       }).then(() => {
         this.isLoading = false;
         this.canToggle = true;
