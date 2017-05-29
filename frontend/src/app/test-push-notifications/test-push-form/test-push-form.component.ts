@@ -50,7 +50,8 @@ export class TestPushFormComponent implements OnInit {
       this.testService.startTest(token, this.model)
         .then(() => {
           this.isSubmitting = false;
-        }).catch(() => {
+        }).catch((err) => {
+          this.formErrors.submit = err;
           this.isSubmitting = false;
         });
     }
@@ -64,7 +65,8 @@ export class TestPushFormComponent implements OnInit {
       this.testService.clearTest(token)
         .then(() => {
           this.isClearing = false;
-        }).catch(() => {
+        }).catch((err) => {
+          this.formErrors.clear = err;
           this.isClearing = false;
         });
     }
@@ -106,13 +108,15 @@ export class TestPushFormComponent implements OnInit {
       'required': 'Interval is required.',
       'min':      'Interval must be at least 0.',
       'max':      'Interval cannot be more than 100.',
-    },
+    }
   };
 
   formErrors = {
     'numNotificationsPerInterval': '',
     'numIntervals': '',
-    'interval': ''
+    'interval': '',
+    'submit': '',
+    'clear': ''
   };
 
 }

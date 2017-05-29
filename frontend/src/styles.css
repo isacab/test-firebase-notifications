@@ -48,3 +48,7 @@ div.content {
     max-width: 512px;
     margin: 20px;
 }
+
+.formError {
+  color: #AA2222;
+}

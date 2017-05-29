@@ -43,6 +43,7 @@
                   <button md-raised-button 
                   color="primary" 
                   type="submit"
+                  name="submit"
                   [disabled]="isSubmitting || !testPushForm.form.valid">
                         <md-spinner class="buttonSpinner" *ngIf="isSubmitting"></md-spinner>
                         Start test
@@ -50,10 +51,13 @@
                   <button md-raised-button 
                   color="warn" 
                   (click)="clear()"
+                  name="clear"
                   [disabled]="isClearing">
                         <md-spinner class="buttonSpinner" *ngIf="isClearing"></md-spinner>
                         Stop test
                   </button>
             </div>
+            <div class="formError">{{ formErrors.submit }}</div>
+            <div class="formError">{{ formErrors.clear }}</div>
       </form>
 </section>
