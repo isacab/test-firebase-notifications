@@ -10,7 +10,7 @@ namespace TestFirebaseNotificationsAPI.Model
     {
         [Required]
         public int SequenceNumber { get; set; }
-
+        
         [Required]
         public DateTime Sent { get; set; }
         

@@ -36,8 +36,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPost("start/{token}")]
         public IActionResult Start([FromBody]TestModel data, string token)
         {
+            if (data == null)
+                return BadRequest(new { Ok = false, Message = "Data is null" });
+
             if (!ModelState.IsValid)
-                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel reg = _registrationService.Get(token);
 
@@ -47,11 +50,21 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if (!reg.Enabled)
                 return Json(new { Ok = false, Message = "Notifications are disabled" });
 
-            data.PushRegistrationId = reg.Id;
+            int id = reg.Id;
+
+            data.PushRegistrationId = id;
 
             TestApplication testApp = new TestApplication(data);
 
-            Task.Run((Action)testApp.Run);
+            TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
+
+            if (existingApp != testApp)
+                return Json(new { Ok = false, Message = "Test already exist for this registration token" });
+
+            Task.Run((Action)testApp.Run).ContinueWith((t) =>
+            {
+                GlobalStore.RunningTests.TryRemove(id, out testApp);
+            });
 
             return Json(new { Ok = true });
         }
@@ -80,14 +93,17 @@ namespace TestFirebaseNotificationsAPI.Controllers
         }
 
         // POST api/pushnotifications/stoptimer
-        [HttpPost("stoptimer/{token}")]
+        [HttpPost("stoptimer")]
         public IActionResult StopTimer([FromBody]TestNotifactionContentModel data)
         {
+            if (data == null)
+                return BadRequest(new { Ok = false, Message = "Data is null" });
+
             if (!ModelState.IsValid)
-                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             DateTime now = DateTime.UtcNow;
-            TimeSpan latancy = data.Sent.Subtract(now);
+            TimeSpan latancy = now.Subtract(data.Sent);
             data.Latancy = latancy.Milliseconds;
 
             return Json(new { Ok = true, Data = data });

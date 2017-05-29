@@ -35,7 +35,7 @@ export class TestPushNotificationsService {
           reject(new Error("Could not update all received messages from service worker, Error: " + event.data.error));
         } else {
           // Clear receivedMessages
-          console.log("[clearTest] Response: ", event.data);
+          console.log("[startTest] Response: ", event.data);
           this._receivedMessages = event.data.allReceived;
           resolve(event.data);
         }
@@ -43,7 +43,7 @@ export class TestPushNotificationsService {
       this.sendMessageToServiceWorker(message, onresponse);
     });
 
-    return notifyServiceWorker.then(() => this.api.startTest(token, test));
+    return notifyServiceWorker.then(() => this.api.startTest(token, test))
   }
 
   newTest() {
@@ -112,7 +112,7 @@ export class TestPushNotificationsService {
 
         let messageType = event.data.messageType;
 
-        if(messageType === 'getAll' || messageType === 'push') {
+        if(messageType === 'getAll' || messageType === 'push' || messageType === 'stopTimer') {
           this._receivedMessages = event.data.allReceived;
         }
       });

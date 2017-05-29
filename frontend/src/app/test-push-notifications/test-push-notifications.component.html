@@ -7,8 +7,14 @@
             <md-list-item *ngFor="let message of receivedMessages">
                 <md-card>
                     <md-card-title>Title: {{message.title}}</md-card-title>
-                    <md-card-content>Body: {{message.body}}</md-card-content>
-                    <md-card-subtitle>Sent: {{message.sent}}</md-card-subtitle>
+                    <md-card-content>
+                        <p>Body: {{message.body}}</p>
+                        <p>Seq number: {{message.sequenceNumber}}</p>
+                        <p>Sent: {{message.sent}}</p>
+                        <p>Latancy: {{message.latancy}}</p>
+                        <p>App to server RTT: {{message.appToServerRTT}}</p>
+                        <p>Num retries: {{message.numRetries}}</p>
+                    </md-card-content>
                 </md-card>
             </md-list-item>
         </md-list>

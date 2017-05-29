@@ -9,6 +9,8 @@ firebase.initializeApp({
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
+const apiBaseUrl = 'http://localhost:21378/api';
+
 const receivedMessages = [];
 
 /*messaging.setBackgroundMessageHandler(function (payload) {
@@ -24,6 +26,14 @@ const receivedMessages = [];
 
     return self.registration.showNotification(title, options);
 });*/
+
+self.addEventListener('install', function(event) {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
+});
 
 self.addEventListener('push', function (event) {
     console.log('[sw.js] Received a push message', event.data.json());
@@ -43,14 +53,6 @@ self.addEventListener('push', function (event) {
     //let receivedDateTime = new Date().getTime();
 
     //data.receivedDateTime = receivedDateTime;
-
-    receivedMessages.push(data);
-    
-    sendMessageToAllClients({
-        messageType: 'push',
-        received: data,
-        allReceived: receivedMessages
-    });
     
     if (!(self.Notification && self.Notification.permission === 'granted')) {
         return;
@@ -114,12 +116,35 @@ self.addEventListener('message', function(event){
 
 function notifyServer(data)
 {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open('POST', 'http://localhost:21378/api');
-    xhttp.onload = function(e) {
-        var data = e.data;
-        // TODO: post notification to clients
-    }
+    let url = apiBaseUrl + '/pushnotifications/stoptimer';
+    fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'accept': 'application/json',
+            'content-type': 'application/json'
+        },
+        mode: 'CORS'
+    }).then(function(response) {
+        return response.json();
+    }).then(function(data) {
+        console.log('[sw.js] response from server ', data);
+
+        if(data.ok !== true)
+            return;
+
+        let msg = data.data;
+
+        receivedMessages.push(msg);
+    
+        sendMessageToAllClients({
+            messageType: 'stopTimer',
+            received: msg,
+            allReceived: receivedMessages
+        });
+    }).catch(function(reason) {
+        console.log('[sw.js] could not notify server ', reason);
+    });
 }
 
 function sendMessageToClient(client, message){

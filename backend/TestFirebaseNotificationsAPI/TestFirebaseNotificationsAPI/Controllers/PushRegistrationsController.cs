@@ -37,8 +37,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPost]
         public IActionResult Post([FromBody]PushRegistrationModel data)
         {
+            if (data == null)
+                return BadRequest(new { Ok = false, Message = "Data is null" });
+
             if (!ModelState.IsValid)
-                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             // Check if token is already registrated
             PushRegistrationModel model = _service.Get(data.Token);
@@ -57,8 +60,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPut("{token}")]
         public IActionResult Put([FromBody]PushRegistrationModel data, string token)
         {
+            if (data == null)
+                return BadRequest(new { Ok = false, Message = "Data is null" });
+
             if (!ModelState.IsValid)
-                return Json(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel model = _service.Get(token);
 
