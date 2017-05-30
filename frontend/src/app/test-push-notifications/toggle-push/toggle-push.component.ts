@@ -19,8 +19,6 @@ export class TogglePushComponent implements OnInit {
 
   ngOnInit() {
 
-    console.log("Is initialize: ", this.pushService.isInitialized);
-
     this.label = "Push notifications: ";
 
     this.pushService.pushRegistrationChanged.subscribe(() => {
@@ -44,8 +42,6 @@ export class TogglePushComponent implements OnInit {
     this.isLoading = true;
     this.pushService.setEnabled(!this.isEnabled)
       .then(() => {
-        this.isEnabled = !this.isEnabled;
-        this.setButtonText(this.isEnabled);
         this.error = '';
       }).catch((error) => {
         this.error = error;
