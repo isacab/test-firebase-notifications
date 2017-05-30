@@ -60,10 +60,10 @@ export function initializePushNotifications(service: PushNotificationService): F
     ApiService,
     PushNotificationService, 
     TestPushNotificationsService,
-    { provide: APP_INITIALIZER,
+    /*{ provide: APP_INITIALIZER,
       useFactory: initializePushNotifications,
       deps: [PushNotificationService], 
-      multi: true }
+      multi: true }*/
   ],
   bootstrap: [AppComponent]
 })

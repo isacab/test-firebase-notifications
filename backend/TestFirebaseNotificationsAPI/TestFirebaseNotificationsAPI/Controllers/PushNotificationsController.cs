@@ -37,18 +37,18 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult Start([FromBody]TestModel data, string token)
         {
             if (data == null)
-                return BadRequest(new { Ok = false, Message = "Data is null" });
+                return BadRequest(new { Message = "Data is null" });
 
             if (!ModelState.IsValid)
-                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
-                return Json(new { Ok = false, Message = "Token not found" });
+                return BadRequest(new { Message = "Token not found" });
 
             if (!reg.Enabled)
-                return Json(new { Ok = false, Message = "Notifications are disabled" });
+                return BadRequest(new { Message = "Notifications are disabled" });
 
             int id = reg.Id;
 
@@ -66,7 +66,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 GlobalStore.RunningTests.TryRemove(id, out testApp);
             });
 
-            return Json(new { Ok = true });
+            return Ok();
         }
 
         // POST api/pushnotifications/stop
@@ -76,20 +76,20 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
-                return Json(new { Ok = false, Message = "Token not found" });
+                return BadRequest(new { Message = "Token not found" });
 
             int id = reg.Id;
 
             TestApplication testApp;
 
             if (!GlobalStore.RunningTests.TryGetValue(id, out testApp))
-                return Json(new { Ok = false, Message = "No running test found" });
+                return BadRequest(new { Message = "No running test found" });
 
             testApp.Stop = true;
 
             GlobalStore.RunningTests.TryRemove(id, out testApp);
 
-            return Json(new { Ok = true });
+            return Ok();
         }
 
         // POST api/pushnotifications/stoptimer
@@ -97,16 +97,16 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult StopTimer([FromBody]TestNotifactionContentModel data)
         {
             if (data == null)
-                return BadRequest(new { Ok = false, Message = "Data is null" });
+                return BadRequest(new { Message = "Data is null" });
 
             if (!ModelState.IsValid)
-                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             DateTime now = DateTime.UtcNow;
             TimeSpan latancy = now.Subtract(data.Sent);
             data.Latancy = latancy.Milliseconds;
 
-            return Json(new { Ok = true, Data = data });
+            return Json(data);
         }
 
         // POST api/pushnotifications
@@ -116,10 +116,10 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel reg = _registrationService.Get(token);
 
             if (reg == null)
-                return Json(new { Ok = false, Message = "Token not found" });
+                return BadRequest(new { Message = "Token not found" });
 
             if (!reg.Enabled)
-                return Json(new { Ok = false, Message = "Notifications are disabled" });
+                return BadRequest(new { Message = "Notifications are disabled" });
 
             NotificationModel notification = new NotificationModel()
             {
@@ -133,7 +133,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             _notificationService.Send(notification);
 
-            return Json(new { Ok = false });
+            return Ok();
         }
     }
 }

@@ -18,8 +18,8 @@ export class TestPushFormComponent implements OnInit {
 
   constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
   
-  testPushForm: NgForm;
-  @ViewChild('testPushForm') currentForm: NgForm;
+  testPushForm : NgForm;
+  @ViewChild('testPushForm') currentForm : NgForm;
 
   ngAfterViewChecked() {
     this.formChanged();
@@ -43,30 +43,36 @@ export class TestPushFormComponent implements OnInit {
   }
 
   submit() {
-    let pushReg = this.pushService.getPushRegistration();
+    let pushReg = this.pushService.pushRegistration;
     if(pushReg) {
       let token = pushReg.token;
       this.isSubmitting = true;
       this.testService.startTest(token, this.model)
         .then(() => {
           this.isSubmitting = false;
+          this.formErrors.submit = '';
+          this.formErrors.clear = '';
         }).catch((err) => {
           this.formErrors.submit = err;
+          this.formErrors.clear = '';
           this.isSubmitting = false;
         });
     }
   }
 
   clear() {
-    let pushReg = this.pushService.getPushRegistration();
+    let pushReg = this.pushService.pushRegistration;
     if(pushReg) {
       let token = pushReg.token;
       this.isClearing = true;
       this.testService.clearTest(token)
         .then(() => {
           this.isClearing = false;
+          this.formErrors.submit = '';
+          this.formErrors.clear = '';
         }).catch((err) => {
           this.formErrors.clear = err;
+          this.formErrors.submit = '';
           this.isClearing = false;
         });
     }

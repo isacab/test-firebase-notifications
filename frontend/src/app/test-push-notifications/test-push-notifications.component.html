@@ -1,22 +1,29 @@
 <div class="content">
-    <toggle-push></toggle-push>
-    <div>
-        <test-push-form *ngIf="isEnabled"></test-push-form>
-        <h2>Received notifications</h2>
-        <md-list class="receivedList">
-            <md-list-item *ngFor="let message of receivedMessages">
-                <md-card>
-                    <md-card-title>Title: {{message.title}}</md-card-title>
-                    <md-card-content>
-                        <p>Body: {{message.body}}</p>
-                        <p>Seq number: {{message.sequenceNumber}}</p>
-                        <p>Sent: {{message.sent}}</p>
-                        <p>Latancy: {{message.latancy}}</p>
-                        <p>App to server RTT: {{message.appToServerRTT}}</p>
-                        <p>Num retries: {{message.numRetries}}</p>
-                    </md-card-content>
-                </md-card>
-            </md-list-item>
-        </md-list>
+    <div *ngIf="isLoaded">
+        <toggle-push></toggle-push>
+        <div>
+            <test-push-form *ngIf="isEnabled"></test-push-form>
+            <h2>Received notifications 
+                <span *ngIf="currentTest">
+                    ({{ receivedMessages?.length || 0 }}/{{ currentTest?.totalNumNotifications() || 0 }})
+                </span>
+            </h2>
+            <md-list class="receivedList">
+                <md-list-item *ngFor="let message of receivedMessages">
+                    <md-card>
+                        <md-card-title>Title: {{message.title}}</md-card-title>
+                        <md-card-content>
+                            <p>Body: {{message.body}}</p>
+                            <p>Seq number: {{message.sequenceNumber}}</p>
+                            <p>Sent: {{message.sent}}</p>
+                            <p>Latancy: {{message.latancy}}</p>
+                            <p>App to server RTT: {{message.appToServerRTT}}</p>
+                            <p>Num retries: {{message.numRetries}}</p>
+                        </md-card-content>
+                    </md-card>
+                </md-list-item>
+            </md-list>
+        </div>
     </div>
+    <div *ngIf="error">{{ error }}</div>
 </div>

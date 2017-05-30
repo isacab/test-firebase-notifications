@@ -9,7 +9,7 @@ firebase.initializeApp({
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-const apiBaseUrl = 'http://localhost:52026/api';
+const apiBaseUrl = 'http://localhost:21378/api';
 
 const receivedMessages = [];
 
@@ -130,16 +130,11 @@ function notifyServer(data)
     }).then(function(data) {
         console.log('[sw.js] response from server ', data);
 
-        if(data.ok !== true)
-            return;
-
-        let msg = data.data;
-
-        receivedMessages.push(msg);
+        receivedMessages.push(data);
     
         sendMessageToAllClients({
             messageType: 'stopTimer',
-            received: msg,
+            received: data,
             allReceived: receivedMessages
         });
     }).catch(function(reason) {
@@ -161,7 +156,6 @@ function sendMessageToAllClients(message){
         });
     });
 }
-
 
 /* Use this function to send messages from client to service worker.
 function send_message_to_sw(msg){

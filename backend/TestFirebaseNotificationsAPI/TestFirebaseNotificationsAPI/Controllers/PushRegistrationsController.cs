@@ -28,9 +28,9 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel model = _service.Get(token);
 
             if(model == null)
-                return Json(new { Ok = false, Message = "No resource found" });
+                return BadRequest(new { Message = "No resource found" });
 
-            return Json(new { Ok = true, Data = model });
+            return Json(model);
         }
 
         // POST api/pushregistrations
@@ -38,10 +38,10 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult Post([FromBody]PushRegistrationModel data)
         {
             if (data == null)
-                return BadRequest(new { Ok = false, Message = "Data is null" });
+                return BadRequest(new { Message = "Data is null" });
 
             if (!ModelState.IsValid)
-                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             // Check if token is already registrated
             PushRegistrationModel model = _service.Get(data.Token);
@@ -53,7 +53,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Insert(data);
             _service.SaveChanges();
 
-            return Json(new { Ok = true, Data = data });
+            return Json(data);
         }
 
         // PUT api/pushregistrations/{token}
@@ -61,15 +61,15 @@ namespace TestFirebaseNotificationsAPI.Controllers
         public IActionResult Put([FromBody]PushRegistrationModel data, string token)
         {
             if (data == null)
-                return BadRequest(new { Ok = false, Message = "Data is null" });
+                return BadRequest(new { Message = "Data is null" });
 
             if (!ModelState.IsValid)
-                return BadRequest(new { Ok = false, Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             PushRegistrationModel model = _service.Get(token);
 
             if (model == null)
-                return Json(new { Ok = false, Message = "Resource does not exist" });
+                return BadRequest(new { Message = "Resource not found" });
 
             model.Token = data.Token;
             model.Enabled = data.Enabled;
@@ -77,7 +77,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _service.Update(model);
             _service.SaveChanges();
 
-            return Json(new { Ok = true, Data = data });
+            return Json(data);
         }
 
         // DELETE api/pushregistrations/{token}
@@ -87,12 +87,12 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel model = _service.Get(token);
 
             if (model == null)
-                return Json(new { Ok = false, Message = "Resource does not exist" });
+                return BadRequest(new { Message = "Resource not found" });
 
             _service.Delete(model);
             _service.SaveChanges();
 
-            return Json(new { Ok = true });
+            return Ok();
         }
     }
 }

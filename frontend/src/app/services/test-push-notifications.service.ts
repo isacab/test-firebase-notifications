@@ -4,22 +4,34 @@ import { PushNotificationService } from './push-notification.service';
 import { PushRegistration } from '../models/push-registration';
 import { Test } from '../models/test';
 
+import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
+
 @Injectable()
 export class TestPushNotificationsService {
 
   private _receivedMessages : Array<any>;
 
-  constructor(private api : ApiService, private pushService : PushNotificationService) { 
-    if(!pushService.isInitialized) {
-      throw new Error("PushNotificationService was not initialized");
-    }
+  private _test : Test;
 
-    this.setServiceWorkerMessageListeners();
-    this.updateAllReceived();
+  constructor(private api : ApiService, private pushService : PushNotificationService) { 
+    if(pushService.isInitialized) {
+      this.setServiceWorkerMessageListeners();
+      this.updateAllReceived();
+    } else {
+      pushService.isInitializedChanged.subscribe(() => {
+        this.setServiceWorkerMessageListeners();
+        this.updateAllReceived();
+      });
+    } 
+
   }
 
   get receivedMessages() : Array<any> {
     return this._receivedMessages;
+  }
+
+  get currentTest() : Test {
+    return this._test;
   }
 
   send(token : string) : Promise<any> {
@@ -43,11 +55,9 @@ export class TestPushNotificationsService {
       this.sendMessageToServiceWorker(message, onresponse);
     });
 
-    return notifyServiceWorker.then(() => this.api.startTest(token, test))
-  }
-
-  newTest() {
-    // TODO call api to start new test
+    return notifyServiceWorker
+      .then(() => this.api.startTest(token, test))
+      .then(() => this._test = new Test(test));
   }
 
   clearTest(token : string) {

@@ -82,24 +82,16 @@ export class ApiService {
 
   private extractData(res: Response) {
     let body = res.json();
-    return body.data || { };
+    return body || { };
   }
 
   private handleError (error: Response | any) {
-    let rejectError: Error;
-    let errMsg : string;
-
-    if (error instanceof Response) {
-      let body = error.json() || '';
-      let err = body.error || JSON.stringify(body);
-
-      errMsg = `${error.status} - ${error.statusText || ''} ${err}` || '';
-    } else {
-      errMsg = error.message ? error.message : error.toString() || '';
-    }
+    let body = this.extractData(error);
+    let errMsg = body.message || '';
 
     console.error(errMsg);
-    return Promise.reject(errMsg);
+
+    return Promise.reject(new Error(errMsg));
   }
 
 }

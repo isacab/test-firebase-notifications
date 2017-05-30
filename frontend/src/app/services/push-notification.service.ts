@@ -4,10 +4,8 @@ import { FirebaseApp } from "angularfire2";
 import * as firebase from 'firebase';
 
 import 'rxjs/add/operator/toPromise';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Subject } from 'rxjs/Subject';
+import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
 
-import { IPair } from '../interfaces';
 import { ApiService } from './api.service';
 
 import { PushRegistration } from '../models/push-registration';
@@ -21,10 +19,7 @@ declare var navigator: any;
 @Injectable()
 export class PushNotificationService {
   
-  private readonly _messaging: firebase.messaging.Messaging;
-  
-  // Current push registration
-  private _pushRegistration : PushRegistration;
+  private readonly _messaging : firebase.messaging.Messaging;
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, private api : ApiService) { 
     this._messaging = firebaseApp.messaging();
@@ -42,15 +37,17 @@ export class PushNotificationService {
     this.setValue(this._isInitializedSource, value);
   }
 
-  // [end] Observable properties
-
-  /**
-   * Get a copy of the push registration. 
-   * Note: If no push registration is set a default registration will be returned.
-   */
-  getPushRegistration() : PushRegistration {
-    return new PushRegistration(this._pushRegistration);
+  // pushRegistration - observable property
+  private _pushRegistrationSource : BehaviorSubject<PushRegistration> = new BehaviorSubject<PushRegistration>(null);
+  pushRegistrationChanged = this._pushRegistrationSource.asObservable();
+  get pushRegistration() : PushRegistration {
+    return this._pushRegistrationSource.getValue();
   }
+  private setPushRegistration(value : PushRegistration) : void {
+    this.setValue(this._pushRegistrationSource, value);
+  }
+
+  // [end] Observable properties
 
   /**
    * set value for an BehaviorSubject
@@ -78,7 +75,6 @@ export class PushNotificationService {
       })
       .then(() => this.setMessagingEventListeners())
       .then(() => this.getToken())
-      .then((token) => this.loadPushRegistration(token))
       .then(() => this.setIsInitialized(true))
       .catch((error) => {
         // Something went wrong during the initialization
@@ -99,54 +95,68 @@ export class PushNotificationService {
    * 
    * @param token Current registration token generated from messaging.getToken()
    */
-  private loadPushRegistration(token : string) : Promise<PushRegistration> {
-    return new Promise<PushRegistration>((resolve, reject) => {
-      if(!token) {
-        // No token, nothing to load
-        resolve(undefined);
-        return;
-      }
+  loadPushRegistration() : Promise<PushRegistration> {
+    let promise = new Promise<PushRegistration>((resolve, reject) => {
 
-      // Get the last token sent to the server from local storage
-      let lastSentToken = this.getLocalToken();
+      this._messaging.getToken().then((token) => {
 
-      if(!lastSentToken) {
-        // No token has been sent to the server which means there is no push registration to load from server.
-        resolve(undefined);
-        return;
-      }
+        // Get the last token sent to the server from local storage
+        let lastSentToken = this.getLocalToken();
 
-      // Check if we have a token that has not been sent to the server yet
-      if(lastSentToken !== token) {
-        // Get current push registration at the server
-        this.api.getPushRegistration(lastSentToken)
-          .then((reg : PushRegistration) => {
-            // Update the push registration with the current token
-            reg.token = token;
-            return this.sendToServer(reg, lastSentToken);
-          })
-          .then((reg : PushRegistration) => {
-            // Push registration has been updated
-            this._pushRegistration = reg;
-            resolve(reg);
-          })
-          .catch((error) => {
-            reject(new Error("Could not load registration token."));
-          });
-      } 
-      else {
-        // Get current push registration at the server
-        this.api.getPushRegistration(token)
-          .then((reg : PushRegistration) => {
-            this._pushRegistration = reg;
-            resolve(reg);
-          })
-          .catch((error) => {
-            reject(new Error("Could not load registration token."));
-          });
-      }
+        // Check if we have a token that has not been sent to the server yet
+        if(lastSentToken && lastSentToken !== token) {
+          // Get current push registration at the server
+          this.api.getPushRegistration(lastSentToken)
+            .then((reg : PushRegistration) => {
+              // Update the push registration with the current token
+              reg.token = token;
+              reg.enabled = token ? reg.enabled : false;
+              return this.sendToServer(reg, lastSentToken);
+            })
+            .then((reg : PushRegistration) => {
+              // Push registration has been updated
+              this.setPushRegistration(reg);
+              resolve(reg);
+            })
+            .catch((error) => {
+              if(error === 'Resource not found') {
+                // This happens when we have tried to update but token did not exist.
+                // Remove local token and retry loading.
+                this.setLocalToken('');
+                return this.loadPushRegistration();
+              } else {
+                reject(new Error("Could not load registration token."));
+              }
+            });
+        } 
+        else if(token) {
+          // Get current push registration at the server
+          this.api.getPushRegistration(token)
+            .then((reg : PushRegistration) => {
+              this.setPushRegistration(reg);
+              resolve(reg);
+            })
+            .catch((error) => {
+              if(error === 'Resource not found') {
+              this.setPushRegistration(null);
+                resolve(null);
+              } else {
+                reject(new Error("Could not load registration token."));
+              }
+            });
+        } else {
+          // No token and lastSentToken, nothing to load
+          // This device has no push registration yet
+          this.setPushRegistration(null);
+          resolve(null);
+        }
+      }).catch((error) => {
+        reject(new Error("Could not load registration token."));
+      });
       
     });
+
+    return promise;
   }
 
   /**
@@ -192,7 +202,7 @@ export class PushNotificationService {
   setEnabled(value : boolean) : Promise<any> {
     let promise : Promise<any>;
 
-    let enabled = this._pushRegistration ? this._pushRegistration.enabled : false;
+    let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
 
     // Check if push is already enabled
     if(enabled === value) {
@@ -218,7 +228,7 @@ export class PushNotificationService {
         .then(() => this.getToken()) // get current token
         .then((currentToken) => {
 
-          let oldToken = this._pushRegistration ? this._pushRegistration.token : undefined;
+          let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
 
           let data = new PushRegistration({
             token: currentToken,
@@ -228,7 +238,7 @@ export class PushNotificationService {
           return this.sendToServer(data, oldToken);
         })
         .then((reg : PushRegistration) => {
-          this._pushRegistration = reg;
+          this.setPushRegistration(reg);
           resolve();
         })
         .catch((err) => {
@@ -242,7 +252,7 @@ export class PushNotificationService {
    * Private helper method to setEnabled. This method disables push notifications.
    */
   private disable() : Promise<any> {
-    const currentToken = this._pushRegistration.token;
+    const currentToken = this.pushRegistration ? this.pushRegistration.token : undefined;
     const data = new PushRegistration({
       token: currentToken,
       enabled: false
@@ -250,7 +260,7 @@ export class PushNotificationService {
     
     let promise = this.sendToServer(data, currentToken)
       .then((reg : PushRegistration) => {
-        this._pushRegistration = reg;
+        this.setPushRegistration(reg);
       })
       .catch(function(err) {
         throw err;
@@ -290,10 +300,11 @@ export class PushNotificationService {
         console.log('Token refreshed.');
         messaging.getToken()
             .then((refreshedToken) => {
-                let oldToken = this._pushRegistration.token;
+                let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
+                let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
                 let data = new PushRegistration({
                   token: refreshedToken,
-                  enabled: this._pushRegistration.enabled
+                  enabled: enabled
                 });
                 return this.sendToServer(data, oldToken);
             })
