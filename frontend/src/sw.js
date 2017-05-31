@@ -116,7 +116,7 @@ self.addEventListener('message', function(event){
 
 function notifyServer(data)
 {
-    let url = apiBaseUrl + '/pushnotifications/stoptimer';
+    let url = apiBaseUrl + '/testpushnotifications/stoptimer';
     fetch(url, {
         method: 'POST',
         body: JSON.stringify(data),

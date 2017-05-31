@@ -9,6 +9,7 @@ import { MdProgressSpinnerModule } from '@angular/material';
 import { MdToolbarModule } from '@angular/material';
 import { MdCardModule } from '@angular/material';
 import { MdInputModule } from '@angular/material';
+import { RouterModule, Routes } from '@angular/router';
 
 import 'hammerjs';
 
@@ -17,9 +18,12 @@ import { PushNotificationService } from './services/push-notification.service';
 import { TestPushNotificationsService } from './services/test-push-notifications.service';
 
 import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+
 import { TogglePushComponent } from './test-push-notifications/toggle-push/toggle-push.component';
 import { TestPushNotificationsComponent } from './test-push-notifications/test-push-notifications.component';
 import { TestPushFormComponent } from './test-push-notifications/test-push-form/test-push-form.component';
+import { TestListComponent } from './test-list/test-list.component';
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
@@ -41,7 +45,8 @@ export function initializePushNotifications(service: PushNotificationService): F
     AppComponent,
     TogglePushComponent,
     TestPushNotificationsComponent,
-    TestPushFormComponent
+    TestPushFormComponent,
+    TestListComponent
   ],
   imports: [
     BrowserModule,
@@ -55,6 +60,7 @@ export function initializePushNotifications(service: PushNotificationService): F
     MdToolbarModule,
     MdCardModule,
     MdInputModule,
+    AppRoutingModule
   ],
   providers: [
     ApiService,

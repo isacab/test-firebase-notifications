@@ -1,4 +1,5 @@
 export class Test {
+    name : string;
     numNotificationsPerInterval : number;
     numIntervals : number;
     interval : number;

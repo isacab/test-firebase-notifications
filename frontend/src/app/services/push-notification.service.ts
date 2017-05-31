@@ -78,13 +78,6 @@ export class PushNotificationService {
       .then(() => this.setIsInitialized(true))
       .catch((error) => {
         // Something went wrong during the initialization
-        if(error !== null && typeof error === 'object') {
-          if(error.name === PushNotAvailableError.name 
-            && error.code === PushNotAvailableError.Blocked) {
-              //blocked
-              console.log("blocked");
-          }
-        }
         throw error;
       });
   }
@@ -119,7 +112,7 @@ export class PushNotificationService {
               resolve(reg);
             })
             .catch((error) => {
-              if(error === 'Resource not found') {
+              if(error.message === 'Resource not found') {
                 // This happens when we have tried to update but token did not exist.
                 // Remove local token and retry loading.
                 this.setLocalToken('');
@@ -137,8 +130,9 @@ export class PushNotificationService {
               resolve(reg);
             })
             .catch((error) => {
-              if(error === 'Resource not found') {
-              this.setPushRegistration(null);
+              if(error.message === 'Resource not found') {
+                this.setLocalToken('');
+                this.setPushRegistration(null);
                 resolve(null);
               } else {
                 reject(new Error("Could not load registration token."));

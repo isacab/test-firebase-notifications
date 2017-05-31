@@ -34,10 +34,6 @@ export class TestPushNotificationsService {
     return this._test;
   }
 
-  send(token : string) : Promise<any> {
-    return this.api.sendPushNotification(token);
-  }
-
   startTest(token : string, test : Test) : Promise<any> {
     // Notify service worker to clear receivedMessages
     let notifyServiceWorker = new Promise((resolve, reject) => {

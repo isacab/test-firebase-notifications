@@ -4,15 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using TestFirebaseNotificationsAPI.Model;
 
-namespace TestFirebaseNotificationsAPI.Services
+namespace TestFirebaseNotificationsAPI.Repository
 {
-    public class PushRegistrationService
+    public class PushRegistrationRepository : Repository
     {
-        private DatabaseContext _databaseContext;
-
-        public PushRegistrationService(DatabaseContext databaseContext)
+        public PushRegistrationRepository(DatabaseContext databaseContext) : base(databaseContext)
         {
-            this._databaseContext = databaseContext;
         }
 
         public PushRegistrationModel Get(string token)
@@ -52,12 +49,7 @@ namespace TestFirebaseNotificationsAPI.Services
             _databaseContext.PushRegistrations.RemoveRange(models);
         }
 
-        public int SaveChanges()
-        {
-            return _databaseContext.SaveChanges();
-        }
-
-        private string GenerateDeviceId()
+        /*private string GenerateDeviceId()
         {
             Guid g = Guid.NewGuid();
             string guidString = Convert.ToBase64String(g.ToByteArray());
@@ -66,6 +58,6 @@ namespace TestFirebaseNotificationsAPI.Services
             guidString = guidString.Replace("/", "");
 
             return guidString;
-        }
+        }*/
     }
 }

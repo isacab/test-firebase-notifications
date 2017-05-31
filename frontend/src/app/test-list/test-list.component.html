@@ -1,0 +1,25 @@
+<h2>My Tests</h2>
+<table class="received-table mdl-data-table">
+    <thead>
+        <tr>
+          <th class="mdl-data-table__cell--non-numeric">Name</th>
+          <th>Num Notifications Per Interval</th>
+          <th>Num Interval</th>
+          <th>Interval (ms)</th>
+          <!--<th class="mdl-data-table__cell--non-numeric">Received Notifications</th>
+          <th>Average Latancy</th>
+          <th>Average App to Server RTT</th>
+          <th>Average Num Retries</th>-->
+          <th class="mdl-data-table__cell--non-numeric">Created</th>
+        </tr>
+    </thead>
+      <tbody>
+        <tr *ngFor="let test of testList">
+          <td class="mdl-data-table__cell--non-numeric">{{test.name}}</td>
+          <td>{{test.numNotificationsPerInterval}}</td>
+          <td>{{test.numIntervals}}</td>
+          <td>{{test.interval}}</td>
+          <td class="mdl-data-table__cell--non-numeric">{{test.createdAt}}</td>
+        </tr>
+      </tbody>
+</table>

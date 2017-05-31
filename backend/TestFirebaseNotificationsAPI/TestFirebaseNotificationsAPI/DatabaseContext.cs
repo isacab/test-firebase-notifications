@@ -12,10 +12,12 @@ namespace TestFirebaseNotificationsAPI
     public class DatabaseContext : DbContext
     {
         public DbSet<PushRegistrationModel> PushRegistrations { get; set; }
+        public DbSet<TestModel> Tests { get; set; }
+        public DbSet<TestNotifactionContentModel> Notifications { get; set; }
 
-        public DatabaseContext(DbContextOptions<DatabaseContext> options)
-            : base(options)
-        { }
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+        {
+        }
 
         /**
          * Create a new instance of DatabaseContext with default options

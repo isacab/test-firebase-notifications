@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFirebaseNotificationsAPI.Model;
+using TestFirebaseNotificationsAPI.Repository;
 using TestFirebaseNotificationsAPI.Services;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 
@@ -16,14 +17,14 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
         private readonly TestModel _test; // a copy of the TestModel passed in constructor
         private readonly DatabaseContext _databaseContext;
         private readonly PushNotificationService _pushService;
-        private readonly PushRegistrationService _regService;
+        private readonly PushRegistrationRepository _regService;
 
         public TestApplication(TestModel test)
         {
             this._test = new TestModel(test) ?? throw new ArgumentNullException("Test is null");
             this._pushService = new PushNotificationService();
             this._databaseContext = DatabaseContext.CreateDefault();
-            this._regService = new PushRegistrationService(_databaseContext);
+            this._regService = new PushRegistrationRepository(_databaseContext);
         }
 
         #region Properties
@@ -95,7 +96,8 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                             Title = "Test firebase notifications",
                             Body = "Test body",
                             SequenceNumber = seqNumber,
-                            Sent = DateTime.UtcNow
+                            Sent = DateTime.UtcNow,
+                            TestID = _test.Id
                         }
                     };
                     string response = this._pushService.Send(notification);

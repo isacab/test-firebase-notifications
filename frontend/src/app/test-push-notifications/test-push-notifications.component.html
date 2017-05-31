@@ -1,29 +1,47 @@
-<div class="content">
-    <div *ngIf="isLoaded">
-        <toggle-push></toggle-push>
-        <div>
-            <test-push-form *ngIf="isEnabled"></test-push-form>
-            <h2>Received notifications 
-                <span *ngIf="currentTest">
-                    ({{ receivedMessages?.length || 0 }}/{{ currentTest?.totalNumNotifications() || 0 }})
-                </span>
-            </h2>
-            <md-list class="receivedList">
-                <md-list-item *ngFor="let message of receivedMessages">
-                    <md-card>
-                        <md-card-title>Title: {{message.title}}</md-card-title>
-                        <md-card-content>
-                            <p>Body: {{message.body}}</p>
-                            <p>Seq number: {{message.sequenceNumber}}</p>
-                            <p>Sent: {{message.sent}}</p>
-                            <p>Latancy: {{message.latancy}}</p>
-                            <p>App to server RTT: {{message.appToServerRTT}}</p>
-                            <p>Num retries: {{message.numRetries}}</p>
-                        </md-card-content>
-                    </md-card>
-                </md-list-item>
-            </md-list>
-        </div>
+<div *ngIf="isLoaded">
+    <toggle-push></toggle-push>
+    <div>
+        <test-push-form *ngIf="isEnabled"></test-push-form>
+        <h2>Received notifications 
+            <span *ngIf="currentTest">
+                ({{ receivedMessages?.length || 0 }}/{{ currentTest?.totalNumNotifications() || 0 }})
+            </span>
+        </h2>
+        <table class="received-table mdl-data-table">
+            <thead>
+                <tr>
+                <th>Seq number</th>
+                <th class="mdl-data-table__cell--non-numeric">Sent</th>
+                <th>Latancy (ms)</th>
+                <th>App to server RTT (ms)</th>
+                <th>Num retries</th>
+                </tr>
+            </thead>
+                <tbody>
+                <tr *ngFor="let message of receivedMessages">
+                <td>{{message.sequenceNumber}}</td>
+                <td class="mdl-data-table__cell--non-numeric">{{message.sent}}</td>
+                <td>{{message.latancy}}</td>
+                <td>{{message.appToServerRTT}}</td>
+                <td>{{message.numRetries}}</td>
+                </tr>
+                </tbody>
+        </table>
+        <!--<md-list class="receivedList">
+            <md-list-item *ngFor="let message of receivedMessages">
+                <md-card>
+                    <md-card-title>Title: {{message.title}}</md-card-title>
+                    <md-card-content>
+                        <p>Body: {{message.body}}</p>
+                        <p>Seq number: {{message.sequenceNumber}}</p>
+                        <p>Sent: {{message.sent}}</p>
+                        <p>Latancy: {{message.latancy}}</p>
+                        <p>App to server RTT: {{message.appToServerRTT}}</p>
+                        <p>Num retries: {{message.numRetries}}</p>
+                    </md-card-content>
+                </md-card>
+            </md-list-item>
+        </md-list>-->
     </div>
-    <div *ngIf="error">{{ error }}</div>
 </div>
+<div *ngIf="error">{{ error }}</div>

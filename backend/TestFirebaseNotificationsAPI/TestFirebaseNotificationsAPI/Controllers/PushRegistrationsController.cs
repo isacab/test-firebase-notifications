@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TestFirebaseNotificationsAPI.Services;
 using TestFirebaseNotificationsAPI.Model;
+using TestFirebaseNotificationsAPI.Repository;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -14,21 +15,21 @@ namespace TestFirebaseNotificationsAPI.Controllers
     [Produces("application/json")]
     public class PushRegistrationsController : Controller
     {
-        private PushRegistrationService _service;
+        private PushRegistrationRepository _registrations;
 
-        public PushRegistrationsController(PushRegistrationService pushRegistrationService)
+        public PushRegistrationsController(PushRegistrationRepository pushRegistrationService)
         {
-            this._service = pushRegistrationService;
+            this._registrations = pushRegistrationService;
         }
 
         // GET api/pushregistrations/{deviceId}
         [HttpGet("{token}")]
         public IActionResult Get(string token)
         {
-            PushRegistrationModel model = _service.Get(token);
+            PushRegistrationModel model = _registrations.Get(token);
 
             if(model == null)
-                return BadRequest(new { Message = "No resource found" });
+                return BadRequest(new { Message = "Resource not found" });
 
             return Json(model);
         }
@@ -44,14 +45,14 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             // Check if token is already registrated
-            PushRegistrationModel model = _service.Get(data.Token);
+            PushRegistrationModel model = _registrations.Get(data.Token);
 
             if (model != null)
-                _service.Delete(data.Token); // Delete existing entries with the same token
+                _registrations.Delete(data.Token); // Delete existing entries with the same token
 
             // Insert new data
-            _service.Insert(data);
-            _service.SaveChanges();
+            _registrations.Insert(data);
+            _registrations.SaveChanges();
 
             return Json(data);
         }
@@ -66,7 +67,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
-            PushRegistrationModel model = _service.Get(token);
+            PushRegistrationModel model = _registrations.Get(token);
 
             if (model == null)
                 return BadRequest(new { Message = "Resource not found" });
@@ -74,8 +75,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             model.Token = data.Token;
             model.Enabled = data.Enabled;
 
-            _service.Update(model);
-            _service.SaveChanges();
+            _registrations.Update(model);
+            _registrations.SaveChanges();
 
             return Json(data);
         }
@@ -84,13 +85,13 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpDelete("{token}")]
         public IActionResult Registrations(string token)
         {
-            PushRegistrationModel model = _service.Get(token);
+            PushRegistrationModel model = _registrations.Get(token);
 
             if (model == null)
                 return BadRequest(new { Message = "Resource not found" });
 
-            _service.Delete(model);
-            _service.SaveChanges();
+            _registrations.Delete(model);
+            _registrations.SaveChanges();
 
             return Ok();
         }

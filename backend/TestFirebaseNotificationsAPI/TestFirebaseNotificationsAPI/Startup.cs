@@ -11,6 +11,7 @@ using TestFirebaseNotificationsAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
 using System.Configuration;
+using TestFirebaseNotificationsAPI.Repository;
 
 namespace TestFirebaseNotificationsAPI
 {
@@ -45,7 +46,9 @@ namespace TestFirebaseNotificationsAPI
             services.AddEntityFrameworkSqlite()
                     .AddDbContext<DatabaseContext>(options => options.UseSqlite(connectionString));
             services.AddScoped<PushNotificationService>();
-            services.AddScoped<PushRegistrationService>();
+            services.AddScoped<PushRegistrationRepository>();
+            services.AddScoped<TestRepository>();
+            services.AddScoped<TestNotifactionContentRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

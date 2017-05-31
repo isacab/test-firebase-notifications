@@ -100,6 +100,8 @@ export class TestPushFormComponent implements OnInit {
   }
 
   validationMessages = {
+    'name': {
+    },
     'numNotificationsPerInterval': {
       'required': 'Num notifications per interval is required.',
       'min':      'Num notifications per interval must be at least 1.',
@@ -118,6 +120,7 @@ export class TestPushFormComponent implements OnInit {
   };
 
   formErrors = {
+    'name': '',
     'numNotificationsPerInterval': '',
     'numIntervals': '',
     'interval': '',

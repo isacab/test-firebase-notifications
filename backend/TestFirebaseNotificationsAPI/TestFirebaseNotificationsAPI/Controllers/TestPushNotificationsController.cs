@@ -8,31 +8,60 @@ using TestFirebaseNotificationsAPI.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
+using TestFirebaseNotificationsAPI.Repository;
 
 namespace TestFirebaseNotificationsAPI.Controllers
 {
     [Route("api/[controller]")]
-    public class PushNotificationsController : Controller
+    public class TestPushNotificationsController : Controller
     {
-        private PushNotificationService _notificationService;
-        private PushRegistrationService _registrationService;
-        private IServiceProvider _provider;
+        private readonly PushRegistrationRepository _registrations;
+        private readonly TestRepository _tests;
+        private readonly TestNotifactionContentRepository _notifications;
 
-        public PushNotificationsController(IServiceProvider provider, PushNotificationService pushNotificationService, PushRegistrationService pushRegistrationService)
+        public TestPushNotificationsController(
+            PushNotificationService pushNotificationService, 
+            PushRegistrationRepository pushRegistrationRepository,
+            TestRepository testRepository,
+            TestNotifactionContentRepository testNotifactionContentRepository)
         {
-            this._notificationService = pushNotificationService;
-            this._registrationService = pushRegistrationService;
-            this._provider = provider;
+            this._registrations = pushRegistrationRepository;
+            this._tests = testRepository;
+            this._notifications = testNotifactionContentRepository;
         }
 
-        // GET api/values
+        // GET api/testpushnotifications/{token}
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult List()
         {
-            return new string[] { "value1", "value2" };
+            if (!Request.Query.Keys.Contains("token"))
+                return BadRequest(new { Message = "Token is required" });
+
+            string token = Request.Query["token"].ToString();
+            
+            PushRegistrationModel reg = _registrations.Get(token);
+
+            if (reg == null)
+                return BadRequest(new { Message = "Resource not found" });
+
+            IEnumerable<TestModel> list = _tests.List(token);
+
+            return Json(list);
         }
 
-        // POST api/pushnotifications/start
+        // GET api/testpushnotifications/{id}
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
+        {
+            TestModel model = _tests.Get(id);
+
+            if (model == null)
+                return BadRequest(new { Message = "Resource not found" });
+
+            return Json(model);
+        }
+
+        // POST api/testpushnotifications/start
         [HttpPost("start/{token}")]
         public IActionResult Start([FromBody]TestModel data, string token)
         {
@@ -42,7 +71,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
-            PushRegistrationModel reg = _registrationService.Get(token);
+            PushRegistrationModel reg = _registrations.Get(token);
 
             if (reg == null)
                 return BadRequest(new { Message = "Token not found" });
@@ -59,7 +88,10 @@ namespace TestFirebaseNotificationsAPI.Controllers
             TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
 
             if (existingApp != testApp)
-                return Json(new { Ok = false, Message = "Test already exist for this registration token" });
+                return BadRequest(new { Message = "Test is running" });
+            
+            _tests.Insert(data);
+            _tests.SaveChanges();
 
             Task.Run((Action)testApp.Run).ContinueWith((t) =>
             {
@@ -69,11 +101,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
             return Ok();
         }
 
-        // POST api/pushnotifications/stop
+        // POST api/testpushnotifications/stop
         [HttpPost("stop/{token}")]
         public IActionResult Stop(string token)
         {
-            PushRegistrationModel reg = _registrationService.Get(token);
+            PushRegistrationModel reg = _registrations.Get(token);
 
             if (reg == null)
                 return BadRequest(new { Message = "Token not found" });
@@ -92,48 +124,27 @@ namespace TestFirebaseNotificationsAPI.Controllers
             return Ok();
         }
 
-        // POST api/pushnotifications/stoptimer
+        // POST api/testpushnotifications/stoptimer
         [HttpPost("stoptimer")]
         public IActionResult StopTimer([FromBody]TestNotifactionContentModel data)
         {
+            DateTime stopped = DateTime.UtcNow;
+
             if (data == null)
                 return BadRequest(new { Message = "Data is null" });
 
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
-            DateTime now = DateTime.UtcNow;
-            TimeSpan latancy = now.Subtract(data.Sent);
-            data.Latancy = latancy.Milliseconds;
+            //TODO: some kind of auth
+
+            TimeSpan latancy = stopped.Subtract(data.Sent);
+            data.Latancy = latancy.TotalMilliseconds;
+
+            _notifications.Insert(data);
+            _notifications.SaveChanges();
 
             return Json(data);
-        }
-
-        // POST api/pushnotifications
-        [HttpPost("{token}")]
-        public IActionResult Post(string token)
-        {
-            PushRegistrationModel reg = _registrationService.Get(token);
-
-            if (reg == null)
-                return BadRequest(new { Message = "Token not found" });
-
-            if (!reg.Enabled)
-                return BadRequest(new { Message = "Notifications are disabled" });
-
-            NotificationModel notification = new NotificationModel()
-            {
-                To = token,
-                Data = new {
-                    Title = "Hello",
-                    Body = "There!",
-                    Sent = DateTime.Now
-                }
-            };
-
-            _notificationService.Send(notification);
-
-            return Ok();
         }
     }
 }

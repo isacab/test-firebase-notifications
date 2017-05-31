@@ -29,6 +29,24 @@ export class ApiService {
             .toPromise();
   }
 
+  getTest(id : number) : Promise<Test> {
+    let url = this.apiUrl + "/testpushnotifications/" + id;
+    let request = this.http.get(url);
+    return request
+            .map(this.extractData)
+            .catch(this.handleError)
+            .toPromise();
+  }
+
+  getTestList(token : string) : Promise<Array<Test>> {
+    let url = this.apiUrl + "/testpushnotifications?token=" + token;
+    let request = this.http.get(url);
+    return request
+            .map(this.extractData)
+            .catch(this.handleError)
+            .toPromise();
+  }
+
   createPushRegistration(registration : PushRegistration) : Promise<PushRegistration> {
     let url = this.apiUrl + "/pushregistrations"
     let request = this.http.post(url, registration, this.options);
@@ -56,16 +74,8 @@ export class ApiService {
               .toPromise();
   }
 
-  sendPushNotification(token : string) : Promise<any> {
-    let url = this.apiUrl + "/pushnotifications/" + token;
-    let request = this.http.post(url, { }, this.options);
-    return request
-              .catch(this.handleError)
-              .toPromise();
-  }
-
   startTest(token : string, test : Test) : Promise<any> {
-    let url = this.apiUrl + "/pushnotifications/start/" + token;
+    let url = this.apiUrl + "/testpushnotifications/start/" + token;
     let request = this.http.post(url, test, this.options);
     return request
               .catch(this.handleError)
@@ -73,7 +83,7 @@ export class ApiService {
   }
 
   stopTest(token : string) : Promise<any> {
-    let url = this.apiUrl + "/pushnotifications/stop/" + token;
+    let url = this.apiUrl + "/testpushnotifications/stop/" + token;
     let request = this.http.post(url, { }, this.options);
     return request
               .catch(this.handleError)
@@ -86,8 +96,14 @@ export class ApiService {
   }
 
   private handleError (error: Response | any) {
-    let body = this.extractData(error);
-    let errMsg = body.message || '';
+    let errMsg = '';
+
+    if(error instanceof Response) {
+      let body = error.json() || { };
+      errMsg = body.message || '';
+    } else if(error.message) {
+      errMsg = error.message;
+    }
 
     console.error(errMsg);
 
