@@ -74,7 +74,7 @@ export class PushNotificationService {
           });
       })
       .then(() => this.setMessagingEventListeners())
-      .then(() => this.getToken())
+      .then(() => this.loadPushRegistration())
       .then(() => this.setIsInitialized(true))
       .catch((error) => {
         // Something went wrong during the initialization
@@ -92,6 +92,7 @@ export class PushNotificationService {
     let promise = new Promise<PushRegistration>((resolve, reject) => {
 
       this._messaging.getToken().then((token) => {
+        let rv : Promise<PushRegistration>;
 
         // Get the last token sent to the server from local storage
         let lastSentToken = this.getLocalToken();
@@ -99,53 +100,44 @@ export class PushNotificationService {
         // Check if we have a token that has not been sent to the server yet
         if(lastSentToken && lastSentToken !== token) {
           // Get current push registration at the server
-          this.api.getPushRegistration(lastSentToken)
+          rv = this.api.getPushRegistration(lastSentToken)
             .then((reg : PushRegistration) => {
               // Update the push registration with the current token
               reg.token = token;
               reg.enabled = token ? reg.enabled : false;
               return this.sendToServer(reg, lastSentToken);
-            })
-            .then((reg : PushRegistration) => {
-              // Push registration has been updated
-              this.setPushRegistration(reg);
-              resolve(reg);
-            })
-            .catch((error) => {
+            }).catch((error) => {
               if(error.message === 'Resource not found') {
                 // This happens when we have tried to update but token did not exist.
                 // Remove local token and retry loading.
                 this.setLocalToken('');
                 return this.loadPushRegistration();
               } else {
-                reject(new Error("Could not load registration token."));
+                throw error;
               }
             });
         } 
         else if(token) {
           // Get current push registration at the server
-          this.api.getPushRegistration(token)
-            .then((reg : PushRegistration) => {
-              this.setPushRegistration(reg);
-              resolve(reg);
-            })
+          rv = this.api.getPushRegistration(token)
             .catch((error) => {
               if(error.message === 'Resource not found') {
-                this.setLocalToken('');
-                this.setPushRegistration(null);
-                resolve(null);
+                return null;
               } else {
-                reject(new Error("Could not load registration token."));
+                throw error;
               }
             });
         } else {
-          // No token and lastSentToken, nothing to load
-          // This device has no push registration yet
-          this.setPushRegistration(null);
-          resolve(null);
+          rv = null;
         }
+
+        return rv;
+        
+      }).then((reg : PushRegistration) => {
+        this.setPushRegistration(reg);
+        resolve(reg);
       }).catch((error) => {
-        reject(new Error("Could not load registration token."));
+          reject(new Error("Could not load push registration."));
       });
       
     });
