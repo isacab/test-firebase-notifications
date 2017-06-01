@@ -15,7 +15,9 @@
     </thead>
       <tbody>
         <tr *ngFor="let test of testList">
-          <td class="mdl-data-table__cell--non-numeric">{{test.name}}</td>
+          <td class="mdl-data-table__cell--non-numeric">
+            <a routerLink="/test/{{test.id}}">{{test.name}}</a>
+          </td>
           <td>{{test.numNotificationsPerInterval}}</td>
           <td>{{test.numIntervals}}</td>
           <td>{{test.interval}}</td>

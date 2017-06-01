@@ -31,6 +31,8 @@ export class TogglePushComponent implements OnInit {
 
     this.pushService.checkAvailable().then(() => {
       this.canToggle = true;
+    }).catch((err) => {
+      this.canToggle = false;
     });
   }
 
@@ -42,12 +44,18 @@ export class TogglePushComponent implements OnInit {
     this.isLoading = true;
     this.pushService.setEnabled(!this.isEnabled)
       .then(() => {
+        this.canToggle = true;
         this.error = '';
-      }).catch((error) => {
-        this.error = error;
+      }).catch((error : any) => {
+        if(error.code === 'messaging/permission-blocked') {
+          this.canToggle = false;
+          this.error = "Notifications were blocked";
+        } else {
+          this.canToggle = true;
+          this.error = error.message ? error.message : error;
+        }
       }).then(() => {
         this.isLoading = false;
-        this.canToggle = true;
       });
   }
 

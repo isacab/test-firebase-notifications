@@ -139,7 +139,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             //TODO: some kind of auth
 
             TimeSpan latancy = stopped.Subtract(data.Sent);
-            data.Latancy = latancy.TotalMilliseconds;
+            data.Latancy = Convert.ToInt64(latancy.TotalMilliseconds);
 
             _notifications.Insert(data);
             _notifications.SaveChanges();

@@ -74,7 +74,7 @@ export class PushNotificationService {
           });
       })
       .then(() => this.setMessagingEventListeners())
-      .then(() => this.loadPushRegistration())
+      .then(() => this.getToken())
       .then(() => this.setIsInitialized(true))
       .catch((error) => {
         // Something went wrong during the initialization
@@ -98,7 +98,10 @@ export class PushNotificationService {
         let lastSentToken = this.getLocalToken();
 
         // Check if we have a token that has not been sent to the server yet
-        if(lastSentToken && lastSentToken !== token) {
+        if(lastSentToken && !token) {
+          this.sendToServer(null, lastSentToken);
+          rv = null;
+        } else if(lastSentToken && lastSentToken !== token) {
           // Get current push registration at the server
           rv = this.api.getPushRegistration(lastSentToken)
             .then((reg : PushRegistration) => {
@@ -109,15 +112,12 @@ export class PushNotificationService {
             }).catch((error) => {
               if(error.message === 'Resource not found') {
                 // This happens when we have tried to update but token did not exist.
-                // Remove local token and retry loading.
-                this.setLocalToken('');
                 return this.loadPushRegistration();
               } else {
                 throw error;
               }
             });
-        } 
-        else if(token) {
+        } else if(token) {
           // Get current push registration at the server
           rv = this.api.getPushRegistration(token)
             .catch((error) => {
@@ -154,22 +154,19 @@ export class PushNotificationService {
     let promise = new Promise<any>((resolve, reject) => {
       
       if (!('serviceWorker' in navigator)) {
-        reject(new PushNotAvailableError(PushNotAvailableError.ServiceWorkerNotAvailable, 
-                                          "Service Worker isn't supported on this browser."));
+        reject(new PushNotAvailableError("Service Worker is not supported on this browser."));
         return;
       }
 
       if (!('PushManager' in window)) {
-        reject(new PushNotAvailableError(PushNotAvailableError.PushNotAvailable,
-                                          "Push isn't supported on this browser."));
+        reject(new PushNotAvailableError("Push is not supported on this browser."));
         return;
       }
 
       this.getNotificationPermissionState()
         .then(function(state: string) {
           if(state === 'denied') {
-            reject(new PushNotAvailableError(PushNotAvailableError.Blocked,
-                                              "Notifications are blocked by the browser."));
+            reject(new PushNotAvailableError("Notifications are blocked by the browser."));
             return;
           }
           // Push notifications is available
@@ -370,7 +367,11 @@ export class PushNotificationService {
     let request : Promise<PushRegistration>;
 
     if(oldToken) {
-      request = this.api.updatePushRegistration(oldToken, data);
+      if(data) {
+        request = this.api.updatePushRegistration(oldToken, data);
+      } else {
+        request = this.api.removePushRegistration(oldToken);
+      }
     }
     else {
       request = this.api.createPushRegistration(data);
@@ -378,12 +379,17 @@ export class PushNotificationService {
 
     let onResolve = (result : PushRegistration) => { 
       // ok
-      this.setLocalToken(result.token);
+      let newToken = result ? result.token : '';
+      this.setLocalToken(newToken);
       return result;
     };
 
     let onReject = (error) => {
       // nok 
+      if(error.message === 'Resource not found') {
+        this.setLocalToken('');
+      }
+
       throw error;
     };
 

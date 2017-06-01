@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { Test } from '../../models/test';
@@ -14,7 +14,8 @@ export class TestPushFormComponent implements OnInit {
   isSubmitting : boolean;
   isClearing : boolean;
   submitted : boolean;
-  model : Test;
+
+  @Input("test") model : Test;
 
   constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
   
@@ -39,7 +40,6 @@ export class TestPushFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.model = new Test({numNotificationsPerInterval: 1, numIntervals: 1, interval: 0});
   }
 
   submit() {

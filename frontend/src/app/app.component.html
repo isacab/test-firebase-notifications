@@ -1,7 +1,7 @@
 <md-toolbar color="primary">
   <span>
     {{ title }}
-    <a md-button routerLink="/">My Tests</a>
+    <a md-button routerLink="/list">My Tests</a>
     <a md-button routerLink="/test">New Test</a>
   </span>
   <span class="spaces">
@@ -10,4 +10,5 @@
 </md-toolbar>
 <div class="content">
   <router-outlet></router-outlet>
+  <div *ngIf="error">{{ error }}</div>
 </div>

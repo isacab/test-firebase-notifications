@@ -9,7 +9,7 @@ const appRoutes: Routes = [
   {
     path: 'list',
     component: TestListComponent,
-    data: { title: 'Heroes List' }
+    data: { title: 'Test List' }
   },
   { path: '**',
     redirectTo: '/test',

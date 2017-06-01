@@ -1,11 +1,12 @@
 <section>
-      <form #testPushForm="ngForm" (ngSubmit)="submit()">
+      <form #testPushForm="ngForm" (ngSubmit)="submit()" *ngIf="model">
             <md-input-container class="full-width">
                   <input mdInput 
                   type="text" 
                   placeholder="Name" 
                   name="name" 
-                  [(ngModel)]="model.name">
+                  [(ngModel)]="model.name"
+                  [disabled]="model.createdAt">
                   <md-hint *ngIf="formErrors.name">
                         {{ formErrors.name }}
                   </md-hint>
@@ -18,6 +19,7 @@
                   [(ngModel)]="model.numNotificationsPerInterval"
                   max="100"
                   min="1" 
+                  [disabled]="model.createdAt"
                   required>
                   <md-hint *ngIf="formErrors.numNotificationsPerInterval">
                         {{ formErrors.numNotificationsPerInterval }}
@@ -31,6 +33,7 @@
                   [(ngModel)]="model.numIntervals"
                   max="100"
                   min="1" 
+                  [disabled]="model.createdAt"
                   required>
                   <md-hint *ngIf="formErrors.numIntervals">
                         {{ formErrors.numIntervals }}
@@ -44,6 +47,7 @@
                   [(ngModel)]="model.interval"
                   max="100"
                   min="0" 
+                  [disabled]="model.createdAt"
                   required>
                   <md-hint *ngIf="formErrors.interval">
                         {{ formErrors.interval }}
@@ -54,7 +58,7 @@
                   color="primary" 
                   type="submit"
                   name="submit"
-                  [disabled]="isSubmitting || !testPushForm.form.valid">
+                  [disabled]="isSubmitting || !testPushForm.form.valid || model.createdAt">
                         <md-spinner class="buttonSpinner" *ngIf="isSubmitting"></md-spinner>
                         Start test
                   </button>

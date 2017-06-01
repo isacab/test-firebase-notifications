@@ -24,12 +24,13 @@ namespace TestFirebaseNotificationsAPI.Services
             try
             {
                 // Create a request using the URL to the FCM API for sending push notifications
-                WebRequest request = WebRequest.Create(_url);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(_url);
 
                 // Start set headers
                 request.Method = "POST";
 
-                request.ContentType = "application/json;charset=UTF-8";
+                request.Accept = "application/json";
+                request.ContentType = "application/json; charset=UTF-8";
 
                 JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
                 {
@@ -59,16 +60,20 @@ namespace TestFirebaseNotificationsAPI.Services
                         using (StreamReader reader = new StreamReader(dataStreamResponse))
                         {
                             // Read the content.  
-                            String responseFromServer = reader.ReadToEnd();
+                            string responseFromServer = reader.ReadToEnd();
                             str = responseFromServer;
+                            FcmResponseModel fcmResponse = JsonConvert.DeserializeObject<FcmResponseModel>(responseFromServer);
+
+                            if (fcmResponse.failure > 0)
+                                throw new Exception("failure is " + fcmResponse.failure);
+                            else if (fcmResponse.results.Any(x => x.error != null))
+                                throw new Exception("error in result: " + fcmResponse.results.First(x => x.error != null).error);
                         }
                     }
                 }
             }
             catch (WebException ex)
             {
-                string responseFromServer = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
-                Console.WriteLine(responseFromServer);
                 str = ex.Message;
             }
 

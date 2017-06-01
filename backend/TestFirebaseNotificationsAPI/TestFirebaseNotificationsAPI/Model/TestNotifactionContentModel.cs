@@ -19,9 +19,9 @@ namespace TestFirebaseNotificationsAPI.Model
         [Required]
         public DateTime Sent { get; set; }
         
-        public double Latancy { get; set; }
+        public long Latancy { get; set; }
         
-        public double AppToServerRTT { get; set; }
+        public long AppToServerRTT { get; set; }
         
         public int NumRetries { get; set; }
 

@@ -129,16 +129,18 @@ function notifyServer(data)
         return response.json();
     }).then(function(data) {
         console.log('[sw.js] response from server ', data);
-
+        return data;
+    }).catch(function(reason) {
+        console.log('[sw.js] could not notify server ', reason);
+        return data;
+    }).then((data) => {
         receivedMessages.push(data);
     
         sendMessageToAllClients({
             messageType: 'stopTimer',
             received: data,
             allReceived: receivedMessages
-        });
-    }).catch(function(reason) {
-        console.log('[sw.js] could not notify server ', reason);
+        });  
     });
 }
 
