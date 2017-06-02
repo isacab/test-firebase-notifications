@@ -25,7 +25,12 @@ namespace TestFirebaseNotificationsAPI.Repository
 
         public TestModel Get(int id)
         {
-            return _databaseContext.Tests.Find(id);
+            TestModel model = _databaseContext.Tests.Find(id);
+
+            if(model != null)
+                _databaseContext.Entry(model).Collection(x => x.Notifications).Load();
+
+            return model;
         }
 
         public void Insert(TestModel model)

@@ -26,7 +26,7 @@ export class TestListComponent implements OnInit {
 
       this.api.getTestList(token).then((data) => {
         this.testList = data;
-      })
+      });
     });
   }
 

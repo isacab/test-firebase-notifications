@@ -46,7 +46,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             IEnumerable<TestModel> list = _tests.List(token);
 
-            return Json(list);
+            var json = Json(list);
+            return json;
         }
 
         // GET api/testpushnotifications/{id}
@@ -58,7 +59,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if (model == null)
                 return BadRequest(new { Message = "Resource not found" });
 
-            return Json(model);
+            var json = Json(model);
+            return json;
         }
 
         // POST api/testpushnotifications/start
@@ -83,15 +85,15 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             data.PushRegistrationId = id;
 
+            _tests.Insert(data);
+            _tests.SaveChanges();
+
             TestApplication testApp = new TestApplication(data);
 
             TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
 
             if (existingApp != testApp)
                 return BadRequest(new { Message = "Test is running" });
-            
-            _tests.Insert(data);
-            _tests.SaveChanges();
 
             Task.Run((Action)testApp.Run).ContinueWith((t) =>
             {
@@ -142,7 +144,17 @@ namespace TestFirebaseNotificationsAPI.Controllers
             data.Latancy = Convert.ToInt64(latancy.TotalMilliseconds);
 
             _notifications.Insert(data);
-            _notifications.SaveChanges();
+
+            try
+            {
+                _notifications.SaveChanges();
+            }
+            catch(Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                if(ex.InnerException is Microsoft.Data.Sqlite.SqliteException)
+                    return BadRequest(new { Message = "TestId not found" });
+                throw ex;
+            }
 
             return Json(data);
         }

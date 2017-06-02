@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -51,5 +52,9 @@ namespace TestFirebaseNotificationsAPI.Model
         [JsonIgnore]
         [ForeignKey("PushRegistrations")]
         public int PushRegistrationId { get; set; }
+
+        public virtual PushRegistrationModel PushRegistration { get; set; }
+
+        public virtual ICollection<TestNotifactionContentModel> Notifications { get; set; }
     }
 }

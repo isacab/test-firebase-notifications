@@ -15,7 +15,7 @@ namespace TestFirebaseNotificationsAPI.Repository
         public IEnumerable<TestNotifactionContentModel> List(int testId)
         {
             return _databaseContext.Notifications
-                        .Where(x => x.TestID == testId)
+                        .Where(x => x.TestId == testId)
                         .ToList();
         }
 

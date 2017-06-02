@@ -11,7 +11,7 @@ const appRoutes: Routes = [
     component: TestListComponent,
     data: { title: 'Test List' }
   },
-  { path: '**',
+  { path: '',
     redirectTo: '/test',
     pathMatch: 'full'
   }

@@ -16,7 +16,7 @@ import 'rxjs/add/operator/switchMap';
 export class TestPushNotificationsComponent implements OnInit {
 
   isEnabled? : boolean;
-  isInitialized : boolean;
+  isLoaded : boolean;
 
   test : Test;
 
@@ -57,11 +57,12 @@ export class TestPushNotificationsComponent implements OnInit {
 
     this.pushService.pushRegistrationChanged.subscribe(() => {
       let reg = this.pushService.pushRegistration;
+      this.isLoaded = true;
       this.isEnabled = reg ? reg.enabled : false;
     });
 
     this.pushService.isInitializedChanged.subscribe(() => {
-      this.isInitialized = this.pushService.isInitialized;
+      //this.isLoaded = this.pushService.isInitialized;
     });
   }
 

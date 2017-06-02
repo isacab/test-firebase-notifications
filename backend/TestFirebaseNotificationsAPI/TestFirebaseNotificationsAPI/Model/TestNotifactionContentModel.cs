@@ -27,6 +27,8 @@ namespace TestFirebaseNotificationsAPI.Model
 
         [Required]
         [ForeignKey("Tests")]
-        public int TestID { get; set; }
+        public int TestId { get; set; }
+
+        public virtual TestModel Test { get; set; }
     }
 }

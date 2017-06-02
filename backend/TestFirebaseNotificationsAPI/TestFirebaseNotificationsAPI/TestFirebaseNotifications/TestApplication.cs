@@ -97,7 +97,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                             Body = "Test body",
                             SequenceNumber = seqNumber,
                             Sent = DateTime.UtcNow,
-                            TestID = _test.Id
+                            TestId = _test.Id
                         }
                     };
                     string response = this._pushService.Send(notification);

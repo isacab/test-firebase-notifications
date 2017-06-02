@@ -66,13 +66,13 @@ export class PushNotificationService {
    */
   initialize() : Promise<any> {
     return this.checkAvailable()
-      .then(() => this.registerServiceWorker())
+      /*.then(() => this.registerServiceWorker())
       .then((swReg : ServiceWorkerRegistration) => {
           // for debugging
           swReg.pushManager.getSubscription().then((subscription) => {
             console.log("subscription", subscription);
           });
-      })
+      })*/
       .then(() => this.setMessagingEventListeners())
       .then(() => this.getToken())
       .then(() => this.setIsInitialized(true))

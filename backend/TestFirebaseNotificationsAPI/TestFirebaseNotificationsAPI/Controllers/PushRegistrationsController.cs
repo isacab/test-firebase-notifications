@@ -31,7 +31,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if(model == null)
                 return BadRequest(new { Message = "Resource not found" });
 
-            return Json(model);
+            var json = Json(model);
+            return json;
         }
 
         // POST api/pushregistrations

@@ -95,14 +95,20 @@ export class TestPushNotificationsService {
 
   private sendMessageToServiceWorker(message : any, onresponse : (this: MessagePort, ev: MessageEvent) => any) {
     if('serviceWorker' in navigator){
-        // Create a Message Channel
-        var channel = new MessageChannel();
+      if(!navigator.serviceWorker.controller)
+        console.log("no controller yet");
+      navigator.serviceWorker.ready.then(() => { 
+        if(navigator.serviceWorker.controller) {
+          // Create a Message Channel
+          var channel = new MessageChannel();
 
-        // Handler for recieving message reply from service worker
-        channel.port1.onmessage = onresponse;
+          // Handler for recieving message reply from service worker
+          channel.port1.onmessage = onresponse;
 
-        // Send message to service worker along with port for reply
-        navigator.serviceWorker.controller.postMessage(message, [channel.port2]);
+          // Send message to service worker along with port for reply
+          navigator.serviceWorker.controller.postMessage(message, [channel.port2]);
+        }
+      });
     }
   }
 
