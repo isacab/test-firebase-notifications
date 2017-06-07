@@ -30,7 +30,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             this._notifications = testNotifactionContentRepository;
         }
 
-        // GET api/testpushnotifications/{token}
+        // GET api/testpushnotifications?token={token}
         [HttpGet]
         public IActionResult List()
         {
@@ -100,7 +100,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 GlobalStore.RunningTests.TryRemove(id, out testApp);
             });
 
-            return Ok();
+            var ok = Ok();
+            return ok;
         }
 
         // POST api/testpushnotifications/stop
@@ -123,7 +124,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             GlobalStore.RunningTests.TryRemove(id, out testApp);
 
-            return Ok();
+            var ok = Ok();
+            return ok;
         }
 
         // POST api/testpushnotifications/stoptimer
@@ -156,7 +158,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 throw ex;
             }
 
-            return Json(data);
+            var json = Json(data);
+            return json;
         }
     }
 }

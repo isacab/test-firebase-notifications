@@ -8,6 +8,8 @@ import { Test } from '../models/test';
 
 import 'rxjs/add/operator/switchMap';
 
+declare var navigator: any;
+
 @Component({
   selector: 'test-push-notifications',
   templateUrl: './test-push-notifications.component.html',
@@ -17,7 +19,6 @@ export class TestPushNotificationsComponent implements OnInit {
 
   isEnabled? : boolean;
   isLoaded : boolean;
-
   test : Test;
 
   constructor(
@@ -57,13 +58,27 @@ export class TestPushNotificationsComponent implements OnInit {
 
     this.pushService.pushRegistrationChanged.subscribe(() => {
       let reg = this.pushService.pushRegistration;
-      this.isLoaded = true;
       this.isEnabled = reg ? reg.enabled : false;
     });
 
     this.pushService.isInitializedChanged.subscribe(() => {
-      //this.isLoaded = this.pushService.isInitialized;
+      this.updateIsLoaded();
     });
+
+    if('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        this.updateIsLoaded();
+      });
+    }
+  }
+
+  updateIsLoaded() {
+    let initialized = this.pushService.isInitialized;
+    let ready = false;
+    if('serviceWorker' in navigator)
+      ready = navigator.serviceWorker.controller ? true : false;
+
+    this.isLoaded = initialized && ready;
   }
 
 }

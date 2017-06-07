@@ -27,13 +27,13 @@ const receivedMessages = [];
     return self.registration.showNotification(title, options);
 });*/
 
-self.addEventListener('install', function(event) {
+/*self.addEventListener('install', function(event) {
   event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
-});
+});*/
 
 self.addEventListener('push', function (event) {
     console.log('[sw.js] Received a push message', event.data.json());

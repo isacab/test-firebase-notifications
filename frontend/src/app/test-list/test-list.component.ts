@@ -18,6 +18,9 @@ export class TestListComponent implements OnInit {
 
   ngOnInit() {
     this.pushService.pushRegistrationChanged.subscribe(() => {
+      if(this.testList)
+        return;
+
       let reg = this.pushService.pushRegistration;
       let token = reg ? reg.token : undefined;
       

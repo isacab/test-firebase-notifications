@@ -95,9 +95,20 @@ export class TestPushNotificationsService {
 
   private sendMessageToServiceWorker(message : any, onresponse : (this: MessagePort, ev: MessageEvent) => any) {
     if('serviceWorker' in navigator){
-      if(!navigator.serviceWorker.controller)
-        console.log("no controller yet");
-      navigator.serviceWorker.ready.then(() => { 
+      
+      if(!navigator.serviceWorker.controller) {
+        return Promise.reject(new Error("Controller is not available in service worker"));
+      }
+
+      return navigator.serviceWorker.ready.then((reg) => { 
+        
+        console.log("controller", navigator.serviceWorker.controller);
+
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          console.log("controller ready", navigator.serviceWorker.controller);
+        });
+
+
         if(navigator.serviceWorker.controller) {
           // Create a Message Channel
           var channel = new MessageChannel();
@@ -110,6 +121,7 @@ export class TestPushNotificationsService {
         }
       });
     }
+    return Promise.reject(new Error("Service worker is not available"));
   }
 
   setServiceWorkerMessageListeners() {

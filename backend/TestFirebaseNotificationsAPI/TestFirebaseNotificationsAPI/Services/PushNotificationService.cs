@@ -17,6 +17,8 @@ namespace TestFirebaseNotificationsAPI.Services
         
         private string _serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
 
+        private readonly ExponentialBackOff backoff = new ExponentialBackOff();
+
         public string Send(NotificationModel data)
         {
             string str = "";
@@ -74,10 +76,44 @@ namespace TestFirebaseNotificationsAPI.Services
             }
             catch (WebException ex)
             {
+                var response = ((HttpWebResponse)ex.Response);
+
+                if(response != null)
+                {
+                    string retryAfter = response.GetResponseHeader("Retry-After");
+                    if(retryAfter.Length > 0)
+                    {
+                        this.retryAfter(retryAfter);
+                    }
+                }
+                str = ex.Message;
+            }
+            catch (Exception ex)
+            {
                 str = ex.Message;
             }
 
             return str;
+        }
+        
+        private void retryAfter(string retryAfter)
+        {
+            int seconds;
+            DateTime dateTime;
+            TimeSpan delay = new TimeSpan();
+            if (Int32.TryParse(retryAfter, out seconds))
+            {
+                delay = TimeSpan.FromSeconds(seconds);
+            }
+            else if (DateTime.TryParse(retryAfter, out dateTime))
+            {
+                delay = DateTime.Now - dateTime;
+            }
+
+            if (delay == null)
+                throw new Exception("");
+
+            System.Threading.Thread.Sleep(Convert.ToInt32(delay.TotalMilliseconds));
         }
     }
 }

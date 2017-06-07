@@ -16,7 +16,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.pushService.initialize()
-      .then(() => this.pushService.loadPushRegistration())
       .catch((err) => {
         this.error = err.message ? err.message : err;
       });

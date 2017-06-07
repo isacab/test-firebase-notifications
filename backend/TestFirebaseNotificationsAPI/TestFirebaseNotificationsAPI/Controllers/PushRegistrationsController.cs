@@ -55,7 +55,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _registrations.Insert(data);
             _registrations.SaveChanges();
 
-            return Json(data);
+            var json = Json(data);
+            return json;
         }
 
         // PUT api/pushregistrations/{token}
@@ -79,7 +80,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _registrations.Update(model);
             _registrations.SaveChanges();
 
-            return Json(data);
+            var json = Json(data);
+            return json;
         }
 
         // DELETE api/pushregistrations/{token}
@@ -94,7 +96,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
             _registrations.Delete(model);
             _registrations.SaveChanges();
 
-            return Ok();
+            var ok = Ok();
+            return ok;
         }
     }
 }

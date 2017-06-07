@@ -59,8 +59,7 @@ namespace TestFirebaseNotificationsAPI
 
             app.UseCors(builder =>
                 builder.AllowAnyMethod().AllowAnyHeader().WithOrigins(
-                    "http://localhost:4200",
-                    "http://localhost:21378"
+                    "http://localhost:4200"
                 ));
 
             app.UseMvc();
