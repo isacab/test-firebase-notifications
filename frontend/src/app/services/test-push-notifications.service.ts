@@ -95,10 +95,6 @@ export class TestPushNotificationsService {
 
   private sendMessageToServiceWorker(message : any, onresponse : (this: MessagePort, ev: MessageEvent) => any) {
     if('serviceWorker' in navigator){
-      
-      if(!navigator.serviceWorker.controller) {
-        return Promise.reject(new Error("Controller is not available in service worker"));
-      }
 
       return navigator.serviceWorker.ready.then((reg) => { 
         
@@ -118,6 +114,8 @@ export class TestPushNotificationsService {
 
           // Send message to service worker along with port for reply
           navigator.serviceWorker.controller.postMessage(message, [channel.port2]);
+        } else {
+          return Promise.reject(new Error("Controller is not available in service worker"));
         }
       });
     }

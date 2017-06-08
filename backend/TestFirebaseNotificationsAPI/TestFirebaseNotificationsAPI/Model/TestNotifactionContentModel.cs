@@ -21,8 +21,6 @@ namespace TestFirebaseNotificationsAPI.Model
         
         public long Latancy { get; set; }
         
-        public long AppToServerRTT { get; set; }
-        
         public int NumRetries { get; set; }
 
         [Required]

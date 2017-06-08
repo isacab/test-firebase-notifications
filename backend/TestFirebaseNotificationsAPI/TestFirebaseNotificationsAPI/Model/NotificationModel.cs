@@ -8,10 +8,34 @@ namespace TestFirebaseNotificationsAPI.Model
 {
     public class NotificationModel : Model
     {
-        [Required]
+        // Targets
+
         public string To { get; set; }
 
-        [Required]
+        public IEnumerable<string> RegistrationIds { get; set; }
+
+        public string Condition { get; set; }
+
+        // Options
+
+        public string CollapseKey { get; set; }
+
+        public string Priority { get; set; }
+
+        public bool ContentAvailable { get; set; }
+
+        public bool MutableContent { get; set; }
+
+        public int TimeToLive { get; set; }
+
+        public string RestrictedPackageName { get; set; }
+
+        public bool DryRun { get; set; }
+
+        // Payload
+
         public object Data { get; set; }
+
+        public NotificationContentModel Notification { get; set; }
     }
 }

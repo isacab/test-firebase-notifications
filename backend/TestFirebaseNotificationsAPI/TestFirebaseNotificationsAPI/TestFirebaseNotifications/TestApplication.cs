@@ -100,7 +100,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                             TestId = _test.Id
                         }
                     };
-                    string response = this._pushService.Send(notification);
+                    object response = this._pushService.Send(notification);
                 }
 
                 Thread.Sleep(_test.Interval);

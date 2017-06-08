@@ -22,6 +22,11 @@ namespace TestFirebaseNotificationsAPI.Repository
             return _databaseContext.PushRegistrations.Find(id);
         }
 
+        public bool TokenExist(string token)
+        {
+            return _databaseContext.PushRegistrations.Any(x => x.Token == token);
+        }
+
         public void Insert(PushRegistrationModel model)
         {
             model.Id = 0;

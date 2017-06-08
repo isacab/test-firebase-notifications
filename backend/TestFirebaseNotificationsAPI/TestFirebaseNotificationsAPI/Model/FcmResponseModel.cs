@@ -18,7 +18,7 @@ namespace TestFirebaseNotificationsAPI.Model
         public int failure { get; set; }
 
         [Required]
-        public long canonical_ids { get; set; }
+        public int canonical_ids { get; set; }
 
         [Required]
         public IEnumerable<FcmResultModel> results { get; set; }

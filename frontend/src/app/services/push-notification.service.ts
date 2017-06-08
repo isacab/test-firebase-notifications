@@ -114,6 +114,7 @@ export class PushNotificationService {
             }).catch((error) => {
               if(error.message === 'Resource not found') {
                 // This happens when we have tried to update but token did not exist.
+                this.setLocalToken('');
                 return this.loadPushRegistration();
               } else {
                 throw error;
@@ -122,6 +123,11 @@ export class PushNotificationService {
         } else if(token) {
           // Get current push registration at the server
           rv = this.api.getPushRegistration(token)
+            .then((reg : PushRegistration) => {
+              if(!lastSentToken)
+                this.setLocalToken(reg.token);
+              return reg;
+            })
             .catch((error) => {
               if(error.message === 'Resource not found') {
                 return null;

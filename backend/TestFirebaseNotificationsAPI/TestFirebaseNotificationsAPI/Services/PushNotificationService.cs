@@ -8,6 +8,8 @@ using System.Net;
 using System.Text;
 using TestFirebaseNotificationsAPI.Model;
 using System.Configuration;
+using System.Threading;
+using TestFirebaseNotificationsAPI.Exceptions;
 
 namespace TestFirebaseNotificationsAPI.Services
 {
@@ -15,13 +17,13 @@ namespace TestFirebaseNotificationsAPI.Services
     {
         private const string _url = "https://fcm.googleapis.com/fcm/send";
         
-        private string _serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
+        private readonly string _serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
 
         private readonly ExponentialBackOff backoff = new ExponentialBackOff();
 
-        public string Send(NotificationModel data)
+        private object Send(NotificationModel data, int retryAttempt)
         {
-            string str = "";
+            object fcmResponse = null;
 
             try
             {
@@ -63,13 +65,11 @@ namespace TestFirebaseNotificationsAPI.Services
                         {
                             // Read the content.  
                             string responseFromServer = reader.ReadToEnd();
-                            str = responseFromServer;
-                            FcmResponseModel fcmResponse = JsonConvert.DeserializeObject<FcmResponseModel>(responseFromServer);
+                            FcmResponseModel fcmResponseModel = JsonConvert.DeserializeObject<FcmResponseModel>(responseFromServer);
+                            fcmResponse = fcmResponseModel;
 
-                            if (fcmResponse.failure > 0)
-                                throw new Exception("failure is " + fcmResponse.failure);
-                            else if (fcmResponse.results.Any(x => x.error != null))
-                                throw new Exception("error in result: " + fcmResponse.results.First(x => x.error != null).error);
+                            if (fcmResponseModel.failure > 0)
+                                throw new FcmFailureException("failure is " + fcmResponseModel.failure);
                         }
                     }
                 }
@@ -78,42 +78,96 @@ namespace TestFirebaseNotificationsAPI.Services
             {
                 var response = ((HttpWebResponse)ex.Response);
 
-                if(response != null)
+                if (response != null)
                 {
                     string retryAfter = response.GetResponseHeader("Retry-After");
-                    if(retryAfter.Length > 0)
+                    if (retryAfter.Length != 0)
                     {
-                        this.retryAfter(retryAfter);
+                        TimeSpan timeToWait = retryAfterStringToTimeSpan(retryAfter);
+                        retryAttempt++;
+                        return Send(data, retryAttempt);
+                    }
+                    else // go through the failures and decide action
+                    {
+                        FcmResponseModel fcmResponseModel = null;
+                        // Get the stream containing content returned by the server.  
+                        using (Stream dataStreamResponse = response.GetResponseStream())
+                        {
+                            // Open the stream using a StreamReader for easy access.  
+                            using (StreamReader reader = new StreamReader(dataStreamResponse))
+                            {
+                                // Read the content.  
+                                string responseFromServer = reader.ReadToEnd();
+                                fcmResponseModel = JsonConvert.DeserializeObject<FcmResponseModel>(responseFromServer);
+                                fcmResponse = fcmResponseModel;
+                            }
+                        }
+
+                        if(fcmResponse != null)
+                        {
+                            /*List<string> resendTo = new List<string>();
+                            for(int i = 0; i < fcmResponseModel.results.Count(); i++)
+                            {
+                                var result = fcmResponseModel.results.ElementAt(i);
+                                if(shouldRetry(result))
+                                {
+                                    resendTo.Add()
+                                }
+                            }
+                            TimeSpan timeToWait = backoff.CalcNextBackoff(retryAttempt);
+                            retryAttempt++;
+                            return Send(data, retryAttempt);*/
+                        }
                     }
                 }
-                str = ex.Message;
+                else
+                {
+                    throw ex;
+                }
             }
             catch (Exception ex)
             {
-                str = ex.Message;
+                throw ex;
             }
 
-            return str;
+            return fcmResponse;
+        }
+
+        public object Send(NotificationModel data)
+        {
+            return Send(data, 0);
         }
         
-        private void retryAfter(string retryAfter)
+        private TimeSpan retryAfterStringToTimeSpan(string retryAfter)
         {
             int seconds;
             DateTime dateTime;
-            TimeSpan delay = new TimeSpan();
+            TimeSpan timeToWait = new TimeSpan(0);
             if (Int32.TryParse(retryAfter, out seconds))
             {
-                delay = TimeSpan.FromSeconds(seconds);
+                timeToWait = TimeSpan.FromSeconds(seconds);
             }
             else if (DateTime.TryParse(retryAfter, out dateTime))
             {
-                delay = DateTime.Now - dateTime;
+                timeToWait = DateTime.Now - dateTime;
             }
 
-            if (delay == null)
-                throw new Exception("");
+            return timeToWait;
+        }
 
-            System.Threading.Thread.Sleep(Convert.ToInt32(delay.TotalMilliseconds));
+        private bool shouldRetry(FcmResultModel result)
+        {
+            // List of error messages where the app server should retry sending the message,
+            // according to the reference at: https://firebase.google.com/docs/cloud-messaging/http-server-ref
+            List<string> errorList = new List<string>()
+                {
+                    "Unavailable",
+                    "InternalServerError",
+                    "DeviceMessageRateExceeded",
+                    "TopicsMessageRateExceeded"
+                };
+
+            return errorList.Contains(result.error);
         }
     }
 }

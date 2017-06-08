@@ -63,7 +63,7 @@ namespace TestFirebaseNotificationsAPI.Services
             get { return this._maxElapsedTime; }
         }
 
-        private TimeSpan CalcNextBackoff(int retryAttempt)
+        public TimeSpan CalcNextBackoff(int retryAttempt)
         {
             double retryInterval = InitialInterval * Math.Pow(Multiplier, retryAttempt);
             int min = (int)(retryInterval - (retryInterval * RandomizationFactor) * 1000);

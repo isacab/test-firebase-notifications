@@ -9,12 +9,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 using TestFirebaseNotificationsAPI.Repository;
+using System.Configuration;
 
 namespace TestFirebaseNotificationsAPI.Controllers
 {
     [Route("api/[controller]")]
     public class TestPushNotificationsController : Controller
     {
+        private readonly PushNotificationService _pushService;
         private readonly PushRegistrationRepository _registrations;
         private readonly TestRepository _tests;
         private readonly TestNotifactionContentRepository _notifications;
@@ -25,6 +27,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             TestRepository testRepository,
             TestNotifactionContentRepository testNotifactionContentRepository)
         {
+            this._pushService = pushNotificationService;
             this._registrations = pushRegistrationRepository;
             this._tests = testRepository;
             this._notifications = testNotifactionContentRepository;
@@ -60,6 +63,21 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 return BadRequest(new { Message = "Resource not found" });
 
             var json = Json(model);
+            return json;
+        }
+
+        // POST api/testpushnotifications/send
+        [HttpPost("send")]
+        public IActionResult Send([FromBody]NotificationModel data)
+        {
+            if (data == null)
+                return BadRequest(new { Message = "Data is null" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
+            var response = _pushService.Send(data);
+            var json = Json(response);
             return json;
         }
 
