@@ -12,20 +12,18 @@
                 <tr>
                 <th>Seq number</th>
                 <th class="mdl-data-table__cell--non-numeric">Sent</th>
-                <th>Latancy (ms)</th>
-                <th>App to server RTT (ms)</th>
+                <th>Latency (ms)</th>
                 <th>Num retries</th>
                 </tr>
             </thead>
-                <tbody>
+            <tbody>
                 <tr *ngFor="let message of receivedMessages; trackBy: trackMessage">
                 <td>{{message.sequenceNumber}}</td>
                 <td class="mdl-data-table__cell--non-numeric">{{message.sent}}</td>
-                <td>{{message.latancy}}</td>
-                <td>{{message.appToServerRTT}}</td>
+                <td>{{message.latency}}</td>
                 <td>{{message.numRetries}}</td>
                 </tr>
-                </tbody>
+            </tbody>
         </table>
     </div>
 </div>

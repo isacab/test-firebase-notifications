@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace TestFirebaseNotificationsAPI.Model
 {
@@ -12,7 +8,7 @@ namespace TestFirebaseNotificationsAPI.Model
 
         public string To { get; set; }
 
-        public IEnumerable<string> RegistrationIds { get; set; }
+        public ICollection<string> RegistrationIds { get; set; }
 
         public string Condition { get; set; }
 
@@ -34,8 +30,44 @@ namespace TestFirebaseNotificationsAPI.Model
 
         // Payload
 
-        public object Data { get; set; }
+        public Model Data { get; set; }
 
         public NotificationContentModel Notification { get; set; }
+
+        // Helper methods
+
+        public bool IsTopicMessage()
+        {
+            return To.StartsWith("/topics/");
+        }
+
+        public List<string> GetTargetTokens()
+        {
+            var receivers = new List<string>();
+
+            if (To == null ^ RegistrationIds == null)
+            {
+                if (To != null)
+                    receivers.Add(To);
+                else
+                    receivers.AddRange(RegistrationIds);
+            }
+
+            return receivers;
+        }
+
+        public override object Clone()
+        {
+            // Copy data
+            NotificationModel clone = (NotificationModel)base.Clone();
+            if (RegistrationIds != null)
+                clone.RegistrationIds = new List<string>(RegistrationIds);
+            if (Data != null)
+                clone.Data = (Model)Data.Clone();
+            if (Notification != null)
+                clone.Notification = (NotificationContentModel)Notification.Clone();
+
+            return clone;
+        }
     }
 }

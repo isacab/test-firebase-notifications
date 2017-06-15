@@ -5,6 +5,7 @@ using System.Linq;
 using TestFirebaseNotificationsAPI;
 using TestFirebaseNotificationsAPI.Controllers;
 using TestFirebaseNotificationsAPI.Model;
+using TestFirebaseNotificationsAPI.Repository;
 using TestFirebaseNotificationsAPI.Services;
 using Xunit;
 
@@ -40,7 +41,7 @@ namespace TestFirebaseNotificationsAPITests
                 // Run the test against one instance of the context
                 using (var context = new DatabaseContext(options))
                 {
-                    var service = new PushRegistrationService(context);
+                    var service = new PushRegistrationRepository(context);
                     service.Insert(registration);
                     service.SaveChanges();
                     Assert.NotEqual(0, registration.Id);

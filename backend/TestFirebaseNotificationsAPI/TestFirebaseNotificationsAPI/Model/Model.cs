@@ -1,14 +1,21 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TestFirebaseNotificationsAPI.Model
 {
-    public abstract class Model
+    /**
+     * Base class for all models
+     */
+    public class Model : IModel
     {
+        /**
+         * Create a shallow copy of the Model 
+         */
+        public virtual object Clone()
+        {
+            return MemberwiseClone();
+        }
+
         public string ToJson()
         {
             JsonSerializerSettings serializerSettings = new JsonSerializerSettings()

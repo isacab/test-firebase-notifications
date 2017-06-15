@@ -8,25 +8,9 @@ namespace TestFirebaseNotificationsAPI.Model
 {
     public class TestModel : Model
     {
-        public TestModel()
-        { }
-
-        public TestModel(TestModel other)
-        {
-            Id = other.Id;
-            Finished = other.Finished;
-            Name = other.Name;
-            NumNotificationsPerInterval = other.NumNotificationsPerInterval;
-            NumIntervals = other.NumIntervals;
-            Interval = other.Interval;
-            PushRegistrationId = other.PushRegistrationId;
-            UpdatedAt = other.UpdatedAt;
-            CreatedAt = other.CreatedAt;
-        }
-
         public int Id { get; set; }
 
-        public bool Finished { get; set; }
+        public bool Running { get; set; }
 
         [Required]
         [MaxLength(200)]

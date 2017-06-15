@@ -45,7 +45,7 @@ namespace TestFirebaseNotificationsAPI
             services.AddMvc();
             services.AddEntityFrameworkSqlite()
                     .AddDbContext<DatabaseContext>(options => options.UseSqlite(connectionString));
-            services.AddScoped<PushNotificationService>();
+            services.AddScoped<FcmService>(FcmServiceFactory);
             services.AddScoped<PushRegistrationRepository>();
             services.AddScoped<TestRepository>();
             services.AddScoped<TestNotifactionContentRepository>();
@@ -63,6 +63,13 @@ namespace TestFirebaseNotificationsAPI
                 ));
 
             app.UseMvc();
+        }
+        
+        private FcmService FcmServiceFactory(IServiceProvider provider)
+        {
+            return new FcmService(
+                new FcmConfiguration(ConfigurationManager.AppSettings["FCMServerKey"]),
+                provider.GetService<PushRegistrationRepository>());
         }
     }
 }

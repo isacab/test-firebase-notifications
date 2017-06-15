@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
+﻿
 namespace TestFirebaseNotificationsAPI.Model
 {
-    public class FcmResultModel
+    public class FcmResultModel : Model
     {
-        public string message_id { get; set; }
+        public string MessageId { get; set; }
 
-        public string error { get; set; }
+        public string RegistrationId { get; set; }
+
+        public string Error { get; set; }
     }
 }

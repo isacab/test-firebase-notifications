@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -9,6 +10,7 @@ using TestFirebaseNotificationsAPI.Model;
 using TestFirebaseNotificationsAPI.Repository;
 using TestFirebaseNotificationsAPI.Services;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
+using TestFirebaseNotificationsAPI.Lib;
 
 namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 {
@@ -16,15 +18,20 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
     {
         private readonly TestModel _test; // a copy of the TestModel passed in constructor
         private readonly DatabaseContext _databaseContext;
-        private readonly PushNotificationService _pushService;
-        private readonly PushRegistrationRepository _regService;
+        private readonly FcmService _pushService;
+        private readonly SyncFcmService _syncPushService;
+        private readonly PushRegistrationRepository _registrations;
+        private readonly TestRepository _tests;
 
         public TestApplication(TestModel test)
         {
-            this._test = new TestModel(test) ?? throw new ArgumentNullException("Test is null");
-            this._pushService = new PushNotificationService();
-            this._databaseContext = DatabaseContext.CreateDefault();
-            this._regService = new PushRegistrationRepository(_databaseContext);
+            _test = (TestModel)test.Clone() ?? throw new ArgumentNullException("Test is null");
+            _databaseContext = DatabaseContext.CreateDefault();
+            _registrations = new PushRegistrationRepository(_databaseContext);
+            _tests = new TestRepository(_databaseContext);
+            string serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
+            _pushService = new FcmService(new FcmConfiguration(serverKey), _registrations);
+            _syncPushService = new SyncFcmService(new FcmConfiguration(serverKey), _registrations);
         }
 
         #region Properties
@@ -78,13 +85,17 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
             if (Started)
                 throw new InvalidOperationException("TestApplication has already been started.");
 
+            setRunning(true);
+
             Started = true;
             
             int seqNumber = 0;
 
+            Stopwatch sw = Stopwatch.StartNew();
+
             while(Continue(seqNumber))
             {
-                PushRegistrationModel reg = _regService.Get(_test.PushRegistrationId);
+                PushRegistrationModel reg = _registrations.Get(_test.PushRegistrationId);
                 for (int i = 0; i < _test.NumNotificationsPerInterval; i++)
                 {
                     seqNumber++;
@@ -100,18 +111,29 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                             TestId = _test.Id
                         }
                     };
-                    object response = this._pushService.Send(notification);
+                    SendNotification(notification);
                 }
 
                 Thread.Sleep(_test.Interval);
             }
+
+            long runTime = sw.ElapsedMilliseconds;
+            Console.WriteLine("Run Time: {0}", runTime);
+
+            setRunning(false);
         }
 
-        public void StopTimer(TestNotifactionContentModel notificationContent)
+        private async void SendNotification(NotificationModel notification)
         {
-            DateTime received = DateTime.UtcNow;
-            TimeSpan latancy = notificationContent.Sent.Subtract(received);
-            notificationContent.Latancy = latancy.Milliseconds;
+            await _pushService.SendToDevice(notification);
+            //_syncPushService.SendToDevice(notification);
+        }
+
+        private void setRunning(bool running)
+        {
+            _test.Running = running;
+            _tests.Update(_test);
+            _tests.SaveChanges();
         }
 
         private bool Continue(int seqNumber)

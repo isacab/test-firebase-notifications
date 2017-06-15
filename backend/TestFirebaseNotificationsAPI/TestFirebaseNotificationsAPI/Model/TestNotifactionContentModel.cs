@@ -1,10 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TestFirebaseNotificationsAPI.Model
 {
@@ -19,7 +16,7 @@ namespace TestFirebaseNotificationsAPI.Model
         [Required]
         public DateTime Sent { get; set; }
         
-        public long Latancy { get; set; }
+        public long Latency { get; set; }
         
         public int NumRetries { get; set; }
 

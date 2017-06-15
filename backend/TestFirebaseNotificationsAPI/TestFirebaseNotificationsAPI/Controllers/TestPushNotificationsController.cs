@@ -10,27 +10,29 @@ using Newtonsoft.Json.Serialization;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 using TestFirebaseNotificationsAPI.Repository;
 using System.Configuration;
+using Newtonsoft.Json.Linq;
+using TestFirebaseNotificationsAPI.Lib;
 
 namespace TestFirebaseNotificationsAPI.Controllers
 {
     [Route("api/[controller]")]
     public class TestPushNotificationsController : Controller
     {
-        private readonly PushNotificationService _pushService;
+        private readonly FcmService _pushService;
         private readonly PushRegistrationRepository _registrations;
         private readonly TestRepository _tests;
         private readonly TestNotifactionContentRepository _notifications;
 
         public TestPushNotificationsController(
-            PushNotificationService pushNotificationService, 
+            FcmService pushNotificationService, 
             PushRegistrationRepository pushRegistrationRepository,
             TestRepository testRepository,
             TestNotifactionContentRepository testNotifactionContentRepository)
         {
-            this._pushService = pushNotificationService;
-            this._registrations = pushRegistrationRepository;
-            this._tests = testRepository;
-            this._notifications = testNotifactionContentRepository;
+            _pushService = pushNotificationService;
+            _registrations = pushRegistrationRepository;
+            _tests = testRepository;
+            _notifications = testNotifactionContentRepository;
         }
 
         // GET api/testpushnotifications?token={token}
@@ -68,16 +70,27 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
         // POST api/testpushnotifications/send
         [HttpPost("send")]
-        public IActionResult Send([FromBody]NotificationModel data)
+        public async Task<IActionResult> Send([FromBody]NotificationModel data)
         {
-            if (data == null)
-                return BadRequest(new { Message = "Data is null" });
-
             if (!ModelState.IsValid)
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
-            var response = _pushService.Send(data);
-            var json = Json(response);
+            if (data == null)
+                return BadRequest(new { Message = "Data is null" });
+
+            JsonResult json;
+
+            if(data.IsTopicMessage())
+            {
+                var fcmResponse = await _pushService.SendToTopic(data);
+                json = Json(fcmResponse);
+            }
+            else
+            {
+                var fcmResponse = await _pushService.SendToDevice(data);
+                json = Json(fcmResponse);
+            }
+            
             return json;
         }
 
@@ -115,7 +128,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             Task.Run((Action)testApp.Run).ContinueWith((t) =>
             {
-                GlobalStore.RunningTests.TryRemove(id, out testApp);
+                //GlobalStore.RunningTests.TryRemove(id, out testApp);
             });
 
             var ok = Ok();
@@ -160,8 +173,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             //TODO: some kind of auth
 
-            TimeSpan latancy = stopped.Subtract(data.Sent);
-            data.Latancy = Convert.ToInt64(latancy.TotalMilliseconds);
+            TimeSpan latency = stopped.Subtract(data.Sent);
+            data.Latency = Convert.ToInt64(latency.TotalMilliseconds);
 
             _notifications.Insert(data);
 

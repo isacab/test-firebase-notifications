@@ -54,6 +54,13 @@ namespace TestFirebaseNotificationsAPI.Repository
             _databaseContext.PushRegistrations.RemoveRange(models);
         }
 
+        public void Delete(IEnumerable<string> tokens)
+        {
+            var models = _databaseContext.PushRegistrations.Where(x => tokens.Contains(x.Token));
+
+            _databaseContext.PushRegistrations.RemoveRange(models);
+        }
+
         /*private string GenerateDeviceId()
         {
             Guid g = Guid.NewGuid();
