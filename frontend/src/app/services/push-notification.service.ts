@@ -4,7 +4,7 @@ import { FirebaseApp } from "angularfire2";
 import * as firebase from 'firebase';
 
 import 'rxjs/add/operator/toPromise';
-import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
+import { Observable, ReplaySubject, BehaviorSubject, Subject } from 'rxjs';
 
 import { ApiService } from './api.service';
 
@@ -28,8 +28,8 @@ export class PushNotificationService {
   // [start] Observable properties
 
   // isInitialized - observable property
-  private _isInitializedSource : BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  isInitializedChanged = this._isInitializedSource.asObservable();
+  private _isInitializedSource = new BehaviorSubject<boolean>(false);
+  readonly isInitializedChanged = this._isInitializedSource.asObservable();
   get isInitialized() : boolean {
     return this._isInitializedSource.getValue();
   }
@@ -38,8 +38,8 @@ export class PushNotificationService {
   }
 
   // pushRegistration - observable property
-  private _pushRegistrationSource : BehaviorSubject<PushRegistration> = new BehaviorSubject<PushRegistration>(null);
-  pushRegistrationChanged = this._pushRegistrationSource.asObservable();
+  private _pushRegistrationSource = new BehaviorSubject<PushRegistration>(null);
+  readonly pushRegistrationChanged = this._pushRegistrationSource.asObservable();
   get pushRegistration() : PushRegistration {
     return this._pushRegistrationSource.getValue();
   }
@@ -48,6 +48,9 @@ export class PushNotificationService {
   }
 
   // [end] Observable properties
+
+  private _onNotificationReceivedSource : Subject<any> = new Subject<any>();
+  readonly onNotificationReceived = this._onNotificationReceivedSource.asObservable();
 
   /**
    * set value for an BehaviorSubject
@@ -91,7 +94,7 @@ export class PushNotificationService {
    * @param token Current registration token generated from messaging.getToken()
    */
   loadPushRegistration() : Promise<PushRegistration> {
-    let promise = new Promise<PushRegistration>((resolve, reject) => {
+    return new Promise<PushRegistration>((resolve, reject) => {
 
       this._messaging.getToken().then((token) => {
         let rv : Promise<PushRegistration>;
@@ -145,12 +148,10 @@ export class PushNotificationService {
         this.setPushRegistration(reg);
         resolve(reg);
       }).catch((error) => {
-          reject(new Error("Could not load push registration."));
+        reject(new Error("Could not load push registration."));
       });
       
     });
-
-    return promise;
   }
 
   /**
@@ -159,7 +160,7 @@ export class PushNotificationService {
    * There is no data passed on resolve.
    */
   checkAvailable() : Promise<any> {
-    let promise = new Promise<any>((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       
       if (!('serviceWorker' in navigator)) {
         reject(new PushNotAvailableError("Service Worker is not supported on this browser."));
@@ -181,8 +182,6 @@ export class PushNotificationService {
           resolve();
         });
     });
-
-    return promise;
   }
 
   /**
@@ -191,22 +190,15 @@ export class PushNotificationService {
    * @param value 
    */
   setEnabled(value : boolean) : Promise<any> {
-    let promise : Promise<any>;
 
     let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
 
     // Check if push is already enabled
     if(enabled === value) {
-      promise = new Promise((resolve, reject) => { resolve(); });
-    }
-    else if(value) {
-      promise = this.enable();
-    }
-    else {
-      promise = this.disable();
+      return Promise.resolve();
     }
 
-    return promise;
+    return value ? this.enable() : this.disable();
   }
 
   /**
@@ -214,7 +206,7 @@ export class PushNotificationService {
    */
   private enable() : Promise<any> {
     // Request permission, get token and on success, set isPushEnabled to true
-    let promise = new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.requestPermission()
         .then(() => this.getToken()) // get current token
         .then((currentToken) => {
@@ -236,7 +228,6 @@ export class PushNotificationService {
           reject(err);
         });
     });
-    return promise;
   }
 
   /**
@@ -249,15 +240,13 @@ export class PushNotificationService {
       enabled: false
     });
     
-    let promise = this.sendToServer(data, currentToken)
+    return this.sendToServer(data, currentToken)
       .then((reg : PushRegistration) => {
         this.setPushRegistration(reg);
       })
       .catch(function(err) {
         throw err;
       });
-
-    return promise;
   }
 
   /**
@@ -312,7 +301,7 @@ export class PushNotificationService {
     // - the user clicks on an app notification created by a sevice worker
     //   `messaging.setBackgroundMessageHandler` handler.
     messaging.onMessage(function (payload) {
-        console.log("Message received. ", payload);
+        this._onNotificationReceivedSource.next(payload);
     });
   }
 

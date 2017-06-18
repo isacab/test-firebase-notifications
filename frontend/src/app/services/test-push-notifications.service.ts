@@ -3,97 +3,129 @@ import { ApiService } from './api.service';
 import { PushNotificationService } from './push-notification.service';
 import { PushRegistration } from '../models/push-registration';
 import { Test } from '../models/test';
+import { NotificationData } from "../models/notification-data";
 
 import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
 
 @Injectable()
 export class TestPushNotificationsService {
 
-  private _receivedMessages : Array<any>;
-
-  private _test : Test;
+  private _receivedNotifications : Array<NotificationData> = [];
 
   constructor(private api : ApiService, private pushService : PushNotificationService) { 
     if(pushService.isInitialized) {
       this.setServiceWorkerMessageListeners();
-      this.updateAllReceived();
     } else {
       pushService.isInitializedChanged.subscribe(() => {
         this.setServiceWorkerMessageListeners();
-        this.updateAllReceived();
       });
-    } 
-
+    }
   }
 
   get receivedMessages() : Array<any> {
-    return this._receivedMessages;
+    return this._receivedNotifications;
   }
 
+  // [start] Observable properties
+
+  // currentTest - observable property
+  private _currentTestSource : BehaviorSubject<Test> = new BehaviorSubject<Test>(null);
+  readonly currentTestChanged = this._currentTestSource.asObservable();
   get currentTest() : Test {
-    return this._test;
+    return this._currentTestSource.getValue();
+  }
+  private setCurrentTest(value : Test) : void {
+    this.setValue(this._currentTestSource, value);
+  }
+
+  // [end] Observable properties
+
+  /**
+   * set value for an BehaviorSubject
+   */ 
+  private setValue<T>(subject : BehaviorSubject<T>, value : T) : void {
+    if(subject.getValue() !== value) {
+      subject.next(value);
+    }
+  }
+
+  loadTest(id : number) : Promise<Test> {
+    // Send api call to get test
+    return this.api.getTest(id)
+      .then((testFromServer : Test) => {
+        this.updateNotificationList(testFromServer);
+        this.setCurrentTest(testFromServer);
+        return testFromServer;
+      });
+  }
+
+  private updateNotificationList(test : Test) : void {
+    /*if(!test || !test.notifications)
+      return;
+    let arr : Array<NotificationData> = [];
+    this.receivedMessages.forEach((element : NotificationData) => {
+      if(element.testId === test.id && test.notifications.some() {
+        arr.push()
+      }
+    });*/
   }
 
   startTest(token : string, test : Test) : Promise<any> {
-    // Notify service worker to clear receivedMessages
-    let notifyServiceWorker = new Promise((resolve, reject) => {
-      let message = "clear";
-      let onresponse = (event) => {
-        if(event.data.error) {
-          reject(new Error("Could not update all received messages from service worker, Error: " + event.data.error));
-        } else {
-          // Clear receivedMessages
-          console.log("[startTest] Response: ", event.data);
-          this._receivedMessages = event.data.allReceived;
-          resolve(event.data);
-        }
-      };
-      this.sendMessageToServiceWorker(message, onresponse);
-    });
-
-    return notifyServiceWorker
-      .then(() => this.api.startTest(token, test))
-      .then(() => this._test = new Test(test));
+    // Send api call to start test
+    return this.api.startTest(token, test)
+      .then((testFromServer : Test) => {
+        this.updateNotificationList(testFromServer);
+        this._receivedNotifications = [];
+        this.setCurrentTest(testFromServer);
+        return testFromServer;
+      });
   }
 
-  clearTest(token : string) {
-    // Notify service worker to clear receivedMessages
-    let notifyServiceWorker = new Promise((resolve, reject) => {
-      let message = "clear";
-      let onresponse = (event) => {
-        if(event.data.error) {
-          reject(new Error("Could not update all received messages from service worker, Error: " + event.data.error));
-        } else {
-          // Clear receivedMessages
-          console.log("[clearTest] Response: ", event.data);
-          this._receivedMessages = event.data.allReceived;
-          resolve(event.data);
-        }
-      };
-      this.sendMessageToServiceWorker(message, onresponse);
-    });
+  stopTest(token : string) {
+    let test = this.currentTest;
+
+    if(!test || test.running)
+      throw new Error("No test to stop");
 
     // Send api call to stop test
-    return this.api.stopTest(token).then(() => notifyServiceWorker);
+    return this.api.stopTest(test.id)
+      .then((testFromServer : Test) => {
+        this.setCurrentTest(testFromServer);
+        return testFromServer;
+      });
   }
 
-  updateAllReceived() {
-    return new Promise((resolve, reject) => {
-      let message = "getAll";
-      let onresponse = (event) => {
-        if(event.data.error) {
-          reject(new Error("Could not update all received messages from service worker, Error: " + event.data.error));
-        } else {
-          console.log("[updateAllReceived] Received data: ", event.data);
-          this._receivedMessages = event.data.allReceived;
-          resolve(event.data);
+  private setServiceWorkerMessageListeners() {
+    if('serviceWorker' in navigator){
+      // Handler for messages coming from the service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if(!(event.data && event.data.messageType)) {
+          return;
         }
-      };
-      this.sendMessageToServiceWorker(message, onresponse);
-    });
+        
+        console.log("[setServiceWorkerMessageListeners] Received data: ", event.data);
+
+        let messageType = event.data.messageType;
+
+        if(messageType === 'notification') {
+          let received = new NotificationData(event.data.received);
+          let test = this.currentTest;
+
+          this._receivedNotifications.push(received);
+
+          if(test && received.testId === test.id) {
+            if(!test.notifications)
+              test.notifications = [];
+            test.notifications.push(received);
+          }
+        }
+      });
+    } else {
+      console.log("Support for service workers are needed for this test to work.");
+    }
   }
 
-  private sendMessageToServiceWorker(message : any, onresponse : (this: MessagePort, ev: MessageEvent) => any) {
+  /*private sendMessageToServiceWorker(message : any, onresponse : (this: MessagePort, ev: MessageEvent) => any) {
     if('serviceWorker' in navigator){
 
       return navigator.serviceWorker.ready.then((reg) => { 
@@ -120,27 +152,5 @@ export class TestPushNotificationsService {
       });
     }
     return Promise.reject(new Error("Service worker is not available"));
-  }
-
-  setServiceWorkerMessageListeners() {
-    if('serviceWorker' in navigator){
-      // Handler for messages coming from the service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if(!(event.data && event.data.messageType)) {
-          return;
-        }
-        
-        console.log("[setServiceWorkerMessageListeners] Received data: ", event.data);
-
-        let messageType = event.data.messageType;
-
-        if(messageType === 'getAll' || messageType === 'push' || messageType === 'stopTimer') {
-          this._receivedMessages = event.data.allReceived;
-        }
-      });
-    } else {
-      console.log("Support for service workers are needed for this test to work.");
-    }
-  }
-
+  }*/
 }

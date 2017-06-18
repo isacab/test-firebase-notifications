@@ -1,29 +1,21 @@
-<div *ngIf="isLoaded">
-    <toggle-push></toggle-push>
-    <div>
-        <test-push-form *ngIf="isEnabled" [test]="test"></test-push-form>
-        <h2>Received notifications 
-            <span *ngIf="currentTest">
-                ({{ receivedMessages?.length || 0 }}/{{ currentTest?.totalNumNotifications() || 0 }})
-            </span>
-        </h2>
-        <table class="received-table mdl-data-table">
-            <thead>
-                <tr>
-                <th>Seq number</th>
-                <th class="mdl-data-table__cell--non-numeric">Sent</th>
-                <th>Latency (ms)</th>
-                <th>Num retries</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let message of receivedMessages; trackBy: trackMessage">
-                <td>{{message.sequenceNumber}}</td>
-                <td class="mdl-data-table__cell--non-numeric">{{message.sent}}</td>
-                <td>{{message.latency}}</td>
-                <td>{{message.numRetries}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+<div *ngIf="isLoaded && !error">
+    <section>
+        <toggle-push></toggle-push>
+    </section>
+    <section *ngIf="isEnabled">
+        <test-push-form *ngIf="!currentTest"
+            (start)="setTest($event)">
+        </test-push-form>
+        <div *ngIf="currentTest">
+            <stop-button
+                [test]="currentTest">
+            </stop-button>
+            <test-push-data 
+                [test]="currentTest">
+            </test-push-data>
+        </div>
+    </section>
+</div>
+<div class="error">
+    {{ error }}
 </div>

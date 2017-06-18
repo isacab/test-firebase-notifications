@@ -11,8 +11,6 @@ const messaging = firebase.messaging();
 
 const apiBaseUrl = 'http://localhost:21378/api';
 
-const receivedMessages = [];
-
 /*messaging.setBackgroundMessageHandler(function (payload) {
     console.log('[sw.js] Received background message ', payload);
     var data = payload.data;
@@ -99,21 +97,15 @@ self.addEventListener('notificationclick', function (event) {
 // Use this to listen for messages from client
 self.addEventListener('message', function(event){
     const message = event.data;
-
-    if(message === 'getAll') {
+    if(message == 'ping') {
         event.ports[0].postMessage({
-            messageType: 'getAll',
-            allReceived: receivedMessages
-        });
-    } else if(message === 'clear') {
-        receivedMessages.splice(0, receivedMessages.length);
-        event.ports[0].postMessage({
-            messageType: 'clear',
-            allReceived: receivedMessages
+            messageType: 'ping',
+            data: 'ping'
         });
     }
 });
 
+// Send received notification to server to stop the timer
 function notifyServer(data)
 {
     let url = apiBaseUrl + '/testpushnotifications/stoptimer';
@@ -134,32 +126,22 @@ function notifyServer(data)
         console.log('[sw.js] could not notify server ', reason);
         return data;
     }).then((data) => {
-        receivedMessages.push(data);
-    
         sendMessageToAllClients({
-            messageType: 'stopTimer',
-            received: data,
-            allReceived: receivedMessages
+            messageType: 'notification',
+            notificationData: data
         });  
     });
 }
 
-function sendMessageToClient(client, message){
-    return new Promise(function(resolve, reject){
-        var channel = new MessageChannel();
-        client.postMessage(message, [channel.port2]);
-    });
+function sendMessageToClient(client, message) {
+    var channel = new MessageChannel();
+    client.postMessage(message, [channel.port2]);
 }
 
-function sendMessageToAllClients(message){
+function sendMessageToAllClients(message) {
     clients.matchAll().then(clients => {
         clients.forEach(client => {
             sendMessageToClient(client, message);
         });
     });
 }
-
-/* Use this function to send messages from client to service worker.
-function send_message_to_sw(msg){
-    navigator.serviceWorker.controller.postMessage(msg);
-}*/

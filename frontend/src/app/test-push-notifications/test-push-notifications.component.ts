@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { TestPushNotificationsService } from '../services/test-push-notifications.service';
 import { PushNotificationService } from '../services/push-notification.service';
+import { ReceivedPushNotificationsService } from '../services/received-push-notifications.service';
 import { ApiService } from '../services/api.service';
 import { PushRegistration } from '../models/push-registration';
 import { Test } from '../models/test';
+import { NotificationData } from '../models/notification-data';
 
 import 'rxjs/add/operator/switchMap';
 
@@ -17,30 +19,18 @@ declare var navigator: any;
 })
 export class TestPushNotificationsComponent implements OnInit {
 
+  currentTest : Test;
   isEnabled? : boolean;
   isLoaded : boolean;
-  test : Test;
+  error : string;
 
   constructor(
-    private testService : TestPushNotificationsService, 
     private pushService : PushNotificationService, 
+    private receivedService : ReceivedPushNotificationsService,
     private api : ApiService,
     private route: ActivatedRoute,
     private router: Router
   ) { }
-
-  get receivedMessages() : Array<any> {
-    return this.testService.receivedMessages;
-  }
-
-  get currentTest() : Test {
-    return this.testService.currentTest;
-  }
-
-  trackMessage(index, message) {
-    console.log(message);
-    return message ? message.sequenceNumber : undefined;
-  }
 
   ngOnInit() {
     this.route.params
@@ -49,11 +39,15 @@ export class TestPushNotificationsComponent implements OnInit {
         let id = +params['id'];
 
         if(!id)
-          return Promise.resolve(new Test({numNotificationsPerInterval: 1, numIntervals: 1, interval: 0}));
+          return Promise.resolve(undefined);
         else
           return this.api.getTest(id);
       }).subscribe((test) => {
-        this.test = test;
+        if(test)
+          this.currentTest = test;
+      }, 
+      (error) => {
+        this.error = "Could not load test";
       });
 
     this.pushService.pushRegistrationChanged.subscribe(() => {
@@ -70,6 +64,14 @@ export class TestPushNotificationsComponent implements OnInit {
         this.updateIsLoaded();
       });
     }
+
+    this.receivedService.received.subscribe((notificationData : NotificationData) => {
+      this.updateReceivedNotifications(notificationData);
+    });
+  }
+
+  setTest(test : Test) {
+    this.currentTest = test;
   }
 
   updateIsLoaded() {
@@ -79,6 +81,16 @@ export class TestPushNotificationsComponent implements OnInit {
       ready = navigator.serviceWorker.controller ? true : false;
 
     this.isLoaded = initialized && ready;
+  }
+
+  updateReceivedNotifications(notificationData : NotificationData) {
+    if(!this.currentTest || !notificationData || this.currentTest.id !== notificationData.testId)
+      return;
+
+    if(!this.currentTest.notifications)
+      this.currentTest.notifications = [];
+
+    this.currentTest.notifications.push(notificationData);
   }
 
 }

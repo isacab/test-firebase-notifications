@@ -1,13 +1,11 @@
-<section class="example-section">
-  <label>{{ label }}</label>
-  <button md-raised-button 
-    [color]="isEnabled ? 'accent' : 'primary'" 
-    (click)="toggleEnabled()" 
-    [disabled]="!canToggle">
-      <md-spinner class="buttonSpinner" *ngIf="isLoading"></md-spinner>
-      {{ buttonText }}
-  </button>
-  <div class="formError" *ngIf="error">
-    {{ error }}
-  </div>
-</section>
+<label>{{ label }}</label>
+<button md-raised-button 
+  [color]="isEnabled ? 'accent' : 'primary'" 
+  (click)="toggleEnabled()" 
+  [disabled]="!canToggle">
+    <md-spinner class="buttonSpinner" *ngIf="isLoading"></md-spinner>
+    {{ buttonText }}
+</button>
+<div class="formError" *ngIf="error">
+  {{ error }}
+</div>

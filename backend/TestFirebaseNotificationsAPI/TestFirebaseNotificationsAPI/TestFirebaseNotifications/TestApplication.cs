@@ -22,10 +22,12 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
         private readonly SyncFcmService _syncPushService;
         private readonly PushRegistrationRepository _registrations;
         private readonly TestRepository _tests;
+        private readonly int _initialDelay;
 
-        public TestApplication(TestModel test)
+        public TestApplication(TestModel test, int initialDelay = 0)
         {
             _test = (TestModel)test.Clone() ?? throw new ArgumentNullException("Test is null");
+            _initialDelay = initialDelay;
             _databaseContext = DatabaseContext.CreateDefault();
             _registrations = new PushRegistrationRepository(_databaseContext);
             _tests = new TestRepository(_databaseContext);
@@ -88,7 +90,9 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
             setRunning(true);
 
             Started = true;
-            
+
+            Thread.Sleep(_initialDelay);
+
             int seqNumber = 0;
 
             Stopwatch sw = Stopwatch.StartNew();

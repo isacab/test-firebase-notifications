@@ -115,7 +115,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             int id = reg.Id;
 
             data.PushRegistrationId = id;
-
+            data.Running = true;
             _tests.Insert(data);
             _tests.SaveChanges();
 
@@ -128,35 +128,41 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             Task.Run((Action)testApp.Run).ContinueWith((t) =>
             {
-                //GlobalStore.RunningTests.TryRemove(id, out testApp);
+                GlobalStore.RunningTests.TryRemove(id, out testApp);
             });
 
-            var ok = Ok();
-            return ok;
+            var json = Json(data);
+            return json;
         }
 
         // POST api/testpushnotifications/stop
-        [HttpPost("stop/{token}")]
-        public IActionResult Stop(string token)
+        [HttpPost("stop/{testId}")]
+        public IActionResult Stop(int testId)
         {
-            PushRegistrationModel reg = _registrations.Get(token);
+            TestModel test = _tests.Get(testId);
+
+            if (test == null)
+                return BadRequest(new { Message = "Test not found" });
+
+            PushRegistrationModel reg = _registrations.Get(test.PushRegistrationId);
 
             if (reg == null)
-                return BadRequest(new { Message = "Token not found" });
-
-            int id = reg.Id;
+                return BadRequest(new { Message = "PushRegistration not found" });
 
             TestApplication testApp;
 
-            if (!GlobalStore.RunningTests.TryGetValue(id, out testApp))
-                return BadRequest(new { Message = "No running test found" });
+            if(GlobalStore.RunningTests.TryGetValue(reg.Id, out testApp))
+            {
+                testApp.Stop = true;
+                GlobalStore.RunningTests.TryRemove(reg.Id, out testApp);
+            }
 
-            testApp.Stop = true;
+            test.Running = false;
+            _tests.Update(test);
+            _tests.SaveChanges();
 
-            GlobalStore.RunningTests.TryRemove(id, out testApp);
-
-            var ok = Ok();
-            return ok;
+            var json = Json(test);
+            return json;
         }
 
         // POST api/testpushnotifications/stoptimer

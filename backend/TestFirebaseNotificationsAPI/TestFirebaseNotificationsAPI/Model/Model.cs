@@ -20,7 +20,8 @@ namespace TestFirebaseNotificationsAPI.Model
         {
             JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                NullValueHandling = NullValueHandling.Ignore
             };
             string json = JsonConvert.SerializeObject(this, serializerSettings);
 

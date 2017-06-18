@@ -33,7 +33,7 @@ namespace TestFirebaseNotificationsAPI.Model
         
         public DateTime CreatedAt { get; set; }
 
-        [JsonIgnore]
+        [Required]
         [ForeignKey("PushRegistrations")]
         public int PushRegistrationId { get; set; }
 

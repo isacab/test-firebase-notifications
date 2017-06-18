@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
+import { Component, OnInit, ViewChild, Output, Input, EventEmitter } from '@angular/core';
+import { ApiService } from '../../services/api.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { Test } from '../../models/test';
 import { NgForm } from '@angular/forms';
@@ -11,16 +11,15 @@ import { NgForm } from '@angular/forms';
 })
 export class TestPushFormComponent implements OnInit {
 
+  @Output("start") onStart = new EventEmitter<Test>();
+
   isSubmitting : boolean;
-  isClearing : boolean;
-  submitted : boolean;
+  model : Test = new Test({numNotificationsPerInterval: 1, numIntervals: 1, interval: 0});
 
-  @Input("test") model : Test;
-
-  constructor(private testService : TestPushNotificationsService, private pushService : PushNotificationService) { }
-  
   testPushForm : NgForm;
   @ViewChild('testPushForm') currentForm : NgForm;
+
+  constructor(private pushService : PushNotificationService, private api : ApiService) { }
 
   ngAfterViewChecked() {
     this.formChanged();
@@ -43,42 +42,30 @@ export class TestPushFormComponent implements OnInit {
   }
 
   submit() {
+    this.updateFormErrors();
+    if(!this.currentForm.valid)
+      return;
     let pushReg = this.pushService.pushRegistration;
     if(pushReg) {
       let token = pushReg.token;
       this.isSubmitting = true;
-      this.testService.startTest(token, this.model)
-        .then(() => {
+      this.api.startTest(token, this.model)
+        .then((test : Test) => {
           this.isSubmitting = false;
           this.formErrors.submit = '';
-          this.formErrors.clear = '';
+          this.onStart.emit(test);
         }).catch((err) => {
           this.formErrors.submit = err;
-          this.formErrors.clear = '';
           this.isSubmitting = false;
-        });
-    }
-  }
-
-  clear() {
-    let pushReg = this.pushService.pushRegistration;
-    if(pushReg) {
-      let token = pushReg.token;
-      this.isClearing = true;
-      this.testService.clearTest(token)
-        .then(() => {
-          this.isClearing = false;
-          this.formErrors.submit = '';
-          this.formErrors.clear = '';
-        }).catch((err) => {
-          this.formErrors.clear = err;
-          this.formErrors.submit = '';
-          this.isClearing = false;
         });
     }
   }
 
   onValueChanged(data?: any) {
+    this.updateFormErrors();
+  }
+
+  updateFormErrors() {
     if (!this.testPushForm) { 
       return; 
     }
@@ -101,6 +88,7 @@ export class TestPushFormComponent implements OnInit {
 
   validationMessages = {
     'name': {
+      'required': 'Name is required.',
     },
     'numNotificationsPerInterval': {
       'required': 'Num notifications per interval is required.',
@@ -125,7 +113,6 @@ export class TestPushFormComponent implements OnInit {
     'numIntervals': '',
     'interval': '',
     'submit': '',
-    'clear': ''
   };
 
 }

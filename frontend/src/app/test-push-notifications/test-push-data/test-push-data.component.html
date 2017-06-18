@@ -1,0 +1,48 @@
+<h1>{{ test.name }}</h1>
+<ul class="test-parameters-list">
+  <li>
+    <div class="test-data-heading">
+      Num notifications per interval
+    </div>
+    <div class="test-data-value">
+      {{ test.numNotificationsPerInterval }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Num intervals
+    </div>
+    <div class="test-data-value">
+      {{ test.numIntervals }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Interval
+    </div>
+    <div class="test-data-value">
+      {{ test.interval }}
+    </div>
+  </li>
+</ul>
+<h2>Received notifications
+  <span *ngIf="test.id">
+    ({{ test.notifications?.length || 0 }}/{{ test.totalNumNotifications() || 0 }})
+  </span>
+</h2>
+<table class="received-table mdl-data-table">
+  <thead>
+    <tr>
+      <th>Seq number</th>
+      <th class="mdl-data-table__cell--non-numeric">Sent</th>
+      <th>Latency (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let notification of test.notifications; trackBy: trackNotification">
+      <td>{{notification.sequenceNumber}}</td>
+      <td class="mdl-data-table__cell--non-numeric">{{notification.sent}}</td>
+      <td>{{notification.latency}}</td>
+    </tr>
+  </tbody>
+</table>

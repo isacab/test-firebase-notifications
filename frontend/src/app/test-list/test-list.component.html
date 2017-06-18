@@ -6,10 +6,7 @@
           <th>Num Notifications Per Interval</th>
           <th>Num Interval</th>
           <th>Interval (ms)</th>
-          <!--<th class="mdl-data-table__cell--non-numeric">Received Notifications</th>
-          <th>Average Latancy</th>
-          <th>Average App to Server RTT</th>
-          <th>Average Num Retries</th>-->
+          <th class="mdl-data-table__cell--non-numeric">Running</th>
           <th class="mdl-data-table__cell--non-numeric">Created</th>
         </tr>
     </thead>
@@ -21,6 +18,7 @@
           <td>{{test.numNotificationsPerInterval}}</td>
           <td>{{test.numIntervals}}</td>
           <td>{{test.interval}}</td>
+          <td class="mdl-data-table__cell--non-numeric">{{test.running}}</td>
           <td class="mdl-data-table__cell--non-numeric">{{test.createdAt}}</td>
         </tr>
       </tbody>

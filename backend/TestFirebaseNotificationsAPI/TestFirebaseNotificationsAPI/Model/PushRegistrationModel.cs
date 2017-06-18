@@ -6,7 +6,6 @@ namespace TestFirebaseNotificationsAPI.Model
 {
     public class PushRegistrationModel : Model
     {
-        [JsonIgnore]
         public int Id { get; set; }
 
         [Required]

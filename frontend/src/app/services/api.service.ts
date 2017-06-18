@@ -22,77 +22,77 @@ export class ApiService {
 
   getPushRegistration(token : string) : Promise<PushRegistration> {
     let url = this.apiUrl + "/pushregistrations/" + token;
-    let request = this.http.get(url);
-    return request
-            .map(this.extractData)
-            .catch(this.handleError)
-            .toPromise();
+    return this.http.get(url)
+      .toPromise()
+      .then((res) => this.handleResponse(res, PushRegistration))
+      .catch((err) => this.handleError(err));
   }
 
   getTest(id : number) : Promise<Test> {
     let url = this.apiUrl + "/testpushnotifications/" + id;
-    let request = this.http.get(url);
-    return request
-            .map(this.extractData)
-            .catch(this.handleError)
-            .toPromise();
+    return this.http.get(url)
+      .toPromise()
+      .then((res) => this.handleResponse(res, Test))
+      .catch((err) => this.handleError(err));
   }
 
   getTestList(token : string) : Promise<Array<Test>> {
     let url = this.apiUrl + "/testpushnotifications?token=" + token;
-    let request = this.http.get(url);
-    return request
-            .map(this.extractData)
-            .catch(this.handleError)
-            .toPromise();
+    return this.http.get(url)
+      .toPromise()
+      .then((res) => this.handleArrayResponse(res, Test))
+      .catch((err) => this.handleError(err));
   }
 
   createPushRegistration(registration : PushRegistration) : Promise<PushRegistration> {
     let url = this.apiUrl + "/pushregistrations"
-    let request = this.http.post(url, registration, this.options);
-    return request
-              .map(this.extractData)
-              .catch(this.handleError)
-              .toPromise();
+    return this.http.post(url, registration, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, PushRegistration))
+      .catch((err) => this.handleError(err));
   }
 
   updatePushRegistration(token : string, registration : PushRegistration) : Promise<PushRegistration> {
     let url = this.apiUrl + "/pushregistrations/" + token;
-    let request = this.http.put(url, registration, this.options);
-    return request
-              .map(this.extractData)
-              .catch(this.handleError)
-              .toPromise();
+    return this.http.put(url, registration, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, PushRegistration))
+      .catch((err) => this.handleError(err));
   }
 
   removePushRegistration(token : string) : Promise<any> {
     let url = this.apiUrl + "/pushregistrations/" + token;
-    let request = this.http.delete(url);
-    return request
-              .map(this.extractData)
-              .catch(this.handleError)
-              .toPromise();
+    return this.http.delete(url)
+      .toPromise()
+      .catch(this.handleError);
   }
 
-  startTest(token : string, test : Test) : Promise<any> {
+  startTest(token : string, test : Test) : Promise<Test> {
     let url = this.apiUrl + "/testpushnotifications/start/" + token;
-    let request = this.http.post(url, test, this.options);
-    return request
-              .catch(this.handleError)
-              .toPromise();
+    return this.http.post(url, test, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, Test))
+      .catch((err) => this.handleError(err));
   }
 
-  stopTest(token : string) : Promise<any> {
-    let url = this.apiUrl + "/testpushnotifications/stop/" + token;
-    let request = this.http.post(url, { }, this.options);
-    return request
-              .catch(this.handleError)
-              .toPromise();
+  stopTest(testId : number) : Promise<Test> {
+    let url = this.apiUrl + "/testpushnotifications/stop/" + testId;
+    return this.http.post(url, { }, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, Test))
+      .catch((err) => this.handleError(err));
   }
 
-  private extractData(res: Response) {
-    let body = res.json();
-    return body || { };
+  private handleResponse<T>(response : Response, type: { new(init?:Partial<T>): T ;} ) : T {
+    let json = response.json();
+    return new type(json);
+  }
+
+  private handleArrayResponse<T>(response : Response, type : { new(init?:Partial<T>): T ;}) : Array<T> {
+    let json : Array<any> = response.json();
+    return json.map((x) => {
+      return new type(x);
+    });
   }
 
   private handleError (error: Response | any) {

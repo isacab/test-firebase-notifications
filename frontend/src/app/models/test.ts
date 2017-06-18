@@ -1,4 +1,4 @@
-import { NotificationData } from "app/models/notification-data";
+import { NotificationData } from "./notification-data";
 
 export class Test {
     id : number;
@@ -7,6 +7,8 @@ export class Test {
     numIntervals : number;
     interval : number;
     notifications : Array<NotificationData>;
+    running: boolean;
+    createdAt: string;
     
     constructor(init?:Partial<Test>) {
         Object.assign(this, init);
