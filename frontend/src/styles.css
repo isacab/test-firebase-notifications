@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
-@import '~materialize-css/dist/css/materialize.css';
+/*@import '~materialize-css/dist/css/materialize.css';*/
 
 body {
   margin: 0;
@@ -19,11 +19,11 @@ ul.test-parameters-list>li {
 
 .test-data-heading {
   padding: 2px 0;
+  font-weight: bold;
 }
 
 .test-data-value {
   padding: 2px 0;
-  font-weight: bold;
 }
 
 md-card {

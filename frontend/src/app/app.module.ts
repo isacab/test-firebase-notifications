@@ -21,12 +21,15 @@ import { ReceivedPushNotificationsService } from './services/received-push-notif
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 
-import { TogglePushComponent } from './test-push-notifications/toggle-push/toggle-push.component';
-import { TestPushNotificationsComponent } from './test-push-notifications/test-push-notifications.component';
-import { TestPushFormComponent } from './test-push-notifications/test-push-form/test-push-form.component';
-import { TestListComponent } from './test-list/test-list.component';
-import { TestPushDataComponent } from './test-push-notifications/test-push-data/test-push-data.component';
-import { StopButtonComponent } from './test-push-notifications/stop-button/stop-button.component';
+import { TestListComponent } from './components/test-list/test-list.component';
+import { TogglePushComponent } from './components/toggle-push/toggle-push.component';
+//import { TestPushNotificationsComponent } from './components/test-push-notifications/test-push-notifications.component';
+import { NewTestFormComponent } from './components/new-test-form/new-test-form.component';
+import { TestInfoComponent } from './components/test-push-details/test-info/test-info.component';
+import { StopButtonComponent } from './components/test-push-details/stop-button/stop-button.component';
+import { ReceivedTableComponent } from './components/test-push-details/received-table/received-table.component';
+import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
+import { NewButtonComponent } from './components/test-push-details/new-button/new-button.component';
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
@@ -47,11 +50,15 @@ export function initializePushNotifications(service: PushNotificationService): F
   declarations: [
     AppComponent,
     TogglePushComponent,
-    TestPushNotificationsComponent,
-    TestPushFormComponent,
+    //TestPushNotificationsComponent,
+    NewTestFormComponent,
     TestListComponent,
-    TestPushDataComponent,
-    StopButtonComponent
+    TestInfoComponent,
+    StopButtonComponent,
+    ReceivedTableComponent,
+    TestPushDetailsComponent,
+    TestInfoComponent,
+    NewButtonComponent
   ],
   imports: [
     BrowserModule,

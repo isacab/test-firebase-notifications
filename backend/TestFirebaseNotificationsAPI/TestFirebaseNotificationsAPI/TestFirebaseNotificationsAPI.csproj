@@ -4,6 +4,10 @@
     <TargetFramework>net452</TargetFramework>
     <RuntimeIdentifier>win7-x86</RuntimeIdentifier>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="specialappsettings.config" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EnterpriseLibrary.TransientFaultHandling" Version="6.0.1304" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />

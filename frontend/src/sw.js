@@ -9,7 +9,7 @@ firebase.initializeApp({
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-const apiBaseUrl = 'http://localhost:21378/api';
+const apiBaseUrl = 'http://localhost:58378/api';
 
 /*messaging.setBackgroundMessageHandler(function (payload) {
     console.log('[sw.js] Received background message ', payload);

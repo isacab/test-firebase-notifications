@@ -9,6 +9,13 @@
   </span>
 </md-toolbar>
 <div class="content">
-  <router-outlet></router-outlet>
+  <div *ngIf="isLoaded && !error">
+    <section>
+        <toggle-push></toggle-push>
+    </section>
+    <section>
+      <router-outlet></router-outlet>
+    </section>
+  </div>
   <div *ngIf="error">{{ error }}</div>
 </div>

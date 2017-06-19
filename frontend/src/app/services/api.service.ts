@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Headers, Http, Response, RequestOptions } from '@angular/http';
-import { Shared } from '../shared';
+import { environment } from '../../environments/environment';
 import { PushRegistration } from '../models/push-registration';
 import { Test } from '../models/test';
 
@@ -11,7 +11,7 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class ApiService {
 
-  private readonly apiUrl = Shared.BASE_API_URL;
+  private readonly apiUrl = environment.baseApiUrl;
   private readonly options : RequestOptions;
 
   constructor(private http : Http) 

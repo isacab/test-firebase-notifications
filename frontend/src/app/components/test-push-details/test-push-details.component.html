@@ -1,0 +1,9 @@
+<div *ngIf="!error && currentTest">
+  <test-info [model]="currentTest"></test-info>
+  <stop-button></stop-button>
+  <new-button [model]="currentTest"></new-button>
+  <received-table [model]="currentTest"></received-table>
+</div>
+<div class="error">
+    {{ error }}
+</div>

@@ -1,0 +1,43 @@
+<h1>{{ test.name }}</h1>
+<ul class="test-parameters-list">
+  <li>
+    <div class="test-data-heading">
+      Num notifications per interval
+    </div>
+    <div class="test-data-value">
+      {{ test.numNotificationsPerInterval }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Num intervals
+    </div>
+    <div class="test-data-value">
+      {{ test.numIntervals }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Interval
+    </div>
+    <div class="test-data-value">
+      {{ test.interval }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Created
+    </div>
+    <div class="test-data-value">
+      {{ test.createdAt | date: 'yyyy-MM-dd hh:mm' }}
+    </div>
+  </li>
+  <li>
+    <div class="test-data-heading">
+      Running
+    </div>
+    <div class="test-data-value">
+      {{ test.running }}
+    </div>
+  </li>
+</ul>
