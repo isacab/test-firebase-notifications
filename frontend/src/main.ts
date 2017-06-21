@@ -8,9 +8,9 @@ if (environment.production) {
   enableProdMode();
 }
 
-declare var window: any;
+/*declare var window: any;
 window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || {READ_WRITE: "readwrite"};
-window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;*/
 
 platformBrowserDynamic().bootstrapModule(AppModule);

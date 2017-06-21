@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule, APP_INITIALIZER, Type } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule, JsonpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -15,8 +15,12 @@ import 'hammerjs';
 
 import { ApiService } from './services/api.service';
 import { PushNotificationService } from './services/push-notification.service';
-import { TestPushNotificationsService } from './services/test-push-notifications.service';
-import { ReceivedPushNotificationsService } from './services/received-push-notifications.service';
+import { WebPushNotificationService } from './services/web/web-push-notification.service';
+import { CordovaPushNotificationService } from './services/cordova/cordova-push-notification.service';
+import { TestService } from './services/test.service';
+import { WebTestService } from './services/web/web-test.service';
+import { CordovaTestService } from './services/cordova/cordova-test.service';
+import { WindowRefService } from './services/window-ref.service';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -31,20 +35,26 @@ import { ReceivedTableComponent } from './components/test-push-details/received-
 import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
 import { NewButtonComponent } from './components/test-push-details/new-button/new-button.component';
 
-export const firebaseConfig = {
-  apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
-  authDomain: "testnotificationsfirebase.firebaseapp.com",
-  databaseURL: "https://testnotificationsfirebase.firebaseio.com",
-  projectId: "testnotificationsfirebase",
-  storageBucket: "testnotificationsfirebase.appspot.com",
-  messagingSenderId: "170551356465"
-};
+import { environment } from '../environments/environment';
 
-export function initializePushNotifications(service: PushNotificationService): Function {
+/*export function initializePushNotifications(service: PushNotificationService): Function {
   return () => service.initialize().catch((error) => {
     console.error('[app.module]', error);
   });
-};
+};*/
+
+function platform() : string {
+  let cordova = (<any>window).cordova || { platform: 'browser' };
+  return cordova.platform;
+}
+
+function pushNotificationServiceClass() : Type<any> {
+  return platform() === 'browser' ? WebPushNotificationService : CordovaPushNotificationService;
+}
+
+function testServiceClass() : Type<any> {
+  return platform() === 'browser' ? WebTestService : CordovaTestService;
+}
 
 @NgModule({
   declarations: [
@@ -66,7 +76,7 @@ export function initializePushNotifications(service: PushNotificationService): F
     HttpModule,
     JsonpModule,
     BrowserAnimationsModule,
-    AngularFireModule.initializeApp(firebaseConfig),
+    AngularFireModule.initializeApp(environment.firebaseConfig),
     MdButtonModule,
     MdProgressSpinnerModule,
     MdToolbarModule,
@@ -76,9 +86,9 @@ export function initializePushNotifications(service: PushNotificationService): F
   ],
   providers: [
     ApiService,
-    PushNotificationService, 
-    TestPushNotificationsService,
-    ReceivedPushNotificationsService,
+    WindowRefService,
+    { provide: 'PushNotificationService', useClass: pushNotificationServiceClass() },
+    { provide: 'TestService', useClass: testServiceClass() },
     /*{ provide: APP_INITIALIZER,
       useFactory: initializePushNotifications,
       deps: [PushNotificationService], 

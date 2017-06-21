@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
-import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
+
+import { TestService } from "app/services/test.service";
 
 @Component({
   selector: 'test-push-details',
@@ -12,7 +13,7 @@ export class TestPushDetailsComponent implements OnInit {
   error : string;
 
   constructor(
-    private testService : TestPushNotificationsService,
+    @Inject('TestService') private testService : TestService,
     private route: ActivatedRoute,
     private router: Router,
   ) { }
@@ -30,7 +31,7 @@ export class TestPushDetailsComponent implements OnInit {
       }).subscribe((test) => {
       }, 
       (error) => {
-        this.error = "Could not load test";
+        this.error = "Could not load test: " + error;
       });
   }
 

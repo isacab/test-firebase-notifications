@@ -1,7 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { PushNotificationService } from './push-notification.service';
-import { ReceivedPushNotificationsService } from './received-push-notifications.service';
 import { PushRegistration } from '../models/push-registration';
 import { Test } from '../models/test';
 import { NotificationData } from "../models/notification-data";
@@ -9,18 +8,15 @@ import { NotificationData } from "../models/notification-data";
 import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
 
 @Injectable()
-export class TestPushNotificationsService {
+export class TestService {
 
   private waitingForResponse : boolean;
   private receivedNotificationsWhileWaiting : Array<NotificationData> = [];
 
   constructor(
-    private api : ApiService, 
-    private pushService : PushNotificationService, 
-    private receivedService : ReceivedPushNotificationsService
-  ) { 
-    this.setServiceWorkerMessageListener();
-  }
+    protected api : ApiService, 
+    @Inject('PushNotificationService') protected pushService : PushNotificationService
+  ) { }
 
   // [start] Observable properties
 
@@ -81,28 +77,7 @@ export class TestPushNotificationsService {
       return test;
   }
 
-  private setServiceWorkerMessageListener() {
-    if('serviceWorker' in navigator){
-      // Handler for messages coming from the service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if(!(event.data && event.data.messageType))
-          return;
-        
-        console.log("[test-push-notifications.service] Received data: ", event.data);
-
-        let messageType = event.data.messageType;
-
-        if(messageType === 'notification') {
-          let notificationData = new NotificationData(event.data.notificationData);
-          this.onReceivedNotification(notificationData);
-        }
-      });
-    } else {
-      console.log("[test-push-notifications.service] Service workers are not supported by browser.");
-    }
-  }
-
-  private onReceivedNotification(notificationData : NotificationData) : void {
+  protected onReceivedNotification(notificationData : NotificationData) : void {
     let currentTest = this.currentTest;
 
     if(currentTest && notificationData.testId === currentTest.id) {
@@ -135,7 +110,7 @@ export class TestPushNotificationsService {
     );
   }*/
 
-  private updateReceivedNotification(test : Test, notifications : Array<NotificationData>) {
+  protected updateReceivedNotification(test : Test, notifications : Array<NotificationData>) {
     notifications.forEach(element => {
       if(element.testId === test.id && !test.notifications.find(x => x.sequenceNumber == element.sequenceNumber)) {
         test.notifications.push(element);

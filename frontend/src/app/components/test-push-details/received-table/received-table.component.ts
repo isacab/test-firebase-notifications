@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Test } from '../../../models/test';
+import { Test } from "app/models/test";
 
 @Component({
   selector: 'received-table',

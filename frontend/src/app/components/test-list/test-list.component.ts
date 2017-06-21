@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 
-import { ApiService } from '../../services/api.service';
-import { PushNotificationService } from '../../services/push-notification.service';
+import { ApiService } from "app/services/api.service";
+import { PushNotificationService } from "app/services/push-notification.service";
 
-import { Test } from '../../models/test';
+import { Test } from "app/models/test";
+
 
 @Component({
   selector: 'app-test-list',
@@ -14,7 +15,10 @@ export class TestListComponent implements OnInit {
 
   testList : Array<Test>;
 
-  constructor(private api : ApiService, private pushService : PushNotificationService) { }
+  constructor(
+    private api : ApiService, 
+    @Inject('PushNotificationService') private pushService : PushNotificationService
+  ) { }
 
   ngOnInit() {
     this.pushService.pushRegistrationChanged.subscribe(() => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { PushNotificationService } from './services/push-notification.service';
 
@@ -9,21 +9,20 @@ import { PushNotificationService } from './services/push-notification.service';
 })
 export class AppComponent implements OnInit {
   
-  title : string = 'Test Firebase Push Notifications';
+  title : string = 'Test FCM';
   isLoaded : boolean;
   pushIsEnabled : boolean;
   error : string;
 
   constructor(
-    private pushService : PushNotificationService, 
+    @Inject('PushNotificationService') private pushService : PushNotificationService,
     private router: Router
   ) { }
 
   ngOnInit() {
-    this.pushService.initialize()
-      .then(() => {
-        this.updateIsLoaded();
-      })
+    this.pushService.checkAvailable()
+      .then(() => this.pushService.loadPushRegistration())
+      .then(() => this.updateIsLoaded())
       .catch((err) => {
         this.error = err.message ? err.message : err;
       });
@@ -34,18 +33,48 @@ export class AppComponent implements OnInit {
     });
 
     if('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope').then((reg : ServiceWorkerRegistration) => {
+        console.log("firebase-cloud-messaging-push-scope reg: ", reg);
+        reg.addEventListener('message', (m) => {
+          console.log('message: ', m);
+        });
+        reg.pushManager.getSubscription().then((sub) => {
+          console.log("firebase-cloud-messaging-push-scope subscription: ", sub);
+        });
+      });
+
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        console.log("getregistration before register reg: ", reg);
+      });
+
+      /*setTimeout(() => {
+        navigator.serviceWorker.register("sw.js").then((reg) => {
+          console.log("registered reg: ", reg);
+        })
+      }, 1000);*/
+
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        console.log("getregistration after register reg: ", reg);
+      });
+
+
       navigator.serviceWorker.ready.then((reg) => {
-        this.updateIsLoaded();
+        console.log("ready reg: ", reg);
+        reg.pushManager.getSubscription().then((sub) => {
+          console.log("subscription: ", sub);
+        });
       });
     }
   }
 
   updateIsLoaded() {
-    let initialized = this.pushService.isInitialized;
+    this.isLoaded = true;
+    return;
+    /*let initialized = this.pushService.isInitialized;
     let ready = false;
     if('serviceWorker' in navigator)
       ready = navigator.serviceWorker.controller ? true : false;
 
-    this.isLoaded = initialized && ready;
+    this.isLoaded = initialized && ready;*/
   }
 }

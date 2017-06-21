@@ -1,6 +1,6 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { TestPushNotificationsService } from '../../../services/test-push-notifications.service';
-import { Test } from '../../../models/test';
+import { Component, OnInit, Input, Output, EventEmitter, Inject } from '@angular/core';
+import { TestService } from "app/services/test.service";
+import { Test } from "app/models/test";
 
 @Component({
   selector: 'stop-button',
@@ -15,7 +15,8 @@ export class StopButtonComponent implements OnInit {
     'stop': ''
   }
 
-  constructor(private testService : TestPushNotificationsService) { }
+  constructor(@Inject('PushNotificationService') private testService : TestService) 
+  { }
 
   get currentTest() : Test {
     return this.testService.currentTest;

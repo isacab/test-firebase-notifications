@@ -1,9 +1,11 @@
-import { Component, OnInit, ViewChild, Output, Input, EventEmitter } from '@angular/core';
-import { PushNotificationService } from '../../services/push-notification.service';
-import { TestPushNotificationsService } from '../../services/test-push-notifications.service';
-import { Test } from '../../models/test';
+import { Component, OnInit, ViewChild, Output, Input, EventEmitter, Inject } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import { PushNotificationService } from "app/services/push-notification.service";
+import { TestService } from "app/services/test.service";
+
+import { Test } from "app/models/test";
 
 @Component({
   selector: 'new-test-form',
@@ -19,8 +21,8 @@ export class NewTestFormComponent implements OnInit {
   @ViewChild('testPushForm') currentForm : NgForm;
 
   constructor(
-    private pushService : PushNotificationService, 
-    private testService : TestPushNotificationsService,
+    @Inject('PushNotificationService') private pushService : PushNotificationService,
+    @Inject('TestService') private testService : TestService,
     private router : Router,
   ) { }
 

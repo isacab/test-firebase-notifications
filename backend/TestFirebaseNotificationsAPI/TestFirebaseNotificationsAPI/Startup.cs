@@ -58,9 +58,10 @@ namespace TestFirebaseNotificationsAPI
             loggerFactory.AddDebug();
 
             app.UseCors(builder =>
-                builder.AllowAnyMethod().AllowAnyHeader().WithOrigins(
-                    "http://localhost:4200"
-                ));
+                builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());/*.WithOrigins(
+                    "http://localhost:4200",
+                    "http://localhost:8000"
+                ));*/
 
             app.UseMvc();
         }

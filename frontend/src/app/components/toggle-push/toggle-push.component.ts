@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { PushNotificationService } from '../../services/push-notification.service';
+import { Component, OnInit, Inject } from '@angular/core';
+import { PushNotificationService } from 'app/services/push-notification.service';
 
 @Component({
   selector: 'toggle-push',
@@ -15,7 +15,8 @@ export class TogglePushComponent implements OnInit {
   isLoading : boolean;
   error : string;
 
-  constructor(private pushService: PushNotificationService) { }
+  constructor(@Inject('PushNotificationService') private pushService : PushNotificationService) 
+  { }
 
   ngOnInit() {
 

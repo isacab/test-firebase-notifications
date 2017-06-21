@@ -8,9 +8,9 @@ firebase.initializeApp({
 
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
-
 const apiBaseUrl = 'http://localhost:58378/api';
 
+// Use this to handle incomming push notifications when the app is in background
 /*messaging.setBackgroundMessageHandler(function (payload) {
     console.log('[sw.js] Received background message ', payload);
     var data = payload.data;
@@ -33,7 +33,7 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
 });*/
 
-self.addEventListener('push', function (event) {
+/*self.addEventListener('push', function (event) {
     console.log('[sw.js] Received a push message', event.data.json());
 
     if (!event.data) {
@@ -52,9 +52,9 @@ self.addEventListener('push', function (event) {
 
     //data.receivedDateTime = receivedDateTime;
     
-    if (!(self.Notification && self.Notification.permission === 'granted')) {
-        return;
-    }
+    // if (!(self.Notification && self.Notification.permission === 'granted')) {
+    //     return;
+    // }
 
     var title = data.title || 'Notification!';
     var options = {
@@ -67,10 +67,10 @@ self.addEventListener('push', function (event) {
     event.waitUntil(
         self.registration.showNotification(title, options)
     );
-});
+});*/
 
 self.addEventListener('notificationclick', function (event) {
-    console.log('On notification click: ', event.notification.tag);
+    console.log('On notification click: ', event.notification);
 
     event.notification.close();
 
@@ -95,7 +95,7 @@ self.addEventListener('notificationclick', function (event) {
 });
 
 // Use this to listen for messages from client
-self.addEventListener('message', function(event){
+/*self.addEventListener('message', function(event){
     const message = event.data;
     if(message == 'ping') {
         event.ports[0].postMessage({
@@ -103,7 +103,7 @@ self.addEventListener('message', function(event){
             data: 'ping'
         });
     }
-});
+});*/
 
 // Send received notification to server to stop the timer
 function notifyServer(data)
