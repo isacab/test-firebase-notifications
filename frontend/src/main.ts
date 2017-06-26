@@ -4,6 +4,13 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
+  //document.write(`<script type="text/javascript" src="cordova.js"></script>`);
+
+/*if (environment.cordova) {
+  // include the cordova script
+  //document.write(`<script type="text/javascript" src="cordova.js"></script>`);
+}*/
+
 if (environment.production) {
   enableProdMode();
 }

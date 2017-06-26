@@ -5,6 +5,10 @@
     <RuntimeIdentifier>win7-x86</RuntimeIdentifier>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>0</WarningLevel>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="specialappsettings.config" />
   </ItemGroup>

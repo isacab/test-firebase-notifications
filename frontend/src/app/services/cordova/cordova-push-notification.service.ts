@@ -10,10 +10,10 @@ import { environment } from "environments/environment";
 import { WindowRefService } from "app/services/window-ref.service";
 
 @Injectable()
-export class CordovaPushNotificationService extends PushNotificationService {
+export class CordovaPushNotificationService /*extends PushNotificationService*/ {
 
   constructor(api : ApiService, private windowRef : WindowRefService) {
-    super(api);
+    //super(api);
   }
 
   private get firebasePlugin() {

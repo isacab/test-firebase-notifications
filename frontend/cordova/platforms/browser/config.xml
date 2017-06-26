@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="com.example.testfirebasenotifications" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <feature name="Device">
+        <param name="browser-package" value="Device" />
+    </feature>
     <name>Test Firebase Notifications</name>
     <description>
         A sample Apache Cordova application that responds to the deviceready event.
@@ -15,5 +18,4 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
-    <hook src="scripts/prepareAngular2App.js" type="before_prepare" />
 </widget>

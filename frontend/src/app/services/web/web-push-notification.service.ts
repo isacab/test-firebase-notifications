@@ -15,12 +15,12 @@ declare var Notification: any;
 declare var navigator: any;
 
 @Injectable()
-export class WebPushNotificationService extends PushNotificationService {
+export class WebPushNotificationService /*extends PushNotificationService*/ {
 
   private readonly serviceWorkerFile = "sw.js";
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App, api : ApiService) { 
-    super(api);
+    //super(api);
   }
 
   private get _messaging() : firebase.messaging.Messaging {
@@ -37,7 +37,7 @@ export class WebPushNotificationService extends PushNotificationService {
     return new Promise<any>((resolve, reject) => {
       
       if (!('serviceWorker' in navigator)) {
-        reject(new Error("Service Worker is not supported in this browser."));
+        reject(new Error("Service Worker isn't supported in this browser."));
         return;
       }
 
@@ -58,9 +58,9 @@ export class WebPushNotificationService extends PushNotificationService {
     });
   }
 
-  loadPushRegistration() : Promise<PushRegistration> {
+  /*loadPushRegistration() : Promise<PushRegistration> {
     return this.registerServiceWorker().then(() => super.loadPushRegistration());
-  }
+  }*/
 
   /**
    * Register the service worker used to receive push notifications.

@@ -36,6 +36,8 @@ import { TestPushDetailsComponent } from './components/test-push-details/test-pu
 import { NewButtonComponent } from './components/test-push-details/new-button/new-button.component';
 
 import { environment } from '../environments/environment';
+import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
+import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
 
 /*export function initializePushNotifications(service: PushNotificationService): Function {
   return () => service.initialize().catch((error) => {
@@ -43,18 +45,16 @@ import { environment } from '../environments/environment';
   });
 };*/
 
-function platform() : string {
-  let cordova = (<any>window).cordova || { platform: 'browser' };
-  return cordova.platform;
-}
+export const firebaseMessagingServiceClass : Type<any> = 
+  environment.cordova ? CordovaFirebaseMessagingService : WebFirebaseMessagingService;
 
-function pushNotificationServiceClass() : Type<any> {
-  return platform() === 'browser' ? WebPushNotificationService : CordovaPushNotificationService;
-}
-
-function testServiceClass() : Type<any> {
-  return platform() === 'browser' ? WebTestService : CordovaTestService;
-}
+//alert(firebaseMessagingServiceClass.toString());
+  
+// export const pushNotificationServiceClass : Type<any> = 
+  // environment.cordova ? CordovaPushNotificationService : WebPushNotificationService;
+  
+export const testServiceClass : Type<any> = 
+  environment.cordova ? CordovaTestService : WebTestService;
 
 @NgModule({
   declarations: [
@@ -87,8 +87,9 @@ function testServiceClass() : Type<any> {
   providers: [
     ApiService,
     WindowRefService,
-    { provide: 'PushNotificationService', useClass: pushNotificationServiceClass() },
-    { provide: 'TestService', useClass: testServiceClass() },
+    { provide: 'FirebaseMessaging', useClass: firebaseMessagingServiceClass },
+    { provide: 'PushNotificationService', useClass: PushNotificationService },
+    { provide: 'TestService', useClass: testServiceClass },
     /*{ provide: APP_INITIALIZER,
       useFactory: initializePushNotifications,
       deps: [PushNotificationService], 

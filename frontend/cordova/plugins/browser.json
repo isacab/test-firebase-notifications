@@ -9,6 +9,12 @@
     "installed_plugins": {
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "com.example.testfirebasenotifications"
+        },
+        "cordova-plugin-firebase": {
+            "PACKAGE_NAME": "com.example.testfirebasenotifications"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "com.example.testfirebasenotifications"
         }
     },
     "dependent_plugins": {}

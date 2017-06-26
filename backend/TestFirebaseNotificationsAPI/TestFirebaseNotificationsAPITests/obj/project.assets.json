@@ -9121,10 +9121,10 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\WorkingFolder\\test-firebase-notifications\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\TestFirebaseNotificationsAPITests.csproj",
+      "projectUniqueName": "C:\\Projects\\test-fcm\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\TestFirebaseNotificationsAPITests.csproj",
       "projectName": "TestFirebaseNotificationsAPITests",
-      "projectPath": "C:\\WorkingFolder\\test-firebase-notifications\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\TestFirebaseNotificationsAPITests.csproj",
-      "outputPath": "C:\\WorkingFolder\\test-firebase-notifications\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\obj\\",
+      "projectPath": "C:\\Projects\\test-fcm\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\TestFirebaseNotificationsAPITests.csproj",
+      "outputPath": "C:\\Projects\\test-fcm\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPITests\\obj\\",
       "projectStyle": "PackageReference",
       "originalTargetFrameworks": [
         "net452"
@@ -9132,8 +9132,8 @@
       "frameworks": {
         "net452": {
           "projectReferences": {
-            "C:\\WorkingFolder\\test-firebase-notifications\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI.csproj": {
-              "projectPath": "C:\\WorkingFolder\\test-firebase-notifications\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI.csproj"
+            "C:\\Projects\\test-fcm\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI.csproj": {
+              "projectPath": "C:\\Projects\\test-fcm\\backend\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI\\TestFirebaseNotificationsAPI.csproj"
             }
           }
         }

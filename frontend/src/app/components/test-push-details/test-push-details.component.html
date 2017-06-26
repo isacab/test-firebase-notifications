@@ -1,4 +1,4 @@
-<div *ngIf="!error && currentTest">
+<div *ngIf="!error && currentTest != undefined">
   <test-info [model]="currentTest"></test-info>
   <stop-button></stop-button>
   <new-button [model]="currentTest"></new-button>

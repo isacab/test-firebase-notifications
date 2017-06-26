@@ -33,7 +33,7 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
 });*/
 
-/*self.addEventListener('push', function (event) {
+self.addEventListener('push', function (event) {
     console.log('[sw.js] Received a push message', event.data.json());
 
     if (!event.data) {
@@ -67,7 +67,7 @@ self.addEventListener('activate', function(event) {
     event.waitUntil(
         self.registration.showNotification(title, options)
     );
-});*/
+});
 
 self.addEventListener('notificationclick', function (event) {
     console.log('On notification click: ', event.notification);

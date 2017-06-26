@@ -14,6 +14,7 @@ import { Test } from "app/models/test";
 })
 export class NewTestFormComponent implements OnInit {
 
+  pushIsEnabled : boolean;
   isSubmitting : boolean;
   model : Test = new Test({numNotificationsPerInterval: 1, numIntervals: 1, interval: 0});
 

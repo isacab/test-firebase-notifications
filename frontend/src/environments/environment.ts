@@ -14,4 +14,5 @@ export const environment = {
     storageBucket: "testnotificationsfirebase.appspot.com",
     messagingSenderId: "170551356465"
   },
+  cordova: false
 };

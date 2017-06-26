@@ -9,14 +9,18 @@ import { Observable, ReplaySubject, BehaviorSubject, Subject } from 'rxjs';
 import { ApiService } from './api.service';
 
 import { PushRegistration } from '../models/push-registration';
+import { FirebaseMessaging } from "app/services/firebase-messaging";
 
 declare var Notification: any;
 declare var navigator: any;
 
 @Injectable()
-export abstract class PushNotificationService {
+export class PushNotificationService {
 
-  constructor(private api : ApiService) {
+  constructor(
+    @Inject('FirebaseMessaging') public messaging : FirebaseMessaging, 
+    private api : ApiService
+  ) {
     //this.setMessagingEventListeners();
   }
 
@@ -43,9 +47,7 @@ export abstract class PushNotificationService {
   }
 
   // [start] Abstract methods
-
-  //abstract initialize() : Promise<any>;
-
+  /*
   abstract checkAvailable() : Promise<any>;
   
   protected abstract getToken() : Promise<any> | null;
@@ -55,8 +57,16 @@ export abstract class PushNotificationService {
   protected abstract onTokenRefresh(nextOrObserver : Object) : void;
 
   protected abstract requestPermission() : Promise<any> | null;
-
+  */
   // [end] Abstract methods
+
+  ready() : Promise<any> {
+    return this.messaging.ready().toPromise();
+  }
+
+  checkAvailable() : Promise<any> {
+    return this.messaging.available().toPromise();
+  }
 
   /**
    * This method sets pushRegistration to the current push registration on the server.
@@ -67,7 +77,7 @@ export abstract class PushNotificationService {
   loadPushRegistration() : Promise<PushRegistration> {
     return new Promise<PushRegistration>((resolve, reject) => {
 
-      this.getToken().then((token) => {
+      this.messaging.getToken().toPromise().then((token) => {
         let rv : Promise<PushRegistration>;
 
         // Get the last token sent to the server from local storage
@@ -149,8 +159,8 @@ export abstract class PushNotificationService {
   private enable() : Promise<any> {
     // Request permission, get token and on success, set isPushEnabled to true
     return new Promise((resolve, reject) => {
-      this.requestPermission()
-        .then(() => this.getToken()) // get current token
+      this.messaging.requestPermission().toPromise()
+        .then(() => this.messaging.getToken().toPromise()) // get current token
         .then((currentToken) => {
 
           let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
@@ -197,9 +207,9 @@ export abstract class PushNotificationService {
   private setMessagingEventListeners() : void {
 
     // Callback fired if Instance ID token is updated.
-    this.onTokenRefresh(() => {
+    this.messaging.onTokenRefresh().subscribe(() => {
         console.log('Token refreshed.');
-        this.getToken()
+        this.messaging.getToken().toPromise()
             .then((refreshedToken) => {
                 let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
                 let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
@@ -221,7 +231,7 @@ export abstract class PushNotificationService {
     // - a message is received while the app has focus
     // - the user clicks on an app notification created by a sevice worker
     //   `messaging.setBackgroundMessageHandler` handler.
-    this.onMessage((payload) => {
+    this.messaging.onMessage().subscribe((payload) => {
         console.log("[push-notification.service] message received", payload);
         this._onNotificationReceivedSource.next(payload);
     });
