@@ -61,7 +61,8 @@ self.addEventListener('push', function (event) {
         body: data.body || '',
         tag: 'test-firebase-notification',
         renotify: true,
-        //icon: "images/new-notification.png"
+        //icon: "images/new-notification.png,"
+        requireInteraction: true,
     }
 
     event.waitUntil(
@@ -106,10 +107,13 @@ self.addEventListener('notificationclick', function (event) {
 });*/
 
 // Send received notification to server to stop the timer
-function notifyServer(data)
+// Returns a promise that resolves if data could be sent to server
+function notifyServer(data, retryAttempt = 0)
 {
-    let url = apiBaseUrl + '/testpushnotifications/stoptimer';
-    fetch(url, {
+    const url = apiBaseUrl + '/testpushnotifications/stoptimer';
+    const maxNumRetries = 10;
+    const maxBackOff = 60000;
+    return fetch(url, {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {
@@ -119,17 +123,25 @@ function notifyServer(data)
         mode: 'CORS'
     }).then(function(response) {
         return response.json();
-    }).then(function(data) {
-        console.log('[sw.js] response from server ', data);
-        return data;
     }).catch(function(reason) {
-        console.log('[sw.js] could not notify server ', reason);
-        return data;
+        // handle failure
+        console.log('[sw.js] Could not notify server, retryAttempt: ' + retryAttempt + ', reason: ', reason);
+        data.obsolete = true;
+        if(retryAttempt < maxNumRetries) {
+            // retry using exponential backoff
+            var backoff = getBackOff(++retryAttempt, maxBackOff);
+            return delay(backoff).then(() => {
+                return this.notifyServer(data, retryAttempt);
+            });
+        }
+        console.err('[sw.js] All retry attempts made for notification', data);
+        return Promise.reject(reason); //data;
     }).then((data) => {
         sendMessageToAllClients({
             messageType: 'notification',
             notificationData: data
         });  
+        return retryAttempt;
     });
 }
 
@@ -144,4 +156,15 @@ function sendMessageToAllClients(message) {
             sendMessageToClient(client, message);
         });
     });
+}
+
+function delay(t) {
+   return new Promise(function(resolve) { 
+       setTimeout(resolve, t)
+   });
+}
+
+function getBackOff(retryAttempt, maxBackOff) {
+    let backoff = Math.pow(2, retryAttempt) * 1000;
+    return Math.min(backoff, maxBackOff);
 }

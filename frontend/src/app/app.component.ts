@@ -1,5 +1,4 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { Router, ActivatedRoute, Params } from '@angular/router';
 import { PushNotificationService } from './services/push-notification.service';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 
@@ -16,17 +15,15 @@ export class AppComponent implements OnInit {
   
   title : string = 'Test FCM';
   showComponent : boolean;
-  pushIsEnabled : boolean;
   error : string;
 
   constructor(
-    @Inject('PushNotificationService') private pushService : PushNotificationService,
-    private router: Router
+    @Inject('PushNotificationService') private pushService : PushNotificationService
   ) { }
 
   ngOnInit() {
     document.addEventListener('deviceready', function(){
-      //alert("ready");
+      console.log("cordovaready");
     }, false);
 
     this.pushService.ready()
@@ -37,11 +34,6 @@ export class AppComponent implements OnInit {
       .catch((err) => {
         this.error = err.message ? err.message : err;
       });
-
-    this.pushService.pushRegistrationChanged.subscribe(() => {
-      let reg = this.pushService.pushRegistration;
-      this.pushIsEnabled = reg ? reg.enabled : false;
-    });
 
     /*if('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope').then((reg : ServiceWorkerRegistration) => {
@@ -81,8 +73,7 @@ export class AppComponent implements OnInit {
   registerServiceWorker() : Promise<any> {
     if(this.pushService.messaging instanceof WebFirebaseMessagingService) {
       let fcm = (<WebFirebaseMessagingService>(this.pushService.messaging));
-      navigator.serviceWorker.register('sw.js');
-      return navigator.serviceWorker.ready
+      return navigator.serviceWorker.register('sw.js')
         .then((reg) => {
           fcm.useServiceWorker(reg);
         });

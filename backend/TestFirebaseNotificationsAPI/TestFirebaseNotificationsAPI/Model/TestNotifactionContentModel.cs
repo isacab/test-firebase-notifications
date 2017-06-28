@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TestFirebaseNotificationsAPI.Model
 {
-    public class TestNotifactionContentModel : NotificationContentModel
+    public class TestNotifactionContentModel : Model
     {
         [JsonIgnore]
         public int Id { get; set; }
@@ -18,7 +18,7 @@ namespace TestFirebaseNotificationsAPI.Model
         
         public long Latency { get; set; }
         
-        public int NumRetries { get; set; }
+        public bool Obsolete { get; set; }
 
         [Required]
         [ForeignKey("Tests")]

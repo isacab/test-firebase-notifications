@@ -98,41 +98,48 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPost("start/{token}")]
         public IActionResult Start([FromBody]TestModel data, string token)
         {
-            if (data == null)
+            try
+            {
+                if (data == null)
                 return BadRequest(new { Message = "Data is null" });
 
-            if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+                if (!ModelState.IsValid)
+                    return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
-            PushRegistrationModel reg = _registrations.Get(token);
+                PushRegistrationModel reg = _registrations.Get(token);
 
-            if (reg == null)
-                return BadRequest(new { Message = "Token not found" });
+                if (reg == null)
+                    return BadRequest(new { Message = "Token not found" });
 
-            if (!reg.Enabled)
-                return BadRequest(new { Message = "Notifications are disabled" });
+                if (!reg.Enabled)
+                    return BadRequest(new { Message = "Notifications are disabled" });
 
-            int id = reg.Id;
+                int id = reg.Id;
 
-            data.PushRegistrationId = id;
-            data.Running = true;
-            _tests.Insert(data);
-            _tests.SaveChanges();
+                data.PushRegistrationId = id;
+                data.Running = true;
+                _tests.Insert(data);
+                _tests.SaveChanges();
 
-            TestApplication testApp = new TestApplication(data);
+                TestApplication testApp = new TestApplication(data);
 
-            TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
+                TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
 
-            if (existingApp != testApp)
-                return BadRequest(new { Message = "Test is running" });
+                if (existingApp != testApp)
+                    return BadRequest(new { Message = "Test is running" });
 
-            Task.Run((Action)testApp.Run).ContinueWith((t) =>
+                Task.Run((Action)testApp.Run).ContinueWith((t) =>
+                {
+                    GlobalStore.RunningTests.TryRemove(id, out testApp);
+                });
+
+                var json = Json(data);
+                return json;
+            }
+            catch (Exception ex)
             {
-                GlobalStore.RunningTests.TryRemove(id, out testApp);
-            });
-
-            var json = Json(data);
-            return json;
+                return BadRequest(ex.InnerException.Message);
+            }
         }
 
         // POST api/testpushnotifications/stop
@@ -179,8 +186,11 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             //TODO: some kind of auth
 
-            TimeSpan latency = stopped.Subtract(data.Sent);
-            data.Latency = Convert.ToInt64(latency.TotalMilliseconds);
+            if(!data.Obsolete)
+            {
+                TimeSpan latency = stopped.Subtract(data.Sent);
+                data.Latency = Convert.ToInt64(latency.TotalMilliseconds);
+            }
 
             _notifications.Insert(data);
 

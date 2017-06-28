@@ -108,12 +108,16 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         To = reg.Token,
                         Data = new TestNotifactionContentModel()
                         {
-                            Title = "Test firebase notifications",
-                            Body = "Test body",
                             SequenceNumber = seqNumber,
                             Sent = DateTime.UtcNow,
                             TestId = _test.Id
-                        }
+                        },
+                        Notification = new NotificationContentModel()
+                        {
+                            Title = "Test firebase notifications",
+                            Body = "Test body",
+                        },
+                        Priority = "high"
                     };
                     SendNotification(notification);
                 }

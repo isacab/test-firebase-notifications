@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject, NgZone } from '@angular/core';
 
 import { TestService } from "app/services/test.service";
 import { ApiService } from "app/services/api.service";
@@ -12,9 +12,10 @@ export class WebTestService extends TestService {
 
   constructor(
     api : ApiService, 
+    ngZone: NgZone,
     @Inject('PushNotificationService') pushService : PushNotificationService
   ) {
-    super(api, pushService);
+    super(api, ngZone, pushService);
     this.setNotificationListener();
   }
 

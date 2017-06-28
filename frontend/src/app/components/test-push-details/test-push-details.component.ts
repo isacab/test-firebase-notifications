@@ -10,7 +10,12 @@ import { TestService } from "app/services/test.service";
 })
 export class TestPushDetailsComponent implements OnInit {
 
-  error : string;
+  isStopping : boolean;
+
+  errors = {
+    'load': '',
+    'stop': ''
+  };
 
   constructor(
     @Inject('TestService') private testService : TestService,
@@ -31,7 +36,25 @@ export class TestPushDetailsComponent implements OnInit {
       }).subscribe((test) => {
       }, 
       (error) => {
-        this.error = "Could not load test: " + error;
+        this.errors.load = "Could not load test: " + error;
+      });
+  }
+
+  canStop() : boolean {
+    let model = this.currentTest,
+        isStopping = this.isStopping;
+    return model && model.id && model.running && !isStopping;
+  }
+
+  stop() {
+    this.isStopping = true;
+    this.testService.stop()
+      .then(() => {
+        this.isStopping = false;
+        this.errors.stop = '';
+      }).catch((err) => {
+        this.isStopping = false;
+        this.errors.stop = err;
       });
   }
 

@@ -21,7 +21,9 @@ export class PushNotificationService {
     @Inject('FirebaseMessaging') public messaging : FirebaseMessaging, 
     private api : ApiService
   ) {
-    //this.setMessagingEventListeners();
+    this.ready().then(() => {
+      this.setMessagingEventListeners()
+    });
   }
 
   // pushRegistration - observable property
@@ -45,20 +47,6 @@ export class PushNotificationService {
       subject.next(value);
     }
   }
-
-  // [start] Abstract methods
-  /*
-  abstract checkAvailable() : Promise<any>;
-  
-  protected abstract getToken() : Promise<any> | null;
-
-  protected abstract onMessage(nextOrObserver : Object) : void;
-
-  protected abstract onTokenRefresh(nextOrObserver : Object) : void;
-
-  protected abstract requestPermission() : Promise<any> | null;
-  */
-  // [end] Abstract methods
 
   ready() : Promise<any> {
     return this.messaging.ready().toPromise();
@@ -127,7 +115,6 @@ export class PushNotificationService {
         
       }).then((reg : PushRegistration) => {
         this.setPushRegistration(reg);
-        this.setMessagingEventListeners();
         resolve(reg);
       }).catch((error) => {
         reject(new Error("Could not load push registration: " + error));
@@ -145,7 +132,6 @@ export class PushNotificationService {
 
     let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
 
-    // Check if push is already enabled
     if(enabled === value) {
       return Promise.resolve();
     }
@@ -174,6 +160,7 @@ export class PushNotificationService {
         })
         .then((reg : PushRegistration) => {
           this.setPushRegistration(reg);
+          console.log("Succesfully enabled push for token: " + reg.token);
           resolve();
         })
         .catch((err) => {
@@ -232,7 +219,7 @@ export class PushNotificationService {
     // - the user clicks on an app notification created by a sevice worker
     //   `messaging.setBackgroundMessageHandler` handler.
     this.messaging.onMessage().subscribe((payload) => {
-        console.log("[push-notification.service] message received", payload);
+        console.log("[push-notification.service] message received: " + JSON.stringify(payload));
         this._onNotificationReceivedSource.next(payload);
     });
   }

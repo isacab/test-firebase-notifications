@@ -62,7 +62,7 @@ export class CordovaFirebaseMessagingService implements FirebaseMessaging {
 
   requestPermission(): Observable<any> {
     return Observable.create((observer) => {
-      if(this.platform() === 'android') {
+      if(this.platform() === 'Android') {
         observer.next();
         observer.complete();
       } else {

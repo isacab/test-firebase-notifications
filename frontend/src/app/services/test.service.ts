@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject, NgZone } from '@angular/core';
 import { ApiService } from './api.service';
 import { PushNotificationService } from './push-notification.service';
 import { PushRegistration } from '../models/push-registration';
@@ -15,6 +15,7 @@ export class TestService {
 
   constructor(
     protected api : ApiService, 
+    protected ngZone: NgZone,
     @Inject('PushNotificationService') protected pushService : PushNotificationService
   ) { }
 
@@ -27,7 +28,9 @@ export class TestService {
     return this._currentTestSource.getValue();
   }
   private setCurrentTest(value : Test) : void {
-    this.setValue(this._currentTestSource, value);
+    this.ngZone.run(() => {
+      this.setValue(this._currentTestSource, value);
+    })
   }
 
   // [end] Observable properties
@@ -49,7 +52,7 @@ export class TestService {
 
   load(id : number) : Promise<Test> {
     let currentTest = this.currentTest;
-    if(currentTest && currentTest.id)
+    if(currentTest && currentTest.id === id)
       return Promise.resolve(currentTest);
       
     this.startWaitingForResponse();
@@ -80,13 +83,18 @@ export class TestService {
   protected onReceivedNotification(notificationData : NotificationData) : void {
     let currentTest = this.currentTest;
 
+    console.log("[TestService] " + JSON.stringify(notificationData));
+
     if(currentTest && notificationData.testId === currentTest.id) {
 
       if(!currentTest.notifications) {
           currentTest.notifications = [];
       }
 
+      console.log("[TestService] push to notifications");
+
       currentTest.notifications.push(notificationData);
+      this.setCurrentTest(new Test(currentTest));
     }
 
     if(this.waitingForResponse) {

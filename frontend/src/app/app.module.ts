@@ -15,8 +15,6 @@ import 'hammerjs';
 
 import { ApiService } from './services/api.service';
 import { PushNotificationService } from './services/push-notification.service';
-import { WebPushNotificationService } from './services/web/web-push-notification.service';
-import { CordovaPushNotificationService } from './services/cordova/cordova-push-notification.service';
 import { TestService } from './services/test.service';
 import { WebTestService } from './services/web/web-test.service';
 import { CordovaTestService } from './services/cordova/cordova-test.service';
@@ -30,10 +28,8 @@ import { TogglePushComponent } from './components/toggle-push/toggle-push.compon
 //import { TestPushNotificationsComponent } from './components/test-push-notifications/test-push-notifications.component';
 import { NewTestFormComponent } from './components/new-test-form/new-test-form.component';
 import { TestInfoComponent } from './components/test-push-details/test-info/test-info.component';
-import { StopButtonComponent } from './components/test-push-details/stop-button/stop-button.component';
 import { ReceivedTableComponent } from './components/test-push-details/received-table/received-table.component';
 import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
-import { NewButtonComponent } from './components/test-push-details/new-button/new-button.component';
 
 import { environment } from '../environments/environment';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
@@ -47,11 +43,6 @@ import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-fi
 
 export const firebaseMessagingServiceClass : Type<any> = 
   environment.cordova ? CordovaFirebaseMessagingService : WebFirebaseMessagingService;
-
-//alert(firebaseMessagingServiceClass.toString());
-  
-// export const pushNotificationServiceClass : Type<any> = 
-  // environment.cordova ? CordovaPushNotificationService : WebPushNotificationService;
   
 export const testServiceClass : Type<any> = 
   environment.cordova ? CordovaTestService : WebTestService;
@@ -64,11 +55,9 @@ export const testServiceClass : Type<any> =
     NewTestFormComponent,
     TestListComponent,
     TestInfoComponent,
-    StopButtonComponent,
     ReceivedTableComponent,
     TestPushDetailsComponent,
     TestInfoComponent,
-    NewButtonComponent
   ],
   imports: [
     BrowserModule,

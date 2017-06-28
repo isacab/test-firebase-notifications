@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  baseApiUrl: "http://199.23535.23.5.235/api",
+  baseApiUrl: "http://192.168.0.79:58378/api",
   firebaseConfig: {
     apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
     authDomain: "testnotificationsfirebase.firebaseapp.com",

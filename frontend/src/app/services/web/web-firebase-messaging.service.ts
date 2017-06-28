@@ -31,6 +31,10 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
     });
   }
 
+  /**
+   * Get Instance ID token. The first call to this method makes a network call, once retrieved
+   * subsequent calls to getToken will return from cache (if the token has not been deleted in between).
+   */
   getToken(): Observable<any> {
     return Observable.fromPromise(this._messaging.getToken());
   }
@@ -49,10 +53,19 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
     return onTokenRefresh;
   }
 
+  /** 
+   * Request permission for push notifications. 
+   * If the browser permission state is 'prompt', the user is asked to Allow or Block notifications.
+   * Returns an Observable that fires once if permission could be granted and error if not.
+   */
   requestPermission(): Observable<any> {
     return Observable.fromPromise(this._messaging.requestPermission());
   }
   
+  /**
+   * Check if push notifications are supported by the browser.
+   * Returns an Observable that is fired once if they are available or error if not available.
+   */
   available(): Observable<any> {
     return Observable.create((observer) => {
       if (!('serviceWorker' in navigator)) {

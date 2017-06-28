@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, NgZone } from '@angular/core';
 import { Test } from "app/models/test";
 
 @Component({
@@ -10,7 +10,9 @@ export class ReceivedTableComponent implements OnInit {
 
   @Input("model") test : Test;
 
-  constructor() { }
+  constructor(
+
+  ) { }
 
   ngOnInit() {
   }

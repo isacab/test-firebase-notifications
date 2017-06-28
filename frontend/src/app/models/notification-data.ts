@@ -1,8 +1,6 @@
 export class NotificationData {
 
-    title : string;
-    body : string;
-    sequenceNumber : string;
+    sequenceNumber : number;
     sent : string;
     latency : number;
     testId : number;

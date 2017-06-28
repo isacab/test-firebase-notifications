@@ -7,6 +7,7 @@ import { Test } from '../models/test';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
+import { NotificationData } from "app/models/notification-data";
 
 @Injectable()
 export class ApiService {
@@ -80,6 +81,14 @@ export class ApiService {
     return this.http.post(url, { }, this.options)
       .toPromise()
       .then((res) => this.handleResponse(res, Test))
+      .catch((err) => this.handleError(err));
+  }
+
+  stopTimer(data : NotificationData) : Promise<NotificationData> {
+    let url = this.apiUrl + "/testpushnotifications/stoptimer";
+    return this.http.post(url, data, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, NotificationData))
       .catch((err) => this.handleError(err));
   }
 

@@ -1,4 +1,4 @@
-<form #testPushForm="ngForm" (ngSubmit)="submit()" *ngIf="model">
+<form #testPushForm="ngForm" (ngSubmit)="submit()" *ngIf="pushIsEnabled">
       <md-input-container class="full-width">
             <input mdInput 
             type="text" 
@@ -53,15 +53,13 @@
                   {{ formErrors.interval }}
             </md-hint>
       </md-input-container>
-      <div>
-            <button md-raised-button 
-                  color="primary" 
-                  type="submit"
-                  name="submit"
-                  [disabled]="isSubmitting || !testPushForm?.valid || model?.running">
-                  <md-spinner class="buttonSpinner" *ngIf="isSubmitting"></md-spinner>
-                  Start test
-            </button>
-      </div>
+      <button md-raised-button 
+            color="primary" 
+            type="submit"
+            name="submit"
+            [disabled]="isSubmitting || !testPushForm?.valid || model?.running">
+            <md-spinner class="buttonSpinner" *ngIf="isSubmitting"></md-spinner>
+            Start test
+      </button>
       <div class="formError">{{ formErrors.submit }}</div>
 </form>

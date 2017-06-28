@@ -15,6 +15,9 @@
         },
         "cordova-plugin-device": {
             "PACKAGE_NAME": "com.example.testfirebasenotifications"
+        },
+        "cordova-plugin-insomnia": {
+            "PACKAGE_NAME": "com.example.testfirebasenotifications"
         }
     },
     "dependent_plugins": {}

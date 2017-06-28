@@ -1,9 +1,23 @@
-<div *ngIf="!error && currentTest != undefined">
+<div *ngIf="!errors.load && currentTest != undefined">
   <test-info [model]="currentTest"></test-info>
-  <stop-button></stop-button>
-  <new-button [model]="currentTest"></new-button>
+  <button md-raised-button 
+    color="warn" 
+    (click)="stop()"
+    [disabled]="!canStop()">
+    <md-spinner class="buttonSpinner" *ngIf="isStopping"></md-spinner>
+    Stop test
+  </button>
+  <button md-raised-button 
+    color="primary"
+    routerLink="/test"
+    [disabled]="currentTest.running">
+    New test
+  </button>
+  <div class="error">
+    {{ errors.stop }}
+  </div>
   <received-table [model]="currentTest"></received-table>
 </div>
 <div class="error">
-    {{ error }}
+    {{ errors.load }}
 </div>

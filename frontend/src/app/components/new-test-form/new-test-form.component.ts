@@ -6,6 +6,7 @@ import { PushNotificationService } from "app/services/push-notification.service"
 import { TestService } from "app/services/test.service";
 
 import { Test } from "app/models/test";
+import { PushRegistration } from "app/models/push-registration";
 
 @Component({
   selector: 'new-test-form',
@@ -45,6 +46,9 @@ export class NewTestFormComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.pushService.pushRegistrationChanged.subscribe((reg : PushRegistration) => {
+      this.pushIsEnabled = reg ? reg.enabled : false;
+    });
   }
 
   submit() {
