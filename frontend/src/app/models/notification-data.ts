@@ -1,8 +1,10 @@
 export class NotificationData {
 
+    id : number;
     sequenceNumber : number;
-    sent : string;
-    latency : number;
+    sent : number;
+    received : number;
+    clientToServerRTT : number;
     testId : number;
     obsolete : boolean;
 

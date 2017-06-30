@@ -160,7 +160,7 @@ export class PushNotificationService {
         })
         .then((reg : PushRegistration) => {
           this.setPushRegistration(reg);
-          console.log("Succesfully enabled push for token: " + reg.token);
+          //console.log("Succesfully enabled push for token: " + reg.token);
           resolve();
         })
         .catch((err) => {
@@ -219,7 +219,7 @@ export class PushNotificationService {
     // - the user clicks on an app notification created by a sevice worker
     //   `messaging.setBackgroundMessageHandler` handler.
     this.messaging.onMessage().subscribe((payload) => {
-        console.log("[push-notification.service] message received: " + JSON.stringify(payload));
+        //console.log("[push-notification.service] message received: " + JSON.stringify(payload));
         this._onNotificationReceivedSource.next(payload);
     });
   }

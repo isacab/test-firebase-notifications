@@ -92,6 +92,14 @@ export class ApiService {
       .catch((err) => this.handleError(err));
   }
 
+  updateNotification(data : NotificationData) : Promise<NotificationData> {
+    let url = this.apiUrl + "/testpushnotifications/notification";
+    return this.http.put(url, data, this.options)
+      .toPromise()
+      .then((res) => this.handleResponse(res, NotificationData))
+      .catch((err) => this.handleError(err));
+  }
+
   private handleResponse<T>(response : Response, type: { new(init?:Partial<T>): T ;} ) : T {
     let json = response.json();
     return new type(json);

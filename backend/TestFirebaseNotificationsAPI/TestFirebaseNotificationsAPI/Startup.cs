@@ -57,10 +57,16 @@ namespace TestFirebaseNotificationsAPI
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            app.UseDefaultFiles(new DefaultFilesOptions
+            {
+                DefaultFileNames = new List<string> { "index.html" }
+            });
+
+            app.UseStaticFiles();
+
             app.UseCors(builder =>
                 builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());/*.WithOrigins(
-                    "http://localhost:4200",
-                    "http://localhost:8000"
+                    "<url>"
                 ));*/
 
             app.UseMvc();

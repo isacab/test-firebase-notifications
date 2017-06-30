@@ -8,6 +8,9 @@ import { Test } from "app/models/test";
 @Injectable()
 export class CordovaTestService extends TestService {
 
+  private readonly maxNumRetries = 10;
+  private readonly maxBackOff = 60000;
+
   constructor(
     api : ApiService, 
     ngZone: NgZone,
@@ -34,40 +37,61 @@ export class CordovaTestService extends TestService {
   private setNotificationListener() {
     this.pushService.onNotificationReceived.subscribe((payload) => {
       //payload = payload.data;
+      let receivedClient = new Date().getTime();
       let notificationData = new NotificationData();
+      notificationData.id = +payload.id;
       notificationData.sequenceNumber = +payload.sequenceNumber;
-      notificationData.latency = +payload.latency;
-      notificationData.sent = payload.sent;
+      notificationData.received = +payload.received;
+      notificationData.clientToServerRTT = +payload.clientToServerRTT;
+      notificationData.sent = +payload.sent;
       notificationData.testId = +payload.testId;
       notificationData.obsolete = 
         typeof(payload.obsolete) == 'string' ? String(payload.obsolete).toLowerCase() == 'true' : !!payload.obsolete;
 
-      console.log("[CordovaTestService] Received message: " + JSON.stringify(notificationData));
+      //console.log("[CordovaTestService] Received message: " + JSON.stringify(notificationData));
 
-      this.notifyServer(notificationData).then((dataFromServer) => {
-        console.log("[CordovaTestService] Stoped timer: " + JSON.stringify(dataFromServer));
+      this.stopTimer(notificationData).then((dataFromServer) => {
+        //console.log("[CordovaTestService] Stoped timer: " + JSON.stringify(dataFromServer));
         this.onReceivedNotification(dataFromServer);
       }).catch((error) => {
-        console.log("[CordovaTestService] Could not stop timer for notification.", notificationData);
+        //console.log("[CordovaTestService] Could not stop timer for notification.", notificationData);
       });
     });
   }
 
-  private notifyServer(notificationData : NotificationData, retryAttempt : number = 0) : Promise<NotificationData> {
-    const maxNumRetries = 10;
-    const maxBackOff = 60000;
+  private stopTimer(notificationData : NotificationData, retryAttempt : number = 0) : Promise<NotificationData> {
     return this.api.stopTimer(notificationData)
       .catch((error) => {
         console.log('[cordova-test.service.js] Could not notify server, retryAttempt: ' + retryAttempt + ', reason: ' + error);
         notificationData.obsolete = true;
-        if(retryAttempt < maxNumRetries) {
+        if(retryAttempt < this.maxNumRetries) {
           // retry using exponential backoff
-          var backoff = this.getBackOff(++retryAttempt, maxBackOff);
+          var backoff = this.getBackOff(++retryAttempt, this.maxBackOff);
           return this.delay(backoff).then(() => {
-              return this.notifyServer(notificationData, retryAttempt);
+              return this.stopTimer(notificationData, retryAttempt);
           });
         }
         console.error('[cordova-test.service.js] All retry attempts made for notification: ' + JSON.stringify(notificationData));
+        return Promise.reject(error);
+      })
+      .then((data) => {
+        return this.sendRttToServer(data);
+      });
+  }
+
+  private sendRttToServer(notificationData : NotificationData, retryAttempt : number = 0) : Promise<NotificationData> {
+    return this.api.updateNotification(notificationData)
+      .catch((error) => {
+        console.log('[cordova-test.service.js] Could not send rtt to server, retryAttempt: ' + retryAttempt + ', reason: ' + error);
+        notificationData.obsolete = true;
+        if(retryAttempt < this.maxNumRetries) {
+          // retry using exponential backoff
+          var backoff = this.getBackOff(++retryAttempt, this.maxBackOff);
+          return this.delay(backoff).then(() => {
+              return this.stopTimer(notificationData, retryAttempt);
+          });
+        }
+        console.error('[cordova-test.service.js] All retry attempts made for rtt: ' + JSON.stringify(notificationData));
         return Promise.reject(error);
       });
   }

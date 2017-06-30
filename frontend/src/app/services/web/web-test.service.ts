@@ -26,7 +26,7 @@ export class WebTestService extends TestService {
         if(!(event.data && event.data.messageType))
           return;
       
-        console.log("[web-test.service] Received data: ", event.data);
+        //console.log("[web-test.service] Received data: ", event.data);
 
         let messageType = event.data.messageType;
 

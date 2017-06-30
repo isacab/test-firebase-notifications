@@ -11,7 +11,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
     [Route("api/[controller]")]
     public class HomeController : Controller
     {
-        // GET: /<controller>/
+        // GET: api/<controller>/
         public string Index()
         {
             return "Server is running";

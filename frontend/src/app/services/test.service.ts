@@ -83,7 +83,7 @@ export class TestService {
   protected onReceivedNotification(notificationData : NotificationData) : void {
     let currentTest = this.currentTest;
 
-    console.log("[TestService] " + JSON.stringify(notificationData));
+    //console.log("[TestService] " + JSON.stringify(notificationData));
 
     if(currentTest && notificationData.testId === currentTest.id) {
 
@@ -91,7 +91,7 @@ export class TestService {
           currentTest.notifications = [];
       }
 
-      console.log("[TestService] push to notifications");
+      //console.log("[TestService] push to notifications");
 
       currentTest.notifications.push(notificationData);
       this.setCurrentTest(new Test(currentTest));

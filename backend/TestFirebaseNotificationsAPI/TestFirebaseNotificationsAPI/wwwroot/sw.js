@@ -8,7 +8,7 @@ firebase.initializeApp({
 
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
-const apiBaseUrl = 'http://localhost:58380/api';
+const apiBaseUrl = 'https://testfirebasenotifications.azurewebsites/api';
 const maxNumRetries = 10;
 const maxBackOff = 60000;
 

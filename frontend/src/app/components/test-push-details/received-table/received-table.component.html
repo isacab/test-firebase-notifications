@@ -8,15 +8,19 @@
   <thead>
     <tr>
       <th>Seq number</th>
-      <th class="mdl-data-table__cell--non-numeric">Sent</th>
+      <th>Sent (epoch time)</th>
       <th>Latency (ms)</th>
+      <th>Received (epoch time)</th>
+      <th>App server RTT (ms)</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let notification of test.notifications; trackBy: trackNotification">
       <td>{{notification.sequenceNumber}}</td>
       <td class="mdl-data-table__cell--non-numeric">{{notification.sent}}</td>
-      <td>{{notification.latency}}</td>
+      <td>{{notification.received - notification.sent}}</td>
+      <td class="mdl-data-table__cell--non-numeric">{{notification.received}}</td>
+      <td>{{notification.clientToServerRTT}}</td>
     </tr>
   </tbody>
 </table>

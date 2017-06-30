@@ -176,7 +176,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpPost("stoptimer")]
         public IActionResult StopTimer([FromBody]TestNotifactionContentModel data)
         {
-            DateTime stopped = DateTime.UtcNow;
+            long stopped = Helpers.EpochTime();
 
             if (data == null)
                 return BadRequest(new { Message = "Data is null" });
@@ -185,12 +185,8 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
 
             //TODO: some kind of auth
-
-            if(!data.Obsolete)
-            {
-                TimeSpan latency = stopped.Subtract(data.Sent);
-                data.Latency = Convert.ToInt64(latency.TotalMilliseconds);
-            }
+            
+            data.Received = stopped;
 
             _notifications.Insert(data);
 
@@ -202,6 +198,34 @@ namespace TestFirebaseNotificationsAPI.Controllers
             {
                 if(ex.InnerException is Microsoft.Data.Sqlite.SqliteException)
                     return BadRequest(new { Message = "TestId not found" });
+                throw ex;
+            }
+
+            var json = Json(data);
+            return json;
+        }
+
+        [HttpPut("notification")]
+        public IActionResult UpdateNotfication([FromBody]TestNotifactionContentModel data)
+        {
+            if (data == null)
+                return BadRequest(new { Message = "Data is null" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
+            //TODO: some kind of auth
+
+            _notifications.Update(data);
+
+            try
+            {
+                _notifications.SaveChanges();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                if (ex.InnerException is Microsoft.Data.Sqlite.SqliteException)
+                    return BadRequest(new { Message = "Invalid id" });
                 throw ex;
             }
 

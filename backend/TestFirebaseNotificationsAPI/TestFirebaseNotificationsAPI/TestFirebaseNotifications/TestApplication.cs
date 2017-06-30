@@ -109,7 +109,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         Data = new TestNotifactionContentModel()
                         {
                             SequenceNumber = seqNumber,
-                            Sent = DateTime.UtcNow,
+                            Sent = Helpers.EpochTime(),
                             TestId = _test.Id
                         },
                         Notification = new NotificationContentModel()
@@ -120,6 +120,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         Priority = "high"
                     };
                     SendNotification(notification);
+                    Thread.Sleep(10);
                 }
 
                 Thread.Sleep(_test.Interval);
