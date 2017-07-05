@@ -13,19 +13,21 @@ const maxNumRetries = 10;
 const maxBackOff = 60000;
 
 // Use this to handle incomming push notifications when the app is in background
-/*messaging.setBackgroundMessageHandler(function (payload) {
-    console.log('[sw.js] Received background message ', payload);
+messaging.setBackgroundMessageHandler(function (payload) {
     var data = payload.data;
+    data.tap = true;
 
-    var title = data.title || 'Notification!';
+    var title = data.title || 'Hey!';
     var options = {
-        body: data.body || '',
+        body: data.body || 'You have received a notification :)',
         tag: 'test-firebase-notification',
-        //icon: "images/new-notification.png"
+        renotify: true,
+        //icon: "images/new-notification.png,"
+        requireInteraction: true,
     }
 
     return self.registration.showNotification(title, options);
-});*/
+});
 
 /*self.addEventListener('install', function(event) {
   event.waitUntil(self.skipWaiting());
@@ -35,7 +37,7 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
 });*/
 
-self.addEventListener('push', function (event) {
+/*self.addEventListener('push', function (event) {
     //console.log('[sw.js] Received a push message', event.data.json());
 
     if (!event.data) {
@@ -54,9 +56,9 @@ self.addEventListener('push', function (event) {
     //     return;
     // }
 
-    var title = data.title || 'Notification!';
+    var title = data.title || 'Hey!';
     var options = {
-        body: data.body || '',
+        body: data.body || 'You have received a notification :)',
         tag: 'test-firebase-notification',
         renotify: true,
         //icon: "images/new-notification.png,"
@@ -66,31 +68,25 @@ self.addEventListener('push', function (event) {
     event.waitUntil(
         self.registration.showNotification(title, options)
     );
-});
+});*/
 
-self.addEventListener('notificationclick', function (event) {
-    console.log('On notification click: ', event.notification);
+self.addEventListener('notificationclick', function(event) {
+  console.log('On notification click: ', event.notification.tag);
+  event.notification.close();
 
-    event.notification.close();
-
-    // This looks to see if the current is already open and  
-    // focuses if it is  
-    event.waitUntil(
-        clients.matchAll({
-            includeUncontrolled: true,
-            type: "window"
-        })
-        .then(function (clientList) {
-            for (var i = 0; i < clientList.length; i++) {
-                var client = clientList[i];
-                if (client.url == '/' && 'focus' in client)
-                    return client.focus();
-            }
-            if (clients.openWindow) {
-                return clients.openWindow('/');
-            }
-        })
-    );
+  // This looks to see if the current is already open and
+  // focuses if it is
+  event.waitUntil(clients.matchAll({
+    type: "window"
+  }).then(function(clientList) {
+    for (var i = 0; i < clientList.length; i++) {
+      var client = clientList[i];
+      if (client.url == '/' && 'focus' in client)
+        return client.focus();
+    }
+    if (clients.openWindow)
+      return clients.openWindow('/');
+  }));
 });
 
 // Use this to listen for messages from client
@@ -110,7 +106,7 @@ function stopTimer(data, retryAttempt = 0)
 {
     const url = apiBaseUrl + '/testpushnotifications/stoptimer';
     
-    let receivedTime = new Date().getTime();
+    data.receivedClient = new Date().getTime();
 
     return fetch(url, {
         method: 'POST',
@@ -119,60 +115,28 @@ function stopTimer(data, retryAttempt = 0)
             'accept': 'application/json',
             'content-type': 'application/json'
         },
-        mode: 'CORS'
+        mode: 'cors'
     }).then(function(response) {
         return response.json();
     }).catch(function(reason) {
         // handle failure
-        console.log('[sw.js] Could not notify server, retryAttempt: ' + retryAttempt + ', reason: ', reason);
+        console.error('[sw.js] Could not notify server, retryAttempt: ' + retryAttempt + ', reason: ', reason);
         data.obsolete = true;
         if(retryAttempt < maxNumRetries) {
             // retry using exponential backoff
             var backoff = getBackOff(++retryAttempt, maxBackOff);
             return delay(backoff).then(() => {
-                return this.notifyServer(data, retryAttempt);
+                return this.stopTimer(data, retryAttempt);
             });
         }
-        console.err('[sw.js] All retry attempts made for notification', data);
-        return Promise.reject(reason); //data;
-    }).then((data) => {
-        let responseFromServerTime = new Date().getTime();
-        data.clientToServerRTT = responseFromServerTime - receivedTime;
-        return sendRttToServer(data);
-    });
-}
-
-function sendRttToServer(data, retryAttempt = 0) {
-    const url = apiBaseUrl + '/testpushnotifications/notification';
-
-    return fetch(url, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-        headers: {
-            'accept': 'application/json',
-            'content-type': 'application/json'
-        },
-        mode: 'CORS'
-    }).then(function(response) {
-        return response.json();
-    }).catch(function(reason) {
-        // handle failure
-        console.log('[sw.js] Could not send rtt to server, retryAttempt: ' + retryAttempt + ', reason: ', reason);
-        if(retryAttempt < maxNumRetries) {
-            // retry using exponential backoff
-            var backoff = getBackOff(++retryAttempt, maxBackOff);
-            return delay(backoff).then(() => {
-                return this.notifyServer(data, retryAttempt);
-            });
-        }
-        console.err('[sw.js] All retry attempts made for rtt', data);
+        console.error('[sw.js] All retry attempts made for notification', data);
         return Promise.reject(reason); //data;
     }).then((data) => {
         sendMessageToAllClients({
             messageType: 'notification',
             notificationData: data
-        });  
-        return retryAttempt;
+        });
+        return data;
     });
 }
 

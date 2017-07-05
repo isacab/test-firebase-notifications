@@ -59,52 +59,41 @@ namespace TestFirebaseNotificationsAPI.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
+            if (!Request.Query.Keys.Contains("token"))
+                return BadRequest(new { Message = "Token is required" });
+
+            string token = Request.Query["token"].ToString();
+
+            PushRegistrationModel reg = _registrations.Get(token);
+
+            if (reg == null)
+                return BadRequest(new { Message = "Token not found" });
+
             TestModel model = _tests.Get(id);
 
-            if (model == null)
+            if (model == null || model.PushRegistrationId != reg.Id)
                 return BadRequest(new { Message = "Resource not found" });
 
             var json = Json(model);
             return json;
         }
 
-        // POST api/testpushnotifications/send
-        [HttpPost("send")]
-        public async Task<IActionResult> Send([FromBody]NotificationModel data)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
-
-            if (data == null)
-                return BadRequest(new { Message = "Data is null" });
-
-            JsonResult json;
-
-            if(data.IsTopicMessage())
-            {
-                var fcmResponse = await _pushService.SendToTopic(data);
-                json = Json(fcmResponse);
-            }
-            else
-            {
-                var fcmResponse = await _pushService.SendToDevice(data);
-                json = Json(fcmResponse);
-            }
-            
-            return json;
-        }
-
-        // POST api/testpushnotifications/start
-        [HttpPost("start/{token}")]
-        public IActionResult Start([FromBody]TestModel data, string token)
+        // POST api/testpushnotifications/start?token={token}
+        [HttpPost("start")]
+        public IActionResult Start([FromBody]TestModel data)
         {
             try
             {
                 if (data == null)
-                return BadRequest(new { Message = "Data is null" });
+                    return BadRequest(new { Message = "Data is null" });
 
                 if (!ModelState.IsValid)
                     return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
+                if (!Request.Query.Keys.Contains("token"))
+                    return BadRequest(new { Message = "Token is required" });
+
+                string token = Request.Query["token"].ToString();
 
                 PushRegistrationModel reg = _registrations.Get(token);
 
@@ -142,7 +131,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             }
         }
 
-        // POST api/testpushnotifications/stop
+        // POST api/testpushnotifications/stop/{testId}?token={token}
         [HttpPost("stop/{testId}")]
         public IActionResult Stop(int testId)
         {
@@ -151,9 +140,14 @@ namespace TestFirebaseNotificationsAPI.Controllers
             if (test == null)
                 return BadRequest(new { Message = "Test not found" });
 
+            if (!Request.Query.Keys.Contains("token"))
+                return BadRequest(new { Message = "Token is required" });
+
+            string token = Request.Query["token"].ToString();
+
             PushRegistrationModel reg = _registrations.Get(test.PushRegistrationId);
 
-            if (reg == null)
+            if (reg == null || reg.Token != token)
                 return BadRequest(new { Message = "PushRegistration not found" });
 
             TestApplication testApp;
@@ -186,7 +180,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             //TODO: some kind of auth
             
-            data.Received = stopped;
+            data.ReceivedServer = stopped;
 
             _notifications.Insert(data);
 
@@ -205,7 +199,16 @@ namespace TestFirebaseNotificationsAPI.Controllers
             return json;
         }
 
-        [HttpPut("notification")]
+        // POST api/testpushnotifications/ping
+        [HttpPost("ping")]
+        public IActionResult Ping([FromBody]PingModel data)
+        {
+            data.Message = "pong";
+            var json = Json(data);
+            return json;
+        }
+
+        /*[HttpPut("notification")]
         public IActionResult UpdateNotfication([FromBody]TestNotifactionContentModel data)
         {
             if (data == null)
@@ -231,6 +234,32 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
             var json = Json(data);
             return json;
-        }
+        }*/
+
+        // POST api/testpushnotifications/send
+        /*[HttpPost("send")]
+        public async Task<IActionResult> Send([FromBody]NotificationModel data)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
+
+            if (data == null)
+                return BadRequest(new { Message = "Data is null" });
+
+            JsonResult json;
+
+            if(data.IsTopicMessage())
+            {
+                var fcmResponse = await _pushService.SendToTopic(data);
+                json = Json(fcmResponse);
+            }
+            else
+            {
+                var fcmResponse = await _pushService.SendToDevice(data);
+                json = Json(fcmResponse);
+            }
+            
+            return json;
+        }*/
     }
 }

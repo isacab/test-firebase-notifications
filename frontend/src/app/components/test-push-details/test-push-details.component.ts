@@ -1,6 +1,4 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { Router, ActivatedRoute, Params } from '@angular/router';
-
 import { TestService } from "app/services/test.service";
 
 @Component({
@@ -19,8 +17,6 @@ export class TestPushDetailsComponent implements OnInit {
 
   constructor(
     @Inject('TestService') private testService : TestService,
-    private route: ActivatedRoute,
-    private router: Router,
   ) { }
 
   get currentTest() {
@@ -28,16 +24,6 @@ export class TestPushDetailsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params
-      // (+) converts string 'id' to a number
-      .switchMap((params: Params) => {
-        let id = +params['id'];
-        return this.testService.load(id);
-      }).subscribe((test) => {
-      }, 
-      (error) => {
-        this.errors.load = "Could not load test: " + error;
-      });
   }
 
   canStop() : boolean {

@@ -4,6 +4,7 @@ import { ApiService } from "app/services/api.service";
 import { PushNotificationService } from "app/services/push-notification.service";
 
 import { Test } from "app/models/test";
+import { ActivatedRoute } from "@angular/router";
 
 
 @Component({
@@ -17,23 +18,13 @@ export class TestListComponent implements OnInit {
 
   constructor(
     private api : ApiService, 
-    @Inject('PushNotificationService') private pushService : PushNotificationService
+    @Inject('PushNotificationService') private pushService : PushNotificationService,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
-    this.pushService.pushRegistrationChanged.subscribe(() => {
-      if(this.testList)
-        return;
-
-      let reg = this.pushService.pushRegistration;
-      let token = reg ? reg.token : undefined;
-      
-      if(!token)
-        return;
-
-      this.api.getTestList(token).then((data) => {
-        this.testList = data;
-      });
+    this.route.data.subscribe((data: { testList: Array<Test> }) => {
+      this.testList = data.testList;
     });
   }
 

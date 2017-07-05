@@ -1,21 +1,33 @@
-<md-toolbar color="primary">
-  <span>
-    {{ title }}
-    <a md-button routerLink="/list">My Tests</a>
-    <a md-button routerLink="/test">New Test</a>
-  </span>
-  <span class="spaces">
-    <a md-button href="https://github.com/isacab/test-firebase-notifications">GitHub</a>
-  </span>
-</md-toolbar>
-<div class="content">
-  <div *ngIf="showComponent">
-    <section>
-        <toggle-push></toggle-push>
-    </section>
-    <section>
-      <router-outlet></router-outlet>
-    </section>
+<div class="app-container">
+  <div class="overlay" *ngIf="displayLoader">
+      <md-spinner class="loading-spinner"></md-spinner>
   </div>
-  <div *ngIf="error">{{ error }}</div>
+  <md-toolbar color="primary">
+    <span>
+      <span class="title">
+        <a routerLink="/">{{ title }}</a>
+      </span>
+      <span class="nav-buttons hidden-sm">
+        <a md-button routerLink="/list">My Tests</a>
+        <a md-button routerLink="/test">New Test</a>
+      </span>
+    </span>
+    <span class="spaces hidden-sm">
+      <a md-button [attr.href]="github" target="_blank">GitHub</a>
+    </span>
+    <span class="spaces hidden-md">
+      <button md-icon-button [mdMenuTriggerFor]="appMenu">
+        <i class="material-icons">more_vert</i>
+      </button>
+      <md-menu #appMenu="mdMenu">
+        <a md-menu-item routerLink="/list"> My Tests </a>
+        <a md-menu-item routerLink="/test"> New Test </a>
+        <a md-menu-item [attr.href]="github" target="_blank"> GitHub </a>
+      </md-menu>
+    </span>
+  </md-toolbar>
+  <div class="content">
+    <router-outlet *ngIf="!error"></router-outlet>
+    <div *ngIf="error" class="app-error">{{ error }}</div>
+  </div>
 </div>

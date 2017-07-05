@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  baseApiUrl: undefined,
+  baseApiUrl: "http://localhost:58380/api",
   firebaseConfig: {
     apiKey: "AIzaSyDfhytBVEC-aAXdAj8W0PThyalEkwcvfEo",
     authDomain: "testnotificationsfirebase.firebaseapp.com",
@@ -9,5 +9,5 @@ export const environment = {
     storageBucket: "testnotificationsfirebase.appspot.com",
     messagingSenderId: "170551356465"
   },
-  cordova: true,
+  cordova: true
 };

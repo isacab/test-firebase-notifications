@@ -41,7 +41,9 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
 
   onMessage(): Observable<any> {
     let onMessageSource = new Subject<any>();
-    this._messaging.onMessage(onMessageSource);
+    this._messaging.onMessage((payload) => {
+      onMessageSource.next(payload.data);
+    });
     let onMessage = onMessageSource.asObservable();
     return onMessage;
   }

@@ -1,6 +1,5 @@
-<label>{{ label }}</label>
 <button md-raised-button 
-  [color]="isEnabled ? 'warn' : 'primary'" 
+  [color]="isEnabled ? '' : 'primary'" 
   (click)="toggleEnabled()" 
   [disabled]="!canToggle">
     <md-spinner class="buttonSpinner" *ngIf="isLoading"></md-spinner>

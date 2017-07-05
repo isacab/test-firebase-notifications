@@ -15,11 +15,11 @@ namespace TestFirebaseNotificationsAPI.Model
         [Required]
         public long Sent { get; set; }
         
-        public long Received { get; set; }
+        public long ReceivedServer { get; set; }
 
-        public long clientToServerRTT { get; set; }
+        public long ReceivedClient { get; set; }
 
-        public bool Obsolete { get; set; }
+        public bool Failed { get; set; }
 
         [Required]
         [ForeignKey("Tests")]

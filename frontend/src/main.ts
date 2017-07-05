@@ -15,9 +15,12 @@ if (environment.production) {
   enableProdMode();
 }
 
-/*declare var window: any;
-window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || {READ_WRITE: "readwrite"};
-window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;*/
-
-platformBrowserDynamic().bootstrapModule(AppModule);
+platformBrowserDynamic().bootstrapModule(AppModule)
+  .catch((error) => {
+    var appRoot = document.getElementById("app-root");
+    appRoot.className += " hidden";
+    
+    var initError = document.getElementById("init-error");
+    initError.className = initError.className.replace(/\bhidden\b/,'');
+    initError.innerHTML = error.message || error;
+  });

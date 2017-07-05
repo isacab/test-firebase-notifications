@@ -4,16 +4,30 @@ import { RouterModule, Routes }  from '@angular/router';
 import { TestListComponent } from './components/test-list/test-list.component';
 import { NewTestFormComponent } from './components/new-test-form/new-test-form.component';
 import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
+import { TestListResolverService } from "app/services/route-guards/test-list-resolver.service";
+import { TestDetailsResolverService } from "app/services/route-guards/test-details-resolver.service";
 
 const appRoutes: Routes = [
-  { path: 'test',     component: NewTestFormComponent },
-  { path: 'test/:id', component: TestPushDetailsComponent },
+  {
+    path: 'test', 
+    component: NewTestFormComponent 
+  },
+  { 
+    path: 'test/:id', 
+    component: TestPushDetailsComponent,
+    resolve: {
+      test: TestDetailsResolverService
+    }
+  },
   {
     path: 'list',
     component: TestListComponent,
-    data: { title: 'Test List' }
+    resolve: {
+      testList: TestListResolverService
+    }
   },
-  { path: '',
+  { 
+    path: '',
     redirectTo: '/test',
     pathMatch: 'full'
   }
@@ -25,6 +39,10 @@ const appRoutes: Routes = [
   ],
   exports: [
     RouterModule
+  ],
+  providers: [
+    TestListResolverService,
+    TestDetailsResolverService
   ]
 })
 export class AppRoutingModule {}

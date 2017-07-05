@@ -15,12 +15,13 @@ export class TogglePushComponent implements OnInit {
   isLoading : boolean;
   error : string;
 
-  constructor(@Inject('PushNotificationService') private pushService : PushNotificationService) 
-  { }
+  constructor(
+    @Inject('PushNotificationService') private pushService : PushNotificationService
+  ) { }
 
   ngOnInit() {
 
-    this.label = "Push notifications: ";
+    this.label = "Push notifications";
 
     this.pushService.pushRegistrationChanged.subscribe(() => {
       let reg = this.pushService.pushRegistration;
@@ -61,7 +62,7 @@ export class TogglePushComponent implements OnInit {
   }
 
   private setButtonText(pushIsEnabled : boolean) {
-    this.buttonText = pushIsEnabled ? 'Disable' : 'Enable';
+    this.buttonText = pushIsEnabled ? 'Disable Push Notifications' : 'Enable Push Notifications';
   }
 
 }

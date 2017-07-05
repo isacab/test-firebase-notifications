@@ -1,4 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
+import { Router, Event as RouterEvent, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router'
 import { PushNotificationService } from './services/push-notification.service';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 
@@ -13,27 +14,25 @@ declare var cordova : any;
 })
 export class AppComponent implements OnInit {
   
-  title : string = 'Test FCM';
-  showComponent : boolean;
+  displayLoader : boolean = true;
+  title = 'Test FCM';
+  github = "https://github.com/isacab/test-firebase-notifications";
   error : string;
 
   constructor(
-    @Inject('PushNotificationService') private pushService : PushNotificationService
+    @Inject('PushNotificationService') private pushService : PushNotificationService,
+    private router : Router,
   ) { }
 
   ngOnInit() {
+    this.router.events.subscribe((event: RouterEvent) => {
+      this.navigationInterceptor(event);
+    });
+
+    // debugging cordova
     document.addEventListener('deviceready', function(){
       console.log("cordovaready");
     }, false);
-
-    this.pushService.ready()
-      .then(() => this.pushService.checkAvailable())
-      .then(() => this.registerServiceWorker())
-      .then(() => this.pushService.loadPushRegistration())
-      .then(() => this.showComponent = true)
-      .catch((err) => {
-        this.error = err.message ? err.message : err;
-      });
 
     /*if('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope').then((reg : ServiceWorkerRegistration) => {
@@ -70,14 +69,39 @@ export class AppComponent implements OnInit {
     }*/
   }
 
-  registerServiceWorker() : Promise<any> {
-    if(this.pushService.messaging instanceof WebFirebaseMessagingService) {
-      let fcm = (<WebFirebaseMessagingService>(this.pushService.messaging));
-      return navigator.serviceWorker.register('sw.js')
-        .then((reg) => {
-          fcm.useServiceWorker(reg);
-        });
+  // Shows and hides the loading spinner during RouterEvent changes
+  navigationInterceptor(event: RouterEvent): void {
+      if (event instanceof NavigationStart) {
+        this.error = "";
+        this.displayLoader = true;
+      }
+      if (event instanceof NavigationEnd) {
+        this.displayLoader = false;
+      }
+
+      // Set loading state to false in both of the below events to hide the spinner in case a request fails
+      if (event instanceof NavigationCancel) {
+        this.displayLoader = false;
+      }
+      if (event instanceof NavigationError) {
+        this.error = this.errorMessage(event.error);
+        this.displayLoader = false;
+      }
+  }
+
+  private errorMessage(error : any) : string {
+    if(!error) {
+      return "Unknown failure";
     }
-    return Promise.resolve();
+
+    if(error instanceof String) {
+      return error.toString();
+    }
+
+    if(navigator && navigator.onLine === false) {
+      return "You are offline";
+    }
+
+    return error.message || "Unknown failure. You can try reload the page.";
   }
 }

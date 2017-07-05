@@ -16,10 +16,9 @@ export class WebTestService extends TestService {
     @Inject('PushNotificationService') pushService : PushNotificationService
   ) {
     super(api, ngZone, pushService);
-    this.setNotificationListener();
   }
 
-  private setNotificationListener() {
+  protected setNotificationListener() {
     if('serviceWorker' in navigator) {
       // Handler for messages coming from the service worker
       navigator.serviceWorker.addEventListener('message', (event) => {
@@ -31,6 +30,7 @@ export class WebTestService extends TestService {
         let messageType = event.data.messageType;
 
         if(messageType === 'notification') {
+          //alert("notification");
           let notificationData = new NotificationData(event.data.notificationData);
           this.onReceivedNotification(notificationData);
         }

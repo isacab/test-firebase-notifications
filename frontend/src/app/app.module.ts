@@ -4,12 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule, JsonpModule } from '@angular/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AngularFireModule } from 'angularfire2';
-import { MdButtonModule } from '@angular/material';
-import { MdProgressSpinnerModule } from '@angular/material';
-import { MdToolbarModule } from '@angular/material';
-import { MdCardModule } from '@angular/material';
-import { MdInputModule } from '@angular/material';
 import { RouterModule, Routes } from '@angular/router';
+import { MdButtonModule, MdTabsModule, MdProgressSpinnerModule, MdToolbarModule, MdInputModule, MdMenuModule } from '@angular/material';
 
 import 'hammerjs';
 
@@ -18,7 +14,6 @@ import { PushNotificationService } from './services/push-notification.service';
 import { TestService } from './services/test.service';
 import { WebTestService } from './services/web/web-test.service';
 import { CordovaTestService } from './services/cordova/cordova-test.service';
-import { WindowRefService } from './services/window-ref.service';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -35,17 +30,26 @@ import { environment } from '../environments/environment';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
 
-/*export function initializePushNotifications(service: PushNotificationService): Function {
-  return () => service.initialize().catch((error) => {
-    console.error('[app.module]', error);
-  });
-};*/
+export function initializePushNotifications(service: PushNotificationService): Function {
+  return () => service.ready()
+    .then(() => service.checkAvailable())
+    .then(() => {
+      if(service.messaging instanceof WebFirebaseMessagingService) {
+        let fcm = (<WebFirebaseMessagingService>(service.messaging));
+        return navigator.serviceWorker.register('sw.js')
+          .then((reg) => {
+            fcm.useServiceWorker(reg);
+          });
+      }
+    })
+    .then(() => service.loadPushRegistration());
+};
 
 export const firebaseMessagingServiceClass : Type<any> = 
   environment.cordova ? CordovaFirebaseMessagingService : WebFirebaseMessagingService;
   
 export const testServiceClass : Type<any> = 
-  environment.cordova ? CordovaTestService : WebTestService;
+  environment.cordova ? CordovaTestService : TestService;
 
 @NgModule({
   declarations: [
@@ -69,20 +73,20 @@ export const testServiceClass : Type<any> =
     MdButtonModule,
     MdProgressSpinnerModule,
     MdToolbarModule,
-    MdCardModule,
+    MdTabsModule,
     MdInputModule,
-    AppRoutingModule
+    AppRoutingModule,
+    MdMenuModule
   ],
   providers: [
     ApiService,
-    WindowRefService,
     { provide: 'FirebaseMessaging', useClass: firebaseMessagingServiceClass },
     { provide: 'PushNotificationService', useClass: PushNotificationService },
     { provide: 'TestService', useClass: testServiceClass },
-    /*{ provide: APP_INITIALIZER,
+    { provide: APP_INITIALIZER,
       useFactory: initializePushNotifications,
-      deps: [PushNotificationService], 
-      multi: true }*/
+      deps: ['PushNotificationService'], 
+      multi: true }
   ],
   bootstrap: [AppComponent]
 })

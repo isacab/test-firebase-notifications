@@ -31,7 +31,8 @@
         "ip": "environments/environment.ip.ts",
         "azure": "environments/environment.azure.ts",
         "ipcordova": "environments/environment.ipcordova.ts",
-        "azurecordova": "environments/environment.azurecordova.ts"
+        "azurecordova": "environments/environment.azurecordova.ts",
+        "cordova": "environments/environment.cordova.ts"
       }
     }
   ],

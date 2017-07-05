@@ -3,9 +3,32 @@
 @import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
 /*@import '~materialize-css/dist/css/materialize.css';*/
 
+div.app-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+/*div.content {
+  max-width: 1090px;
+  margin: 0 auto;
+}*/
+
 body {
   margin: 0;
   font-family: Roboto, sans-serif;
+}
+
+h2 {
+  font-weight: normal;
+  padding: 22px 0 0 0;
+  margin: 0 0 15px 0;
+}
+
+h1 {
+  font-weight: normal;
+  padding: 0;
+  margin: 0 0 15px 0;
 }
 
 ul {
@@ -17,18 +40,122 @@ ul.test-parameters-list>li {
   padding: 4px 0;
 }
 
+.scroll-x {
+  overflow-x: auto;
+}
+
+.title>a {
+  color: #fff;
+  text-decoration-line: initial;
+}
+
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 8;
+  background-color: #FFF;
+}
+
+md-spinner.loading-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 9;
+}
+
+.hidden {
+  display: none !important;
+}
+
+div.side-bar {
+  min-width: 255px;
+}
+
+/* Small screens and below */
+@media (max-width: 511px) {
+  .hidden-sm {
+    display: none !important;
+  }
+
+  div.content {
+    margin: 8px;
+  }
+
+  div.side-bar {
+    margin-right: 8px;
+  }
+
+  .title {
+    padding: 0 0px;
+  }
+
+  md-spinner.loading-spinner {
+    width: 48px;
+    height: 48px;
+    margin-top: -24px;
+    margin-left: -24px;
+  }
+}
+
+/* Medium screens and above */
+@media (min-width: 512px) {
+  .hidden-md {
+    display: none !important;
+  }
+
+  div.content {
+    margin: 32px;
+  }
+
+  div.side-bar {
+    margin-right: 32px;
+  }
+
+  .title {
+    padding: 0 16px;
+  }
+  
+  md-spinner.loading-spinner {
+    width: 100px;
+    height: 100px;
+    margin-top: -50px;
+    margin-left: -50px;
+  }
+}
+
+/* Large screens and above */
+@media (min-width: 1024px) {
+  .inline-lg {
+    display: inline-block;
+    vertical-align:top;
+  }
+}
+
+.form-wrapper {
+  margin-top: 32px;
+}
+
+.inline {
+  display: inline-block;
+}
+
 .test-data-heading {
   padding: 2px 0;
   font-weight: bold;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 12px;
 }
 
 .test-data-value {
   padding: 2px 0;
 }
 
-md-card {
-  max-width: 400px;
-  margin: 10px;
+md-toolbar {
+  position: relative;
+  z-index: 10;
 }
 
 md-toolbar-row {
@@ -39,6 +166,10 @@ md-input-container,
 md-input-container.mat-input-container {
   display: block;
   padding: 4px 0 4px 0;
+}
+
+.mat-fab, .mat-mini-fab, .mat-raised-button {
+  background-color: #ccc;
 }
 
 .done {
@@ -56,6 +187,21 @@ section {
     padding: 10px;
 }
 
+hr {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
+  padding: 0;
+}
+
+hr.vertical {
+  size: 100%;
+  width: 1px;
+  margin: 0 1em;
+}
+
 md-spinner.buttonSpinner {
   float: left; 
   width: 24px; 
@@ -63,15 +209,14 @@ md-spinner.buttonSpinner {
   margin: 5px 10px 5px 0px;
 }
 
-div.content {
-    max-width: 512px;
-    margin: 20px;
-}
-
 .error,
 .formError {
-  color: #AA2222;
-  margin: 8px;
+  color: #A33;
+  margin: 16px 0;
+}
+
+.app-error {
+  font-size: 1.5em;
 }
 
 /* mdl-data-table */
@@ -81,7 +226,8 @@ div.content {
   border-collapse: collapse;
   white-space: nowrap;
   font-size: 13px;
-  background-color: rgb(255,255,255); }
+  background-color: rgb(255,255,255);
+  table-layout: fixed; }
   .mdl-data-table thead {
     padding-bottom: 3px; }
     .mdl-data-table thead .mdl-data-table__select {

@@ -64,10 +64,9 @@ namespace TestFirebaseNotificationsAPI
 
             app.UseStaticFiles();
 
-            app.UseCors(builder =>
-                builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());/*.WithOrigins(
-                    "<url>"
-                ));*/
+            app.UseCors(builder => {
+                builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            });
 
             app.UseMvc();
         }

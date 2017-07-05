@@ -8,6 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 import { NotificationData } from "app/models/notification-data";
+import { WebSocketSubject } from "rxjs/observable/dom/WebSocketSubject";
 
 @Injectable()
 export class ApiService {
@@ -29,8 +30,8 @@ export class ApiService {
       .catch((err) => this.handleError(err));
   }
 
-  getTest(id : number) : Promise<Test> {
-    let url = this.apiUrl + "/testpushnotifications/" + id;
+  getTest(id : number, token : string) : Promise<Test> {
+    let url = this.apiUrl + "/testpushnotifications/" + id + "?token=" + token;
     return this.http.get(url)
       .toPromise()
       .then((res) => this.handleResponse(res, Test))
@@ -69,15 +70,15 @@ export class ApiService {
   }
 
   startTest(token : string, test : Test) : Promise<Test> {
-    let url = this.apiUrl + "/testpushnotifications/start/" + token;
+    let url = this.apiUrl + "/testpushnotifications/start?token=" + token;
     return this.http.post(url, test, this.options)
       .toPromise()
       .then((res) => this.handleResponse(res, Test))
       .catch((err) => this.handleError(err));
   }
 
-  stopTest(testId : number) : Promise<Test> {
-    let url = this.apiUrl + "/testpushnotifications/stop/" + testId;
+  stopTest(testId : number, token : string) : Promise<Test> {
+    let url = this.apiUrl + "/testpushnotifications/stop/" + testId + "?token=" + token;
     return this.http.post(url, { }, this.options)
       .toPromise()
       .then((res) => this.handleResponse(res, Test))
@@ -92,11 +93,16 @@ export class ApiService {
       .catch((err) => this.handleError(err));
   }
 
-  updateNotification(data : NotificationData) : Promise<NotificationData> {
-    let url = this.apiUrl + "/testpushnotifications/notification";
-    return this.http.put(url, data, this.options)
+  ping() {
+    let url = this.apiUrl + "/testfirebasenotifications/ping";
+    let data = { message: "ping" };
+    let start = new Date().getTime();
+    return this.http.post(url, data, this.options)
       .toPromise()
-      .then((res) => this.handleResponse(res, NotificationData))
+      .then(() => {
+        let stop = new Date().getTime();
+        return stop-start;
+      })
       .catch((err) => this.handleError(err));
   }
 

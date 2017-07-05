@@ -64,7 +64,6 @@ export class PushNotificationService {
    */
   loadPushRegistration() : Promise<PushRegistration> {
     return new Promise<PushRegistration>((resolve, reject) => {
-
       this.messaging.getToken().toPromise().then((token) => {
         let rv : Promise<PushRegistration>;
 
@@ -73,7 +72,7 @@ export class PushNotificationService {
 
         // Check if we have a token that has not been sent to the server yet
         if(lastSentToken && !token) {
-          this.sendToServer(null, lastSentToken);
+          this.sendToServer(null, lastSentToken).catch((err) => {});
           rv = null;
         } else if(lastSentToken && lastSentToken !== token) {
           // Get current push registration at the server
@@ -89,7 +88,7 @@ export class PushNotificationService {
                 this.setLocalToken('');
                 return this.loadPushRegistration();
               } else {
-                throw error;
+                return Promise.reject(error);
               }
             });
         } else if(token) {
@@ -182,9 +181,6 @@ export class PushNotificationService {
     return this.sendToServer(data, currentToken)
       .then((reg : PushRegistration) => {
         this.setPushRegistration(reg);
-      })
-      .catch(function(err) {
-        throw err;
       });
   }
 
@@ -276,7 +272,9 @@ export class PushNotificationService {
         this.setLocalToken('');
       }
 
-      throw error;
+      console.error("[push-notification.service] Could not send to server.", error);
+
+      return Promise.reject(error);
     };
 
     return request.then(onResolve, onReject);

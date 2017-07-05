@@ -10,9 +10,7 @@ export class ReceivedTableComponent implements OnInit {
 
   @Input("model") test : Test;
 
-  constructor(
-
-  ) { }
+  constructor() { }
 
   ngOnInit() {
   }

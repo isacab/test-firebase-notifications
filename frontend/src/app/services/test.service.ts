@@ -6,18 +6,25 @@ import { Test } from '../models/test';
 import { NotificationData } from "../models/notification-data";
 
 import { Observable, ReplaySubject, BehaviorSubject } from 'rxjs';
+import { WebSocketSubject } from "rxjs/observable/dom/WebSocketSubject";
 
 @Injectable()
 export class TestService {
 
   private waitingForResponse : boolean;
   private receivedNotificationsWhileWaiting : Array<NotificationData> = [];
+  private currentTestToken : string;
+
+  private readonly maxNumRetries = 10;
+  private readonly maxBackOff = 60000;
 
   constructor(
     protected api : ApiService, 
     protected ngZone: NgZone,
     @Inject('PushNotificationService') protected pushService : PushNotificationService
-  ) { }
+  ) { 
+    this.setNotificationListener();
+  }
 
   // [start] Observable properties
 
@@ -45,30 +52,31 @@ export class TestService {
   }
 
   start(token : string, test : Test) : Promise<Test> {
-    this.startWaitingForResponse();
+    this.startWaitingForResponse(token);
     return this.api.startTest(token, test)
       .then((test) => this.stopWaitingForResponse(test));
   }
 
-  load(id : number) : Promise<Test> {
+  load(id : number, token : string) : Promise<Test> {
     let currentTest = this.currentTest;
     if(currentTest && currentTest.id === id)
       return Promise.resolve(currentTest);
       
-    this.startWaitingForResponse();
-    return this.api.getTest(id)
+    this.startWaitingForResponse(token);
+    return this.api.getTest(id, token)
       .then((test) => this.stopWaitingForResponse(test));
   }
 
   stop() : Promise<Test> {
-    return this.api.stopTest(this.currentTest.id).then((test) => {
+    return this.api.stopTest(this.currentTest.id, this.currentTestToken).then((test) => {
       this.setCurrentTest(test);
       return test;
     });
   }
 
-  private startWaitingForResponse() {
+  private startWaitingForResponse(token : string) {
     this.receivedNotificationsWhileWaiting = [];
+    this.currentTestToken = token;
     this.waitingForResponse = true;
   }
 
@@ -78,6 +86,62 @@ export class TestService {
       this.waitingForResponse = false;
       this.receivedNotificationsWhileWaiting = [];
       return test;
+  }
+
+  protected setNotificationListener() {
+    this.pushService.onNotificationReceived.subscribe((data) => {
+      let notificationData = new NotificationData();
+      notificationData.id = +data.id;
+      notificationData.sequenceNumber = +data.sequenceNumber;
+      notificationData.receivedServer = +data.receivedServer;
+      notificationData.receivedClient = +data.receivedClient;
+      notificationData.sent = +data.sent;
+      notificationData.testId = +data.testId;
+      notificationData.failed = this.asBoolean(data.failed);
+      notificationData.tap = this.asBoolean(data.tap);
+
+      console.log("[CordovaTestService] Received message: " + JSON.stringify(data));
+
+      this.stopTimer(notificationData).then((dataFromServer) => {
+        //console.log("[CordovaTestService] Stoped timer: " + JSON.stringify(dataFromServer));
+        this.onReceivedNotification(dataFromServer);
+      }).catch((error) => {
+        //console.log("[CordovaTestService] Could not stop timer for notification.", notificationData);
+      });
+    });
+  }
+
+  protected stopTimer(notificationData : NotificationData, retryAttempt : number = 0) : Promise<NotificationData> {
+    notificationData.receivedClient = new Date().getTime();
+    return this.api.stopTimer(notificationData)
+      .catch((error) => {
+        console.error('[cordova-test.service.js] Could not notify server, retryAttempt: ' + retryAttempt + ', reason: ' + error);
+        notificationData.failed = true;
+        if(retryAttempt < this.maxNumRetries) {
+          // retry using exponential backoff
+          var backoff = this.getBackOff(++retryAttempt, this.maxBackOff);
+          return this.delay(backoff).then(() => {
+              return this.stopTimer(notificationData, retryAttempt);
+          });
+        }
+        console.error('[cordova-test.service.js] All retry attempts made for notification: ' + JSON.stringify(notificationData));
+        return Promise.reject(error);
+      });
+  }
+
+  private delay(t) : Promise<any> {
+    return new Promise(function(resolve) { 
+        setTimeout(resolve, t)
+    });
+  }
+
+  private getBackOff(retryAttempt, maxBackOff) : number {
+      let backoff = Math.pow(1.5, retryAttempt) * 1000;
+      return Math.min(backoff, maxBackOff);
+  }
+
+  private asBoolean(value : any) : boolean {
+    return typeof(value) == 'string' ? String(value).toLowerCase() == 'true' : !!value;
   }
 
   protected onReceivedNotification(notificationData : NotificationData) : void {
@@ -101,22 +165,6 @@ export class TestService {
       this.receivedNotificationsWhileWaiting.push(notificationData);
     }
   }
-
-  /*private setReceivedListener() {
-    this.receivedService.received.subscribe(
-      (notificationData : NotificationData) => {
-        let currentTest = this.currentTest;
-        if(notificationData.testId === currentTest.id) {
-          
-          if(!currentTest.notifications) {
-              currentTest.notifications = [];
-          }
-          
-          currentTest.notifications.push(notificationData);
-        }
-      }
-    );
-  }*/
 
   protected updateReceivedNotification(test : Test, notifications : Array<NotificationData>) {
     notifications.forEach(element => {

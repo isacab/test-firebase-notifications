@@ -33,5 +33,10 @@ namespace TestFirebaseNotificationsAPI.Repository
         {
             _databaseContext.Notifications.Remove(model);
         }
+
+        public TestNotifactionContentModel Get(int id)
+        {
+            return _databaseContext.Notifications.Find(id);
+        }
     }
 }

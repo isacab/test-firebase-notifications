@@ -4,23 +4,27 @@
     ({{ test.notifications?.length || 0 }}/{{ test.totalNumNotifications() || 0 }})
   </span>
 </h2>
-<table class="received-table mdl-data-table">
-  <thead>
-    <tr>
-      <th>Seq number</th>
-      <th>Sent (epoch time)</th>
-      <th>Latency (ms)</th>
-      <th>Received (epoch time)</th>
-      <th>App server RTT (ms)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let notification of test.notifications; trackBy: trackNotification">
-      <td>{{notification.sequenceNumber}}</td>
-      <td class="mdl-data-table__cell--non-numeric">{{notification.sent}}</td>
-      <td>{{notification.received - notification.sent}}</td>
-      <td class="mdl-data-table__cell--non-numeric">{{notification.received}}</td>
-      <td>{{notification.clientToServerRTT}}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="scroll-x">
+  <table class="received-table mdl-data-table">
+    <thead>
+      <tr>
+        <th>Seq number</th>
+        <th>Sent (timestamp)</th>
+        <th>Latency (ms)</th>
+        <th>Received Server</th>
+        <th>Received Client</th>
+        <th>Received Difference</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let notification of test.notifications; trackBy: trackNotification">
+        <td>{{notification.sequenceNumber}}</td>
+        <td>{{notification.sent}}</td>
+        <td>{{notification.receivedServer - notification.sent}}</td>
+        <td>{{notification.receivedServer}}</td>
+        <td>{{notification.receivedClient}}</td>
+        <td>{{notification.receivedServer - notification.receivedClient}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
