@@ -10,7 +10,7 @@ declare var navigator: any;
 @Injectable()
 export class WebFirebaseMessagingService implements FirebaseMessaging {
 
-  private readonly _messaging : firebase.messaging.Messaging;
+  protected readonly _messaging : firebase.messaging.Messaging;
 
   constructor(@Inject(FirebaseApp) private firebaseApp: firebase.app.App) { 
     this._messaging = firebase.messaging(firebaseApp);

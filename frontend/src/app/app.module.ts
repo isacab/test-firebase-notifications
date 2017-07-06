@@ -12,7 +12,7 @@ import 'hammerjs';
 import { ApiService } from './services/api.service';
 import { PushNotificationService } from './services/push-notification.service';
 import { TestService } from './services/test.service';
-import { WebTestService } from './services/web/web-test.service';
+import { WebCustomSWTestService } from './services/web/web-custom-sw-test.service';
 import { CordovaTestService } from './services/cordova/cordova-test.service';
 
 import { AppComponent } from './app.component';
@@ -29,6 +29,7 @@ import { TestPushDetailsComponent } from './components/test-push-details/test-pu
 import { environment } from '../environments/environment';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
+import { WebFirebaseMessagingCustomSWService } from "app/services/web/web-firebase-messaging-custom-sw.service";
 
 export function initializePushNotifications(service: PushNotificationService): Function {
   return () => service.ready()
@@ -46,10 +47,10 @@ export function initializePushNotifications(service: PushNotificationService): F
 };
 
 export const firebaseMessagingServiceClass : Type<any> = 
-  environment.cordova ? CordovaFirebaseMessagingService : WebFirebaseMessagingService;
+  environment.cordova ? CordovaFirebaseMessagingService : WebFirebaseMessagingCustomSWService;
   
 export const testServiceClass : Type<any> = 
-  environment.cordova ? CordovaTestService : TestService;
+  environment.cordova ? CordovaTestService : WebCustomSWTestService;
 
 @NgModule({
   declarations: [

@@ -90,23 +90,13 @@ export class TestService {
 
   protected setNotificationListener() {
     this.pushService.onNotificationReceived.subscribe((data) => {
-      let notificationData = new NotificationData();
-      notificationData.id = +data.id;
-      notificationData.sequenceNumber = +data.sequenceNumber;
-      notificationData.receivedServer = +data.receivedServer;
-      notificationData.receivedClient = +data.receivedClient;
-      notificationData.sent = +data.sent;
-      notificationData.testId = +data.testId;
-      notificationData.failed = this.asBoolean(data.failed);
-      notificationData.tap = this.asBoolean(data.tap);
-
-      console.log("[CordovaTestService] Received message: " + JSON.stringify(data));
+      let notificationData = this.asNotificationData(data);
 
       this.stopTimer(notificationData).then((dataFromServer) => {
         //console.log("[CordovaTestService] Stoped timer: " + JSON.stringify(dataFromServer));
         this.onReceivedNotification(dataFromServer);
       }).catch((error) => {
-        //console.log("[CordovaTestService] Could not stop timer for notification.", notificationData);
+        console.log("[TestService] Could not stop timer for notification.", notificationData);
       });
     });
   }
@@ -138,6 +128,19 @@ export class TestService {
   private getBackOff(retryAttempt, maxBackOff) : number {
       let backoff = Math.pow(1.5, retryAttempt) * 1000;
       return Math.min(backoff, maxBackOff);
+  }
+
+  protected asNotificationData(data : any) : NotificationData {
+    let rv = new NotificationData();
+    rv.id = +data.id;
+    rv.sequenceNumber = +data.sequenceNumber;
+    rv.receivedServer = +data.receivedServer;
+    rv.receivedClient = +data.receivedClient;
+    rv.sent = +data.sent;
+    rv.testId = +data.testId;
+    rv.failed = this.asBoolean(data.failed);
+    rv.tap = this.asBoolean(data.tap);
+    return rv;
   }
 
   private asBoolean(value : any) : boolean {

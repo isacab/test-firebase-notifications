@@ -28,45 +28,6 @@ export class AppComponent implements OnInit {
     this.router.events.subscribe((event: RouterEvent) => {
       this.navigationInterceptor(event);
     });
-
-    // debugging cordova
-    document.addEventListener('deviceready', function(){
-      console.log("cordovaready");
-    }, false);
-
-    /*if('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope').then((reg : ServiceWorkerRegistration) => {
-        console.log("firebase-cloud-messaging-push-scope reg: ", reg);
-        reg.addEventListener('message', (m) => {
-          console.log('message: ', m);
-        });
-        reg.pushManager.getSubscription().then((sub) => {
-          console.log("firebase-cloud-messaging-push-scope subscription: ", sub);
-        });
-      });
-
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        console.log("getregistration before register reg: ", reg);
-      });
-
-      setTimeout(() => {
-        navigator.serviceWorker.register("sw.js").then((reg) => {
-          console.log("registered reg: ", reg);
-        })
-      }, 1000);
-
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        console.log("getregistration after register reg: ", reg);
-      });
-
-
-      navigator.serviceWorker.ready.then((reg) => {
-        console.log("ready reg: ", reg);
-        reg.pushManager.getSubscription().then((sub) => {
-          console.log("subscription: ", sub);
-        });
-      });
-    }*/
   }
 
   // Shows and hides the loading spinner during RouterEvent changes

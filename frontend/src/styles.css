@@ -71,7 +71,7 @@ md-spinner.loading-spinner {
 }
 
 div.side-bar {
-  min-width: 255px;
+  width: 255px;
 }
 
 /* Small screens and below */

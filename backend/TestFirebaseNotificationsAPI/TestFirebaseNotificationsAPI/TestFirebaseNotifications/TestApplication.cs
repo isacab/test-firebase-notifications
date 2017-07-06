@@ -116,6 +116,8 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         {
                             Title = "Test firebase notifications",
                             Body = "Test body",
+                            Icon = "assets/img/testfcm-bell-192x192.png",
+                            Badge = "assets/img/testfcm-bell-72x72.png",
                         },
                         Priority = "high"
                     };
