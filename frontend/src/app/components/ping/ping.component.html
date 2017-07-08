@@ -1,0 +1,10 @@
+<button md-raised-button 
+  color="primary"
+  (click)="ping()">
+  Ping
+</button>
+<ol>
+  <li *ngFor="let result of results;">
+    {{result}} ms
+  </li>
+</ol>

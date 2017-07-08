@@ -16,6 +16,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TestFirebaseNotificationsAPI.Repository;
 using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
+using Serilog;
 
 namespace TestFirebaseNotificationsAPI.Services
 {
@@ -42,10 +43,15 @@ namespace TestFirebaseNotificationsAPI.Services
 
         private readonly PushRegistrationRepository _registrations;
 
+        private readonly ILogger _logger;
+
         public FcmService(FcmConfiguration configuration, PushRegistrationRepository registrations)
         {
             _fcmConfig = configuration;
             _registrations = registrations;
+            _logger = new LoggerConfiguration()
+                .WriteTo.RollingFile("Logs/fcmservice-{Date}.txt")
+                .CreateLogger(); ;
 
             _http = new HttpClient();
             _http.DefaultRequestHeaders.Accept.Clear();
@@ -56,7 +62,7 @@ namespace TestFirebaseNotificationsAPI.Services
         public async Task<FcmMulticastMessageResponseModel> SendToDevice(NotificationModel notification)
         {
             var response = await Send(notification);
-            
+
             var fcmResponse = await response.Content.ReadAsAsync<FcmMulticastMessageResponseModel>();
 
             checkPushRegistrations(fcmResponse, notification);
@@ -80,16 +86,24 @@ namespace TestFirebaseNotificationsAPI.Services
 
         protected async Task<HttpResponseMessage> Send(NotificationModel notification)
         {
-            var json = notification.ToJson();
+            try
+            {
+                var json = notification.ToJson();
 
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // Send a post request
-            HttpResponseMessage response = await _http.PostAsync(_fcmConfig.Url, content);
+                // Send a post request
+                HttpResponseMessage response = await _http.PostAsync(_fcmConfig.Url, content);
 
-            response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-            return response;
+                return response;
+            }
+            catch(Exception ex)
+            {
+                _logger.Error(ex, "Could not send notification. \n\tNotification: {A}", notification.ToJson());
+                throw ex;
+            }
         }
 
         /**
@@ -114,6 +128,10 @@ namespace TestFirebaseNotificationsAPI.Services
                     else if (result.Error == "NotRegistrated")
                     {
                         notRegistratedTokens.Add(oldRegistrationToken);
+                    }
+                    else
+                    {
+                        _logger.Warning("Fcm response result contained error.\n\tNotification: {A}\n\tError: {B}", notification.ToJson(), result.Error);
                     }
                     i++;
                 }

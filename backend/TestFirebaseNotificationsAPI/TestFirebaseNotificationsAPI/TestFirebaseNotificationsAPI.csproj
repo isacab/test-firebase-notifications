@@ -34,6 +34,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="1.1.2" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="1.1.1" />
     <PackageReference Include="PushSharp" Version="4.0.10" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="1.0.1" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.105" />
   </ItemGroup>
   <ItemGroup>

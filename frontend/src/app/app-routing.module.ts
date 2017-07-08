@@ -6,6 +6,7 @@ import { NewTestFormComponent } from './components/new-test-form/new-test-form.c
 import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
 import { TestListResolverService } from "app/services/route-guards/test-list-resolver.service";
 import { TestDetailsResolverService } from "app/services/route-guards/test-details-resolver.service";
+import { PingComponent } from "app/components/ping/ping.component";
 
 const appRoutes: Routes = [
   {
@@ -25,6 +26,10 @@ const appRoutes: Routes = [
     resolve: {
       testList: TestListResolverService
     }
+  },
+  {
+    path: 'ping',
+    component: PingComponent
   },
   { 
     path: '',

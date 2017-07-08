@@ -38,8 +38,8 @@ self.addEventListener('push', function (event) {
     var options = {
         body: notification.body || 'You have received a notification :)',
         data: data,
-        icon: "assets/img/testfcm-bell-192x192.png",
-        badge: "assets/img/testfcm-bell-72x72.png",
+        icon: "assets/img/notification_big.png",
+        badge: "assets/img/notification_icon.png",
         //requireInteraction: true,
     }
 
@@ -78,6 +78,9 @@ self.addEventListener('notificationclick', function(event) {
 function stopTimer(data, retryAttempt = 0)
 {
     const url = apiBaseUrl + '/testpushnotifications/stoptimer';
+
+    if(!data)
+        return Promise.reject("Data is null");
     
     data.receivedClient = new Date().getTime();
 

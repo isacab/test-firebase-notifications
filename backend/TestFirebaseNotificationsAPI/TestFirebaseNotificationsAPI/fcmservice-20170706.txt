@@ -1,0 +1,9 @@
+2017-07-06 22:13:49.771 +02:00 [Error] Could not send notification to device. Notification: "{\"to\":\"ePJiNvni2HE:APA91bEnIhopae_H4kp2SNSD5B44EgD2Wqt2v6uhjeylhhAYPFdbaqiK0X4l0jkoPyiHh1SKpvILJe4IM8EBCylQ3IUn1yIr6dQb3r56MgB8Af4dLTY328i249Pkd4Tnz80t855cylOy\",\"priority\":\"high\",\"contentAvailable\":false,\"mutableContent\":false,\"timeToLive\":0,\"dryRun\":false,\"data\":{\"id\":0,\"sequenceNumber\":1,\"sent\":1499372023383,\"receivedServer\":0,\"receivedClient\":0,\"failed\":false,\"testId\":57},\"notification\":{\"title\":\"Test firebase notifications\",\"body\":\"Test body\",\"icon\":\"assets/img/testfcm-bell-192x192.png\",\"badge\":\"assets/img/testfcm-bell-72x72.png\"}}"
+System.Net.Http.HttpRequestException: Response status code does not indicate success: 404 (Not Found).
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at TestFirebaseNotificationsAPI.Services.FcmService.<Send>d__7.MoveNext()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at TestFirebaseNotificationsAPI.Services.FcmService.<SendToDevice>d__5.MoveNext()

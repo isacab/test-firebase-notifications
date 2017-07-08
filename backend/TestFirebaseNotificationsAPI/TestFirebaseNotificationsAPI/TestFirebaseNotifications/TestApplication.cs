@@ -11,6 +11,7 @@ using TestFirebaseNotificationsAPI.Repository;
 using TestFirebaseNotificationsAPI.Services;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 using TestFirebaseNotificationsAPI.Lib;
+using Serilog;
 
 namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 {
@@ -115,9 +116,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         Notification = new NotificationContentModel()
                         {
                             Title = "Test firebase notifications",
-                            Body = "Test body",
-                            Icon = "assets/img/testfcm-bell-192x192.png",
-                            Badge = "assets/img/testfcm-bell-72x72.png",
+                            Body = "Test body"
                         },
                         Priority = "high"
                     };
@@ -136,8 +135,13 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 
         private async void SendNotification(NotificationModel notification)
         {
-            await _pushService.SendToDevice(notification);
-            //_syncPushService.SendToDevice(notification);
+            try
+            {
+                await _pushService.SendToDevice(notification);
+                //_syncPushService.SendToDevice(notification);
+            }
+            catch (Exception ex)
+            { }
         }
 
         private void setRunning(bool running)

@@ -30,14 +30,18 @@ import { environment } from '../environments/environment';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
 import { WebFirebaseMessagingCustomSWService } from "app/services/web/web-firebase-messaging-custom-sw.service";
+import { PingComponent } from './components/ping/ping.component';
 
 export function initializePushNotifications(service: PushNotificationService): Function {
+  const swFileName = 'sw.js';
+  //const swFileName = firebase-messaging-sw-template.js';
+
   return () => service.ready()
     .then(() => service.checkAvailable())
     .then(() => {
       if(service.messaging instanceof WebFirebaseMessagingService) {
         let fcm = (<WebFirebaseMessagingService>(service.messaging));
-        return navigator.serviceWorker.register('sw.js')
+        return navigator.serviceWorker.register(swFileName)
           .then((reg) => {
             fcm.useServiceWorker(reg);
           });
@@ -63,6 +67,7 @@ export const testServiceClass : Type<any> =
     ReceivedTableComponent,
     TestPushDetailsComponent,
     TestInfoComponent,
+    PingComponent,
   ],
   imports: [
     BrowserModule,

@@ -10,7 +10,7 @@
       "assets": [
         "assets",
         "favicon.ico",
-        "firebase-messaging-ssw.js",
+        "firebase-messaging-sw-template.js",
         "sw.js"
       ],
       "index": "index.html",

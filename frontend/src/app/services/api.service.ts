@@ -94,7 +94,7 @@ export class ApiService {
   }
 
   ping() {
-    let url = this.apiUrl + "/testfirebasenotifications/ping";
+    let url = this.apiUrl + "/testpushnotifications/ping";
     let data = { message: "ping" };
     let start = new Date().getTime();
     return this.http.post(url, data, this.options)
