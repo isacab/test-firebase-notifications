@@ -41,7 +41,7 @@ namespace TestFirebaseNotificationsAPI.Model
             return To.StartsWith("/topics/");
         }
 
-        public List<string> GetTargetTokens()
+        public List<string> GetTargets()
         {
             var receivers = new List<string>();
 

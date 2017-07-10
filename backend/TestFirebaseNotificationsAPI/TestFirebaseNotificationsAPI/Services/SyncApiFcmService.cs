@@ -12,13 +12,13 @@ using TestFirebaseNotificationsAPI.Repository;
 
 namespace TestFirebaseNotificationsAPI.Services
 {
-    public class SyncFcmService
+    public class SyncApiFcmService
     {
         private readonly FcmConfiguration _fcmConfig;
 
         private readonly PushRegistrationRepository _registrations;
 
-        public SyncFcmService(FcmConfiguration configuration, PushRegistrationRepository registrations)
+        public SyncApiFcmService(FcmConfiguration configuration, PushRegistrationRepository registrations)
         {
             _fcmConfig = configuration;
             _registrations = registrations;

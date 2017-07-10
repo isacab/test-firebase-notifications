@@ -12,6 +12,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
 using System.Configuration;
 using TestFirebaseNotificationsAPI.Repository;
+using TestFirebaseNotificationsAPI.Lib;
+using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
+using Serilog;
 
 namespace TestFirebaseNotificationsAPI
 {
@@ -73,9 +76,19 @@ namespace TestFirebaseNotificationsAPI
         
         private FcmService FcmServiceFactory(IServiceProvider provider)
         {
+            string serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
+            var configuration = new FcmConfiguration(serverKey);
+            var apiService = new FcmApiService(configuration);
+            var retryStrategy = new ExponentialBackoff();
+            var logger = new LoggerConfiguration()
+                 .WriteTo.RollingFile("Logs/fcmservice-{Date}.txt")
+                 .CreateLogger();
+
             return new FcmService(
-                new FcmConfiguration(ConfigurationManager.AppSettings["FCMServerKey"]),
-                provider.GetService<PushRegistrationRepository>());
+                apiService,
+                provider.GetService<PushRegistrationRepository>(),
+                logger,
+                retryStrategy);
         }
     }
 }

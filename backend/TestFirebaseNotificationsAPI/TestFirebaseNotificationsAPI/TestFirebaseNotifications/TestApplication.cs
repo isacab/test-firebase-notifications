@@ -12,16 +12,15 @@ using TestFirebaseNotificationsAPI.Services;
 using TestFirebaseNotificationsAPI.TestFirebaseNotifications;
 using TestFirebaseNotificationsAPI.Lib;
 using Serilog;
+using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
 
 namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 {
     public class TestApplication
     {
         private readonly TestModel _test; // a copy of the TestModel passed in constructor
-        private readonly DatabaseContext _databaseContext;
-        private readonly FcmService _pushService;
-        private readonly SyncFcmService _syncPushService;
         private readonly PushRegistrationRepository _registrations;
+        private readonly FcmService _fcmService;
         private readonly TestRepository _tests;
         private readonly int _initialDelay;
 
@@ -29,12 +28,21 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
         {
             _test = (TestModel)test.Clone() ?? throw new ArgumentNullException("Test is null");
             _initialDelay = initialDelay;
-            _databaseContext = DatabaseContext.CreateDefault();
-            _registrations = new PushRegistrationRepository(_databaseContext);
-            _tests = new TestRepository(_databaseContext);
+            var databaseContext = DatabaseContext.CreateDefault();
+            _registrations = new PushRegistrationRepository(databaseContext);
+            _tests = new TestRepository(databaseContext);
+
+            // Init fcm service
             string serverKey = ConfigurationManager.AppSettings["FCMServerKey"];
-            _pushService = new FcmService(new FcmConfiguration(serverKey), _registrations);
-            _syncPushService = new SyncFcmService(new FcmConfiguration(serverKey), _registrations);
+            var configuration = new FcmConfiguration(serverKey);
+            var fcmApiService = new FcmApiService(configuration);
+            databaseContext = DatabaseContext.CreateDefault();
+            var regRepository = new PushRegistrationRepository(databaseContext);
+            var retryStrategy = RetryStrategy.NoRetry;
+            ILogger logger = new LoggerConfiguration()
+                 .WriteTo.RollingFile("Logs/fcmservice-{Date}.txt")
+                 .CreateLogger();
+            _fcmService = new FcmService(fcmApiService, regRepository, logger, retryStrategy);
         }
 
         #region Properties
@@ -83,12 +91,12 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
 
         #endregion
 
-        public void Run()
+        public async void Run()
         {
             if (Started)
                 throw new InvalidOperationException("TestApplication has already been started.");
 
-            setRunning(true);
+            SetRunning(true);
 
             Started = true;
 
@@ -120,7 +128,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         },
                         Priority = "high"
                     };
-                    SendNotification(notification);
+                    await SendNotification(notification);
                     Thread.Sleep(10);
                 }
 
@@ -130,21 +138,21 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
             long runTime = sw.ElapsedMilliseconds;
             Console.WriteLine("Run Time: {0}", runTime);
 
-            setRunning(false);
+            SetRunning(false);
         }
 
-        private async void SendNotification(NotificationModel notification)
+        private async Task SendNotification(NotificationModel notification)
         {
             try
             {
-                await _pushService.SendToDevice(notification);
+                await _fcmService.Send(notification);
                 //_syncPushService.SendToDevice(notification);
+            } catch (Exception ex)
+            {
             }
-            catch (Exception ex)
-            { }
         }
 
-        private void setRunning(bool running)
+        private void SetRunning(bool running)
         {
             _test.Running = running;
             _tests.Update(_test);

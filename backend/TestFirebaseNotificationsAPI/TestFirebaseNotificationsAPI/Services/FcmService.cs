@@ -20,310 +20,251 @@ using Serilog;
 
 namespace TestFirebaseNotificationsAPI.Services
 {
-    public class FcmConfiguration
-    {
-        private const string _defaultUrl = "https://fcm.googleapis.com/fcm/send";
-
-        public FcmConfiguration(string serverKey, string url = _defaultUrl)
-        {
-            Url = url;
-            ServerKey = serverKey;
-        }
-
-        public string Url { get; private set; }
-
-        public string ServerKey { get; private set; }
-    }
-
     public class FcmService
     {
-        private readonly HttpClient _http;
-
-        private readonly FcmConfiguration _fcmConfig;
+        private readonly FcmApiService _fcmApiService;
 
         private readonly PushRegistrationRepository _registrations;
 
         private readonly ILogger _logger;
 
-        public FcmService(FcmConfiguration configuration, PushRegistrationRepository registrations)
+        private readonly RetryPolicy<FcmTransientErrorDetectionStrategy> _retryPolicy;
+
+        private readonly Object _registrationsLock = new Object();
+
+        public FcmService(FcmApiService fcmApiService, PushRegistrationRepository registrations, ILogger logger, RetryStrategy retryStrategy)
         {
-            _fcmConfig = configuration;
+            _fcmApiService = fcmApiService;
             _registrations = registrations;
-            _logger = new LoggerConfiguration()
-                .WriteTo.RollingFile("Logs/fcmservice-{Date}.txt")
-                .CreateLogger(); ;
-
-            _http = new HttpClient();
-            _http.DefaultRequestHeaders.Accept.Clear();
-            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "key=" + configuration.ServerKey);
+            _logger = logger;
+            _retryPolicy = new RetryPolicy<FcmTransientErrorDetectionStrategy>(retryStrategy);
+            _retryPolicy.Retrying += OnRetrying;
         }
 
-        public async Task<FcmMulticastMessageResponseModel> SendToDevice(NotificationModel notification)
+        public async Task Send(NotificationModel notification)
         {
-            var response = await Send(notification);
-
-            var fcmResponse = await response.Content.ReadAsAsync<FcmMulticastMessageResponseModel>();
-
-            checkPushRegistrations(fcmResponse, notification);
-
-            return fcmResponse;
-
-            /*if (response.IsSuccessStatusCode)
-                await onResponseOk(response, data, backoff);
+            if (notification.IsTopicMessage())
+                await SendToTopic(notification);
             else
-                await onResponseError(response, data, backoff);*/
+                await SendToDevice(notification);
         }
 
-        public async Task<FcmTopicMessageResponseModel> SendToTopic(NotificationModel notification)
+        private async Task SendToDevice(NotificationModel notification)
         {
-            var response = await Send(notification);
+            NotificationModel originalNotification = notification;
+            Dictionary<string, FcmResultModel> failedResults = new Dictionary<string, FcmResultModel>(); // token, error
+            
+            try
+            {
+                await _retryPolicy.ExecuteAsync(
+                  async () =>
+                  {
+                      var response = await _fcmApiService.Send(notification);
 
-            var fcmResponse = await response.Content.ReadAsAsync<FcmTopicMessageResponseModel>();
+                      if (response.IsSuccessStatusCode)
+                      {
+                          FcmMulticastMessageResponseModel fcmResponse = await response.Content.ReadAsAsync<FcmMulticastMessageResponseModel>();
 
-            return fcmResponse;
+                          if (fcmResponse.Failure > 0 || fcmResponse.CanonicalIds > 0 || failedResults.Any())
+                          {
+
+                              Dictionary<string, FcmResultModel> success, cannonical, failure;
+
+                              CategorizeResults(fcmResponse, notification, out success, out failure, out cannonical);
+
+                              // Update database with by replacing old tokens with new ones and remove invalid tokens
+                              UpdatePushRegistrations(cannonical, failure);
+
+                              // Remove successful tokens from failedResults
+                              if (fcmResponse.Success > 0)
+                                  failedResults = failedResults
+                                      .Except(success)
+                                      .ToDictionary(x => x.Key, x => x.Value);
+
+                              if (fcmResponse.Failure > 0)
+                              {
+                                  // Add failure items to failedResults
+                                  AddOrReplace(failedResults, failure);
+
+                                  // Query all tokens associated with results with retryable error codes
+                                  List<string> retryableTokens = failure
+                                    .Where(FcmTransientErrorDetectionStrategy.IsTransientError)
+                                    .Select(x => x.Key)
+                                    .ToList();
+
+                                  if (retryableTokens.Any())
+                                  {
+                                      // Clone notification and set registrationids to the ones that are retryable
+                                      // This notification will be sent if the retrypolicy decides it should retry this execution action
+                                      notification = (NotificationModel)notification.Clone();
+                                      notification.To = null;
+                                      notification.RegistrationIds = retryableTokens;
+                                  }
+
+                                  throw new FcmMulticastException()
+                                  {
+                                      Notification = originalNotification,
+                                      Failed = failedResults,
+                                      StatusCode = response.StatusCode,
+                                      RetryAfter = response.Headers.RetryAfter
+                                  };
+                              }
+                          }
+                      }
+                      else
+                      {
+                          string message = await ReadErrorMessageAsync(response);
+
+                          throw new FcmException(message)
+                          {
+                              Notification = notification,
+                              StatusCode = response.StatusCode,
+                              RetryAfter = response.Headers.RetryAfter
+                          };
+                      }
+                  });
+            }
+            catch (Exception ex) { await HandleException(ex); }
         }
 
-        protected async Task<HttpResponseMessage> Send(NotificationModel notification)
+        private async Task SendToTopic(NotificationModel notification)
         {
             try
             {
-                var json = notification.ToJson();
+                await _retryPolicy.ExecuteAsync(
+                  async () =>
+                  {
+                      var response = await _fcmApiService.Send(notification);
 
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                      string error;
 
-                // Send a post request
-                HttpResponseMessage response = await _http.PostAsync(_fcmConfig.Url, content);
+                      if (response.IsSuccessStatusCode)
+                      {
+                          FcmTopicMessageResponseModel fcmResponse = await response.Content.ReadAsAsync<FcmTopicMessageResponseModel>();
+                          error = fcmResponse.Error;
+                      }
+                      else
+                      {
+                          error = await ReadErrorMessageAsync(response);
+                      }
 
-                response.EnsureSuccessStatusCode();
-
-                return response;
+                      if(error != null)
+                      {
+                          throw new FcmException(error)
+                          {
+                              Notification = notification,
+                              StatusCode = response.StatusCode,
+                              RetryAfter = response.Headers.RetryAfter
+                          };
+                      }
+                  });
             }
-            catch(Exception ex)
+            catch (Exception ex) { await HandleException(ex); }
+        }
+
+        private async Task HandleException(Exception ex)
+        {
+            var fcmException = ex as FcmException;
+
+            if(fcmException == null)
             {
-                _logger.Error(ex, "Could not send notification. \n\tNotification: {A}", notification.ToJson());
+                _logger.Error(ex, "Unexpected exception.");
+                throw ex;
+            }
+
+            var retryAfter = fcmException.RetryAfter;
+            var notification = fcmException.Notification;
+
+            if (retryAfter != null && retryAfter.Delta.HasValue)
+            {
+                _logger.Warning(fcmException, @"Could not send notification to all receivers. Response contained retry-after header.
+                    \n\tNotification: {A}
+                    \n\tRetryAfter: {B}
+                    \n\tStatusCode: {C}", 
+                    fcmException.Notification.ToJson(), fcmException.RetryAfter, fcmException.StatusCode);
+                await Task.Delay(retryAfter.Delta.Value);
+                await Send(notification);
+            }
+            else
+            {
+                _logger.Error(fcmException, @"Could not send notification to all receivers.
+                    \n\tNotification: {A}
+                    \n\tRetryAfter: {B}
+                    \n\tStatusCode: {C}",
+                    fcmException.Notification.ToJson(), fcmException.RetryAfter, fcmException.StatusCode);
                 throw ex;
             }
         }
 
-        /**
-         * Removes pushRegistrations with invalid tokens and updates pushRegistrations with a cannonical token
-         */
-        private void checkPushRegistrations(FcmMulticastMessageResponseModel fcmResponse, NotificationModel notification)
+        private void OnRetrying(object sender, RetryingEventArgs e)
         {
-            if (fcmResponse.CanonicalIds > 0 || fcmResponse.Failure > 0)
+            _logger.Warning(e.LastException, "Retrying\n\tRetryCount: {A}\n\tDelay: {B}", e.CurrentRetryCount, e.Delay.ToString());
+        }
+
+        private void UpdatePushRegistrations(Dictionary<string, FcmResultModel> cannonical, Dictionary<string, FcmResultModel> failure)
+        {
+            lock(_registrationsLock)
             {
-                var targetTokens = notification.GetTargetTokens();
-                var notRegistratedTokens = new List<string>();
-                int i = 0;
-                foreach (var result in fcmResponse.Results)
+                // Update tokens
+                foreach (var entry in cannonical)
                 {
-                    string oldRegistrationToken = targetTokens[i];
-                    if (result.RegistrationId != null)
-                    {
-                        var reg = _registrations.Get(oldRegistrationToken);
-                        reg.Token = result.RegistrationId;
-                        _registrations.Update(reg);
-                    }
-                    else if (result.Error == "NotRegistrated")
-                    {
-                        notRegistratedTokens.Add(oldRegistrationToken);
-                    }
-                    else
-                    {
-                        _logger.Warning("Fcm response result contained error.\n\tNotification: {A}\n\tError: {B}", notification.ToJson(), result.Error);
-                    }
-                    i++;
+                    string oldToken = entry.Key;
+                    string newToken = entry.Value.RegistrationId;
+                    var reg = _registrations.Get(oldToken);
+                    reg.Token = newToken;
+                    _registrations.Update(reg);
+                    _logger.Information("Fcm response result contained a canonical id.\n\tOld token: {A}\n\tNew token: {B}", oldToken, newToken);
                 }
-                if (notRegistratedTokens.Count != 0)
-                {
-                    _registrations.Delete(notRegistratedTokens);
-                }
+
+                // Remove not registrated tokens
+                var notRegistratedTokens = failure.Where(x => x.Value.Error == "InvalidRegistration").Select(x => x.Key);
+                _registrations.Delete(notRegistratedTokens);
+
+                // Save all changes
                 _registrations.SaveChanges();
             }
         }
 
-        /*protected async Task onResponseError(HttpResponseMessage response, NotificationModel data, IBackOff backoff)
+        private void AddOrReplace<T1, T2>(Dictionary<T1, T2> dict1, Dictionary<T1, T2> dict2)
         {
-            int statusCode = (int)response.StatusCode;
-
-            if (statusCode >= 500 && statusCode <= 599)
+            foreach (var pair in dict2)
             {
-                // Copy data
-                NotificationModel copy = (NotificationModel)data.Clone();
-                
-                TimeSpan? bo = retryBackOff(response.Headers.RetryAfter, backoff);
-                if (bo.HasValue && bo.Value.TotalMilliseconds < backoff.MaxInterval)
-                    await Retry(copy, bo.Value);
+                dict1[pair.Key] = pair.Value;
             }
-
-            response.EnsureSuccessStatusCode();
         }
 
-        private async Task Retry(NotificationModel notification, TimeSpan backoff)
+        private async Task<string> ReadErrorMessageAsync(HttpResponseMessage response)
         {
-            // Specific for the test
-            if (notification.Data is TestNotifactionContentModel)
-            {
-                var testData = (TestNotifactionContentModel)notification.Data;
-                testData.NumRetries++;
-            }
+            string strResponseContent = await response.Content.ReadAsStringAsync();
 
-            await Task.Delay(backoff);
-            await Send(notification);
+            string title = Helpers.GetHtmlTitle(strResponseContent);
+
+            string message = title.Length > 0 ? title : strResponseContent;
+
+            return message;
         }
 
-        private TimeSpan? retryBackOff(RetryConditionHeaderValue retryAfter, IBackOff backoff = null)
+        private void CategorizeResults(FcmMulticastMessageResponseModel fcmResponse, NotificationModel notification,
+            out Dictionary<string, FcmResultModel> success, out Dictionary<string, FcmResultModel> failed, out Dictionary<string, FcmResultModel> cannonical)
         {
-            TimeSpan? timeToWait = null;
-
-            if (backoff != null)
+            success = new Dictionary<string, FcmResultModel>();
+            failed = new Dictionary<string, FcmResultModel>();
+            cannonical = new Dictionary<string, FcmResultModel>();
+            var targetTokens = notification.GetTargets();
+            int i = 0;
+            foreach (var result in fcmResponse.Results)
             {
-                // Next backoff
-                timeToWait = backoff.NextBackOff();
-            }
+                string token = targetTokens[i];
 
-            // Check retry-after
-            if (retryAfter != null && retryAfter.Delta.HasValue)
-            {
-                // Retry after has always highes prio if it has a value
-                timeToWait = retryAfter.Delta.Value;
-            }
+                if (result.RegistrationId != null)
+                    cannonical.Add(token, result);
+                else if (result.Error != null)
+                    failed.Add(token, result);
+                else
+                    success.Add(token, result);
 
-            return timeToWait;
+                i++;
+            }
         }
-
-        protected async Task onResponseOk(HttpResponseMessage response, NotificationModel data, IBackOff backoff)
-        {
-            response.EnsureSuccessStatusCode();
-
-            if (data.IsTopicMessage())
-            {
-                FcmTopicMessageResponseModel topicResponse = await response.Content.ReadAsAsync<FcmTopicMessageResponseModel>();
-            }
-            else
-            {
-                FcmMessageResponseModel fcmResponse = await response.Content.ReadAsAsync<FcmMessageResponseModel>();
-
-                if(fcmResponse.Failure > 0 || fcmResponse.CanonicalIds > 0)
-                {
-                    var retryList = new List<string>();
-                    var removeList = new List<string>();
-                    var results = (List<FcmResultModel>)fcmResponse.Results;
-                    var registrationIds = data.GetReceivers();
-
-                    for (int i = 0; i < results.Count; i++)
-                    {
-                        var result = results[i];
-
-                        if (result.RegistrationId != null)
-                        {
-                            // replace registration id
-                            PushRegistrationModel reg = _registrations.Get(registrationIds[i]);
-                            reg.Token = result.RegistrationId;
-                            _registrations.Update(reg);
-                        }
-                        else if (shouldRetry(result))
-                        {
-                            retryList.Add(registrationIds[i]);
-                        }
-                        else if (shouldRemoveRegistration(result))
-                        {
-                            removeList.Add(registrationIds[i]);
-                        }
-                    }
-
-                    if(removeList.Count != 0)
-                    {
-                        // delete registrations from removeList
-                        _registrations.Delete(removeList);
-                    }
-
-                    _registrations.SaveChanges();
-
-                    if(retryList.Count != 0)
-                    {
-                        // Resend notification with registration ids from retryList
-                        NotificationModel copy = (NotificationModel)data.Clone();
-                        copy.To = null;
-                        copy.RegistrationIds = retryList;
-
-                        TimeSpan? bo = retryBackOff(response.Headers.RetryAfter, backoff);
-                        if (bo.HasValue && bo.Value.TotalMilliseconds < backoff.MaxInterval)
-                            await Retry(copy, bo.Value);
-                    }
-                }
-            }
-
-        }
-
-        private bool shouldRemoveRegistration(FcmResultModel result)
-        {
-            return result.Error == "NotRegistrated";
-        }
-
-        private bool shouldRetry(FcmResultModel result)
-        {
-            // List of error messages where the app server should retry sending the message,
-            // according to the reference at: https://firebase.google.com/docs/cloud-messaging/http-server-ref
-            List<string> errorList = new List<string>()
-                {
-                    "Unavailable",
-                    "InternalServerError",
-                    //"DeviceMessageRateExceeded",
-                    "TopicsMessageRateExceeded"
-                };
-
-            return errorList.Contains(result.Error);
-        }*/
-
-        /*private FcmResponseModel handleFailedResults(FcmResponseModel response, NotificationModel sentData, int retryAttempt)
-        {
-            List<string> resendToList = new List<string>();
-            if (sentData.To != null)
-            {
-                resendToList.Add(sentData.To);
-            }
-            else
-            {
-                for (int i = 0; i < response.results.Count(); i++)
-                {
-                    var result = response.results.ElementAt(i);
-                    if (shouldRetry(result))
-                    {
-                        resendToList.Add(sentData.RegistrationIds.ElementAt(i));
-                    }
-                    else if (shouldRemoveRegistration(result))
-                    {
-                        //remove registration
-                    }
-                    else if(result.)
-                }
-            }
-
-            string jsonString = JsonConvert.SerializeObject(sentData);
-            NotificationModel notification = JsonConvert.DeserializeObject<NotificationModel>(jsonString);
-            notification.To = null;
-            notification.RegistrationIds = resendToList;
-
-            return Send(notification, retryAttempt);
-        }
-        
-        private TimeSpan retryAfterStringToTimeSpan(string retryAfter)
-        {
-            int seconds;
-            DateTime dateTime;
-            TimeSpan timeToWait = new TimeSpan(0);
-            if (Int32.TryParse(retryAfter, out seconds))
-            {
-                timeToWait = TimeSpan.FromSeconds(seconds);
-            }
-            else if (DateTime.TryParse(retryAfter, out dateTime))
-            {
-                timeToWait = DateTime.Now - dateTime;
-            }
-
-            return timeToWait;
-        }*/
     }
 }
