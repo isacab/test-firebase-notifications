@@ -1,5 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { TestService } from "app/services/test.service";
+import { Helper } from "app/helper";
 
 @Component({
   selector: 'test-push-details',
@@ -11,12 +12,12 @@ export class TestPushDetailsComponent implements OnInit {
   isStopping : boolean;
 
   errors = {
-    'load': '',
     'stop': ''
   };
 
   constructor(
     @Inject('TestService') private testService : TestService,
+    private helper : Helper
   ) { }
 
   get currentTest() {
@@ -40,7 +41,7 @@ export class TestPushDetailsComponent implements OnInit {
         this.errors.stop = '';
       }).catch((err) => {
         this.isStopping = false;
-        this.errors.stop = err;
+        this.errors.stop = this.helper.errorMessage(err);
       });
   }
 

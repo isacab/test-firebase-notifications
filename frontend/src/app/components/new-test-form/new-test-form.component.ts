@@ -7,6 +7,7 @@ import { TestService } from "app/services/test.service";
 
 import { Test } from "app/models/test";
 import { PushRegistration } from "app/models/push-registration";
+import { Helper } from "app/helper";
 
 @Component({
   selector: 'new-test-form',
@@ -26,6 +27,7 @@ export class NewTestFormComponent implements OnInit {
     @Inject('PushNotificationService') private pushService : PushNotificationService,
     @Inject('TestService') private testService : TestService,
     private router : Router,
+    private helper : Helper
   ) { }
 
   ngAfterViewChecked() {
@@ -46,29 +48,28 @@ export class NewTestFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.pushService.pushRegistrationChanged.subscribe((reg : PushRegistration) => {
-      this.pushIsEnabled = reg ? reg.enabled : false;
+    this.pushService.tokenChanged.subscribe((token : string) => {
+      this.pushIsEnabled = !!token;
     });
   }
 
   submit() {
     this.updateFormErrors();
+
     if(!this.currentForm.valid)
       return;
-    let pushReg = this.pushService.pushRegistration;
-    if(pushReg) {
-      let token = pushReg.token;
-      this.isSubmitting = true;
-      this.testService.start(token, this.model)
-        .then((test : Test) => {
-          this.isSubmitting = false;
-          this.formErrors.submit = '';
-          this.router.navigate(['/test', test.id]);
-        }).catch((err) => {
-          this.formErrors.submit = err;
-          this.isSubmitting = false;
-        });
-    }
+
+    let token = this.pushService.token;
+    this.isSubmitting = true;
+    this.testService.start(token, this.model)
+      .then((test : Test) => {
+        this.isSubmitting = false;
+        this.formErrors.submit = '';
+        this.router.navigate(['/test', test.id]);
+      }).catch((err) => {
+        this.formErrors.submit = this.helper.errorMessage(err);
+        this.isSubmitting = false;
+      });
   }
 
   onValueChanged(data?: any) {

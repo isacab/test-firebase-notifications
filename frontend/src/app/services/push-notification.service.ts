@@ -26,16 +26,17 @@ export class PushNotificationService {
     });
   }
 
-  // pushRegistration - observable property
-  private _pushRegistrationSource = new BehaviorSubject<PushRegistration>(null);
-  readonly pushRegistrationChanged = this._pushRegistrationSource.asObservable();
-  get pushRegistration() : PushRegistration {
-    return this._pushRegistrationSource.getValue();
+  // token - observable property
+  private _tokenSource = new BehaviorSubject<string>(null);
+  readonly tokenChanged = this._tokenSource.asObservable();
+  get token() : string {
+    return this._tokenSource.getValue();
   }
-  private setPushRegistration(value : PushRegistration) : void {
-    this.setValue(this._pushRegistrationSource, value);
+  private setToken(value : string) : void {
+    this.setValue(this._tokenSource, value);
   }
 
+  // Notification received observer
   private _onNotificationReceivedSource : Subject<any> = new Subject<any>();
   readonly onNotificationReceived = this._onNotificationReceivedSource.asObservable();
 
@@ -57,131 +58,50 @@ export class PushNotificationService {
   }
 
   /**
-   * This method sets pushRegistration to the current push registration on the server.
-   * This method also updates the token if a new token has not been sent to the server yet.
-   * 
-   * @param token Current registration token generated from messaging.getToken()
+   * load token
    */
-  loadPushRegistration() : Promise<PushRegistration> {
-    return new Promise<PushRegistration>((resolve, reject) => {
-      this.messaging.getToken().toPromise().then((token) => {
-        let rv : Promise<PushRegistration>;
+  loadToken() : Promise<string> {
 
-        // Get the last token sent to the server from local storage
-        let lastSentToken = this.getLocalToken();
+    return new Promise<string>((resolve, reject) => {
+      // Get the last token sent to the server from local storage
+      let lastSentToken = this.getLocalToken();
 
-        // Check if we have a token that has not been sent to the server yet
-        if(lastSentToken && !token) {
-          this.sendToServer(null, lastSentToken).catch((err) => {});
-          rv = null;
-        } else if(lastSentToken && lastSentToken !== token) {
-          // Get current push registration at the server
-          rv = this.api.getPushRegistration(lastSentToken)
-            .then((reg : PushRegistration) => {
-              // Update the push registration with the current token
-              reg.token = token;
-              reg.enabled = token ? reg.enabled : false;
-              return this.sendToServer(reg, lastSentToken);
-            }).catch((error) => {
-              if(error.message === 'Resource not found') {
-                // This happens when we have tried to update but token did not exist.
-                this.setLocalToken('');
-                return this.loadPushRegistration();
-              } else {
-                return Promise.reject(error);
-              }
-            });
-        } else if(token) {
-          // Get current push registration at the server
-          rv = this.api.getPushRegistration(token)
-            .then((reg : PushRegistration) => {
-              if(!lastSentToken)
-                this.setLocalToken(reg.token);
-              return reg;
-            })
-            .catch((error) => {
-              if(error.message === 'Resource not found') {
-                return null;
-              } else {
-                throw error;
-              }
-            });
-        } else {
-          rv = null;
-        }
-
-        return rv;
-        
-      }).then((reg : PushRegistration) => {
-        this.setPushRegistration(reg);
-        resolve(reg);
-      }).catch((error) => {
-        reject(new Error("Could not load push registration: " + error));
-      });
+      this.messaging.getToken().toPromise()
+        .then((token) => {
+          // Check if we have a token that has not been sent to the server yet
+          if(lastSentToken != token) {
+            // Update token at server
+            return this.sendToServer(token, lastSentToken);
+          }
+          return token;
+        }).then((token : string) => {
+          this.setToken(token);
+          resolve(token);
+        }).catch((error) => {
+          if(lastSentToken)
+            this.setToken(lastSentToken);
+          resolve(lastSentToken);
+        });
       
     });
   }
 
   /**
-   * Enable or disable push notifications.
-   * 
-   * @param value 
-   */
-  setEnabled(value : boolean) : Promise<any> {
-
-    let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
-
-    if(enabled === value) {
-      return Promise.resolve();
-    }
-
-    return value ? this.enable() : this.disable();
-  }
-
-  /**
-   * Private helper method to setEnabled. This method enables push notifications.
-   */
-  private enable() : Promise<any> {
-    // Request permission, get token and on success, set isPushEnabled to true
+   * Request permission, get token, send it to the server, save token in localstorage and on success: resolve, otherwise reject
+   */ 
+  register() : Promise<PushRegistration> {
     return new Promise((resolve, reject) => {
       this.messaging.requestPermission().toPromise()
         .then(() => this.messaging.getToken().toPromise()) // get current token
-        .then((currentToken) => {
-
-          let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
-
-          let data = new PushRegistration({
-            token: currentToken,
-            enabled: true
-          });
-
-          return this.sendToServer(data, oldToken);
-        })
-        .then((reg : PushRegistration) => {
-          this.setPushRegistration(reg);
-          //console.log("Succesfully enabled push for token: " + reg.token);
-          resolve();
+        .then((currentToken) => this.sendToServer(currentToken)) // send current token to server
+        .then((token : string) => {
+          this.setToken(token); // save token in localstorage
+          resolve(token);
         })
         .catch((err) => {
           reject(err);
         });
     });
-  }
-
-  /**
-   * Private helper method to setEnabled. This method disables push notifications.
-   */
-  private disable() : Promise<any> {
-    const currentToken = this.pushRegistration ? this.pushRegistration.token : undefined;
-    const data = new PushRegistration({
-      token: currentToken,
-      enabled: false
-    });
-    
-    return this.sendToServer(data, currentToken)
-      .then((reg : PushRegistration) => {
-        this.setPushRegistration(reg);
-      });
   }
 
   /**
@@ -194,16 +114,11 @@ export class PushNotificationService {
         console.log('Token refreshed.');
         this.messaging.getToken().toPromise()
             .then((refreshedToken) => {
-                let oldToken = this.pushRegistration ? this.pushRegistration.token : undefined;
-                let enabled = this.pushRegistration ? this.pushRegistration.enabled : false;
-                let data = new PushRegistration({
-                  token: refreshedToken,
-                  enabled: enabled
-                });
-                return this.sendToServer(data, oldToken);
+                let oldToken = this.token;
+                return this.sendToServer(refreshedToken, oldToken);
             })
-            .then((reg : PushRegistration) => {
-                console.log('Refreshed token: ' + reg.token);
+            .then((tokenFromServer : string) => {
+                console.log('Refreshed token: ' + tokenFromServer);
             })
             .catch(function (err) {
                 console.log('Unable to retrieve refreshed token ', err);
@@ -242,14 +157,15 @@ export class PushNotificationService {
   /**
    * Send a push registration to the server
    * 
-   * @param data The push registration to send
-   * @param oldToken Set this to the last token sent to server if you want to update it
+   * @param token - The new token to send
+   * @param oldToken - The last token sent to server
    */
-  protected sendToServer(data : PushRegistration, oldToken? : string) : Promise<PushRegistration> {
+  protected sendToServer(token : string, oldToken? : string) : Promise<string> {
     let request : Promise<PushRegistration>;
+    let data = new PushRegistration({token: token});
 
     if(oldToken) {
-      if(data) {
+      if(token) {
         request = this.api.updatePushRegistration(oldToken, data);
       } else {
         request = this.api.removePushRegistration(oldToken);
@@ -263,13 +179,19 @@ export class PushNotificationService {
       // ok
       let newToken = result ? result.token : '';
       this.setLocalToken(newToken);
-      return result;
+      return newToken;
     };
 
     let onReject = (error) => {
       // nok 
       if(error.message === 'Resource not found') {
         this.setLocalToken('');
+        return this.sendToServer(token);
+      }
+
+      if(error.message === 'Already registrated') {
+        this.setLocalToken(token);
+        return token;
       }
 
       console.error("[push-notification.service] Could not send to server.", error);

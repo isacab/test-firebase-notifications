@@ -1,4 +1,4 @@
-<div *ngIf="!errors.load && currentTest != undefined">
+<div>
   <div class="inline-lg side-bar">
     <test-info [model]="currentTest"></test-info>
     <button md-raised-button 
@@ -21,7 +21,4 @@
   <div class="inline-lg">
     <received-table [model]="currentTest"></received-table>
   </div>
-</div>
-<div class="error">
-    {{ errors.load }}
 </div>

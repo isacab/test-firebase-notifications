@@ -13,8 +13,7 @@ export class TestListResolverService implements Resolve<Array<Test>> {
   ) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<Array<Test>> {
-      let reg = this.pushService.pushRegistration;
-      let token = reg ? reg.token : undefined;
+      let token = this.pushService.token;
       
       if(!token) {
         return Promise.resolve([]);

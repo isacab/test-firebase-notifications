@@ -100,9 +100,6 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 if (reg == null)
                     return BadRequest(new { Message = "Token not found" });
 
-                if (!reg.Enabled)
-                    return BadRequest(new { Message = "Notifications are disabled" });
-
                 int id = reg.Id;
 
                 data.PushRegistrationId = id;
@@ -110,7 +107,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 _tests.Insert(data);
                 _tests.SaveChanges();
 
-                TestApplication testApp = new TestApplication(data);
+                TestApplication testApp = new TestApplication(data, 500);
 
                 TestApplication existingApp = GlobalStore.RunningTests.GetOrAdd(id, testApp);
 
@@ -207,34 +204,6 @@ namespace TestFirebaseNotificationsAPI.Controllers
             var json = Json(data);
             return json;
         }
-
-        /*[HttpPut("notification")]
-        public IActionResult UpdateNotfication([FromBody]TestNotifactionContentModel data)
-        {
-            if (data == null)
-                return BadRequest(new { Message = "Data is null" });
-
-            if (!ModelState.IsValid)
-                return BadRequest(new { Message = ModelState.Values.First().Errors.First().ErrorMessage });
-
-            //TODO: some kind of auth
-
-            _notifications.Update(data);
-
-            try
-            {
-                _notifications.SaveChanges();
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
-            {
-                if (ex.InnerException is Microsoft.Data.Sqlite.SqliteException)
-                    return BadRequest(new { Message = "Invalid id" });
-                throw ex;
-            }
-
-            var json = Json(data);
-            return json;
-        }*/
 
         // POST api/testpushnotifications/send
         /*[HttpPost("send")]

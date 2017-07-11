@@ -15,8 +15,7 @@ export class TestDetailsResolverService implements Resolve<Test> {
   ) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<Test> {
-    let reg = this.pushService.pushRegistration;
-    let token = reg ? reg.token : undefined;
+    let token = this.pushService.token;
     
     if(!token) {
       return null;

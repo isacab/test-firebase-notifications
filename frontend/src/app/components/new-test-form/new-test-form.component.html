@@ -1,5 +1,7 @@
 <div class="side-bar">
-      <p><toggle-push></toggle-push></p>
+      <p *ngIf="!pushIsEnabled">
+            <enable-push></enable-push>
+      </p>
       <div class="form-wrapper" *ngIf="pushIsEnabled">
             <form #testPushForm="ngForm" (ngSubmit)="submit()">
                   <md-input-container class="full-width">

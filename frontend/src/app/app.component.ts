@@ -5,6 +5,7 @@ import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messa
 
 import { environment } from "environments/environment";
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
+import { Helper } from "app/helper";
 
 declare var cordova : any;
 @Component({
@@ -22,6 +23,7 @@ export class AppComponent implements OnInit {
   constructor(
     @Inject('PushNotificationService') private pushService : PushNotificationService,
     private router : Router,
+    private helper : Helper
   ) { }
 
   ngOnInit() {
@@ -45,24 +47,8 @@ export class AppComponent implements OnInit {
         this.displayLoader = false;
       }
       if (event instanceof NavigationError) {
-        this.error = this.errorMessage(event.error);
+        this.error = this.helper.errorMessage(event.error);
         this.displayLoader = false;
       }
-  }
-
-  private errorMessage(error : any) : string {
-    if(!error) {
-      return "Unknown failure";
-    }
-
-    if(error instanceof String) {
-      return error.toString();
-    }
-
-    if(navigator && navigator.onLine === false) {
-      return "You are offline";
-    }
-
-    return error.message || "Unknown failure. You can try reload the page.";
   }
 }

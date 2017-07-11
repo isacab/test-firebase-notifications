@@ -1,0 +1,10 @@
+<button md-raised-button 
+      color="primary"
+      (click)="enablePush()"
+      [disabled]="isEnabling || !canEnable">
+      <md-spinner class="buttonSpinner" *ngIf="isEnabling"></md-spinner>
+      Enable Push Notifications
+</button>
+<div class="formError" *ngIf="error">
+  {{ error }}
+</div>

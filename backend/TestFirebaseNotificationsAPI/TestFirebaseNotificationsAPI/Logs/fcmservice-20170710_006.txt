@@ -1,8 +1,0 @@
-2017-07-10 00:55:46.839 +02:00 [Error] Could not send notification to all receivers.
-TestFirebaseNotificationsAPI.Exceptions.FcmMulticastException: Exception of type 'TestFirebaseNotificationsAPI.Exceptions.FcmMulticastException' was thrown.
-   at TestFirebaseNotificationsAPI.Services.FcmService.<>c__DisplayClass6_0.<<SendToDevice>b__0>d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
-   at TestFirebaseNotificationsAPI.Services.FcmService.<SendToDevice>d__6.MoveNext()

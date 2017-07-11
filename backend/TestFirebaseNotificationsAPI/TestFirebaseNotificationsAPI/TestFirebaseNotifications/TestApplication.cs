@@ -123,13 +123,12 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         },
                         Notification = new NotificationContentModel()
                         {
-                            Title = "Test firebase notifications",
-                            Body = "Test body"
+                            Title = "Hey!",
+                            Body = "You have received a notification :)"
                         },
                         Priority = "high"
                     };
                     await SendNotification(notification);
-                    Thread.Sleep(10);
                 }
 
                 Thread.Sleep(_test.Interval);
@@ -149,6 +148,7 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                 //_syncPushService.SendToDevice(notification);
             } catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 

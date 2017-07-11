@@ -14,23 +14,24 @@ import { PushNotificationService } from './services/push-notification.service';
 import { TestService } from './services/test.service';
 import { WebCustomSWTestService } from './services/web/web-custom-sw-test.service';
 import { CordovaTestService } from './services/cordova/cordova-test.service';
+import { Helper } from './helper';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 
 import { TestListComponent } from './components/test-list/test-list.component';
-import { TogglePushComponent } from './components/toggle-push/toggle-push.component';
+import { EnablePushComponent } from './components/enable-push/enable-push.component';
 //import { TestPushNotificationsComponent } from './components/test-push-notifications/test-push-notifications.component';
 import { NewTestFormComponent } from './components/new-test-form/new-test-form.component';
 import { TestInfoComponent } from './components/test-push-details/test-info/test-info.component';
 import { ReceivedTableComponent } from './components/test-push-details/received-table/received-table.component';
 import { TestPushDetailsComponent } from './components/test-push-details/test-push-details.component';
+import { PingComponent } from './components/ping/ping.component';
 
 import { environment } from '../environments/environment';
 import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messaging.service";
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
 import { WebFirebaseMessagingCustomSWService } from "app/services/web/web-firebase-messaging-custom-sw.service";
-import { PingComponent } from './components/ping/ping.component';
 
 export function initializePushNotifications(service: PushNotificationService): Function {
   const swFileName = 'sw.js';
@@ -47,7 +48,7 @@ export function initializePushNotifications(service: PushNotificationService): F
           });
       }
     })
-    .then(() => service.loadPushRegistration());
+    .then(() => service.loadToken());
 };
 
 export const firebaseMessagingServiceClass : Type<any> = 
@@ -59,7 +60,7 @@ export const testServiceClass : Type<any> =
 @NgModule({
   declarations: [
     AppComponent,
-    TogglePushComponent,
+    EnablePushComponent,
     //TestPushNotificationsComponent,
     NewTestFormComponent,
     TestListComponent,
@@ -68,6 +69,7 @@ export const testServiceClass : Type<any> =
     TestPushDetailsComponent,
     TestInfoComponent,
     PingComponent,
+    EnablePushComponent,
   ],
   imports: [
     BrowserModule,
@@ -85,6 +87,7 @@ export const testServiceClass : Type<any> =
     MdMenuModule
   ],
   providers: [
+    Helper,
     ApiService,
     { provide: 'FirebaseMessaging', useClass: firebaseMessagingServiceClass },
     { provide: 'PushNotificationService', useClass: PushNotificationService },

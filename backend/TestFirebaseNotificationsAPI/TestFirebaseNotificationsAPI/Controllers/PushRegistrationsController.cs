@@ -49,7 +49,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
             PushRegistrationModel model = _registrations.Get(data.Token);
 
             if (model != null)
-                _registrations.Delete(data.Token); // Delete existing entries with the same token
+                return BadRequest(new { Message = "Already registrated" });
 
             // Insert new data
             _registrations.Insert(data);
@@ -75,7 +75,6 @@ namespace TestFirebaseNotificationsAPI.Controllers
                 return BadRequest(new { Message = "Resource not found" });
 
             model.Token = data.Token;
-            model.Enabled = data.Enabled;
 
             _registrations.Update(model);
             _registrations.SaveChanges();
@@ -86,7 +85,7 @@ namespace TestFirebaseNotificationsAPI.Controllers
 
         // DELETE api/pushregistrations/{token}
         [HttpDelete("{token}")]
-        public IActionResult Registrations(string token)
+        public IActionResult Delete(string token)
         {
             PushRegistrationModel model = _registrations.Get(token);
 
