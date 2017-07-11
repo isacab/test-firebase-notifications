@@ -1,4 +1,4 @@
-const apiBaseUrl = 'http://localhost:58380/api';
+const apiBaseUrl = 'https://testfirebasenotifications.azurewebsites.net/api';
 const maxNumRetries = 10;
 const maxBackOff = 60000;
 
@@ -90,7 +90,8 @@ function stopTimer(data, retryAttempt = 0)
         headers: {
             'accept': 'application/json',
             'content-type': 'application/json'
-        }
+        },
+        mode: 'cors'
     }).then(function(response) {
         return response.json();
     }).catch(function(reason) {
