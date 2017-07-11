@@ -1,5 +1,0 @@
-2017-07-08 14:53:35.724 +02:00 [Error] Could not send notification. 
-	Notification: "{\"to\":\"ePJiNvni2HE:APA91bEnIhopae_H4kp2SNSD5B44EgD2Wqt2v6uhjeylhhAYPFdbaqiK0X4l0jkoPyiHh1SKpvILJe4IM8EBCylQ3IUn1yIr6dQb3r56MgB8Af4dLTY328i249Pkd4Tnz80t855cylOy\",\"priority\":\"high\",\"contentAvailable\":false,\"mutableContent\":false,\"timeToLive\":0,\"dryRun\":false,\"data\":{\"id\":0,\"sequenceNumber\":1,\"sent\":1499518415102,\"receivedServer\":0,\"receivedClient\":0,\"failed\":false,\"testId\":92},\"notification\":{\"title\":\"Test firebase notifications\",\"body\":\"Test body\"}}"
-System.Net.Http.HttpRequestException: Response status code does not indicate success: 401 (The request was missing an Authentication Key (FCM Token). Please, refer to section "Authentication" of the FCM documentation, at https://firebase.google.com/docs/cloud-messaging/server.).
-   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
-   at TestFirebaseNotificationsAPI.Services.FcmService.<Send>d__7.MoveNext()
