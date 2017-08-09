@@ -22,7 +22,7 @@
                         placeholder="Num notifications per interval" 
                         name="numNotificationsPerInterval" 
                         [(ngModel)]="model.numNotificationsPerInterval"
-                        max="100"
+                        max="10000"
                         min="1" 
                         [disabled]="model.createdAt"
                         required>
@@ -36,7 +36,7 @@
                         placeholder="Num intervals" 
                         name="numIntervals"
                         [(ngModel)]="model.numIntervals"
-                        max="100"
+                        max="1024"
                         min="1" 
                         [disabled]="model.createdAt"
                         required>

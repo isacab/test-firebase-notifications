@@ -124,14 +124,15 @@ namespace TestFirebaseNotificationsAPI.TestFirebaseNotifications
                         Notification = new NotificationContentModel()
                         {
                             Title = "Hey!",
-                            Body = "You have received a notification :)"
+                            Body = "You have received a notification :)",
+                            Tag = "Test"
                         },
                         Priority = "high"
                     };
                     await SendNotification(notification);
                 }
 
-                Thread.Sleep(_test.Interval);
+                await Task.Delay(10);
             }
 
             long runTime = sw.ElapsedMilliseconds;

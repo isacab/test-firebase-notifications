@@ -13,7 +13,7 @@ namespace TestFirebaseNotificationsAPI.Model
         public bool Running { get; set; }
 
         [Required]
-        [MaxLength(200)]
+        [MaxLength(10000)]
         public string Name { get; set; }
 
         [Required]

@@ -104,17 +104,17 @@ export class NewTestFormComponent implements OnInit {
     'numNotificationsPerInterval': {
       'required': 'Num notifications per interval is required.',
       'min':      'Num notifications per interval must be at least 1.',
-      'max':      'Num notifications per interval cannot be more than 100.',
+      'max':      'Num notifications per interval cannot be more than 10000.',
     },
     'numIntervals': {
       'required': 'Num intervals is required.',
       'min':      'Num intervals must be at least 1.',
-      'max':      'Num intervals cannot be more than 100.',
+      'max':      'Num intervals cannot be more than 1024.',
     },
     'interval': {
       'required': 'Interval is required.',
       'min':      'Interval must be at least 0.',
-      'max':      'Interval cannot be more than 100.',
+      'max':      'Interval cannot be more than 3600000.',
     }
   };
 
