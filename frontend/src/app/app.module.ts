@@ -33,6 +33,8 @@ import { WebFirebaseMessagingService } from "app/services/web/web-firebase-messa
 import { CordovaFirebaseMessagingService } from "app/services/cordova/cordova-firebase-messaging.service";
 import { WebFirebaseMessagingCustomSWService } from "app/services/web/web-firebase-messaging-custom-sw.service";
 
+declare var navigator: any;
+
 export function initializePushNotifications(service: PushNotificationService): Function {
   const swFileName = 'sw.js';
   //const swFileName = firebase-messaging-sw-template.js';

@@ -4,6 +4,8 @@ import { FirebaseApp } from "angularfire2";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs/Subject";
 
+declare var navigator: any;
+
 @Injectable()
 export class WebFirebaseMessagingCustomSWService extends WebFirebaseMessagingService {
 

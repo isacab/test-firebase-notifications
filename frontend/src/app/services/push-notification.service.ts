@@ -89,7 +89,7 @@ export class PushNotificationService {
   /**
    * Request permission, get token, send it to the server, save token in localstorage and on success: resolve, otherwise reject
    */ 
-  register() : Promise<PushRegistration> {
+  register() : Promise<string> {
     return new Promise((resolve, reject) => {
       this.messaging.requestPermission().toPromise()
         .then(() => this.messaging.getToken().toPromise()) // get current token
@@ -175,14 +175,14 @@ export class PushNotificationService {
       request = this.api.createPushRegistration(data);
     }
 
-    let onResolve = (result : PushRegistration) => { 
+    let onSuccess = (result : PushRegistration) => { 
       // ok
       let newToken = result ? result.token : '';
       this.setLocalToken(newToken);
       return newToken;
     };
 
-    let onReject = (error) => {
+    let onError = (error) => {
       // nok 
       if(error.message === 'Resource not found') {
         this.setLocalToken('');
@@ -196,10 +196,14 @@ export class PushNotificationService {
 
       console.error("[push-notification.service] Could not send to server.", error);
 
-      return Promise.reject(error);
+      return error;
     };
 
-    return request.then(onResolve, onReject);
+    return new Promise ((resolve, reject) => {
+      request
+        .then((res) => resolve(onSuccess(res)))
+        .catch((err) => onError(onError(err)));
+    });
   }
 
 }

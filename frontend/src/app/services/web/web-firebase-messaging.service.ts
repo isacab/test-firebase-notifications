@@ -16,12 +16,12 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
     this._messaging = firebase.messaging(firebaseApp);
   }
 
-  useServiceWorker(registration : ServiceWorkerRegistration) {
+  useServiceWorker(registration : any) { //TODO: ServiceWorkerRegistration) {
     this._messaging.useServiceWorker(registration);
   }
 
   deleteToken(token: string): Observable<any> {
-    return Observable.fromPromise(this._messaging.deleteToken(token));
+    return Observable.fromPromise(<Promise<any>>this._messaging.deleteToken(token));
   }
 
   ready() : Observable<any> {
@@ -36,7 +36,7 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
    * subsequent calls to getToken will return from cache (if the token has not been deleted in between).
    */
   getToken(): Observable<any> {
-    return Observable.fromPromise(this._messaging.getToken());
+    return Observable.fromPromise(<Promise<any>>this._messaging.getToken());
   }
 
   onMessage(): Observable<any> {
@@ -58,10 +58,10 @@ export class WebFirebaseMessagingService implements FirebaseMessaging {
   /** 
    * Request permission for push notifications. 
    * If the browser permission state is 'prompt', the user is asked to Allow or Block notifications.
-   * Returns an Observable that fires once if permission could be granted and error if not.
+   * Returns an Observable that fires once if permission could be granted or error if not.
    */
   requestPermission(): Observable<any> {
-    return Observable.fromPromise(this._messaging.requestPermission());
+    return Observable.fromPromise(<Promise<any>>this._messaging.requestPermission());
   }
   
   /**
